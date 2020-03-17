@@ -1,0 +1,44 @@
+<html>
+<head>
+  <title>CloudedBats WURB 2020</title>
+  <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+  <h1>CloudedBats WURB 2020</h1>
+  <a href="/docs">API documentation</a>
+  <h4>Device name: <span id="device_name"> {{ device_name }} </span></h4>
+  <h4>Sampling frequency: <span id="sample_rate"> {{ sample_rate }} Hz </span></h4>
+
+  <button onclick="callRecorder('/start_rec')"><h2>Start recording</h2></button>
+  <button onclick="callRecorder('/stop_rec')"><h2>Stop recording</h2></button>
+ 
+  <h4>Status: 
+  <p id="rec_status"></p>
+  </h4>
+
+  <script>
+    async function callRecorder(action) {
+      try {
+        document.getElementById("rec_status").innerHTML = "Waiting...";
+        await fetch(action)
+        var resp = await fetch("/get_status")
+        var data = await resp.json();
+        document.getElementById("rec_status").innerHTML = data.rec_status;
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  </script>
+
+  <script>
+    var ws = new WebSocket("ws://localhost:19594/ws");
+    ws.onmessage = function(event) {
+      var data_json = JSON.parse(event.data);
+      document.getElementById("device_name").innerHTML = data_json.device_name;
+      document.getElementById("sample_rate").innerHTML = data_json.sample_rate;
+      document.getElementById("rec_status").innerHTML = data_json.rec_status;
+    };
+  </script>
+
+</body>
+</html>

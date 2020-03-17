@@ -1,0 +1,9 @@
+# API and web.
+fastapi
+uvicorn
+jinja2
+aiofiles
+# Sound.
+sounddevice
+# For Visual Studio Code.
+# pylint
