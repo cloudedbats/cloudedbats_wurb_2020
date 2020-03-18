@@ -14,6 +14,6 @@ COPY ./requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
 # Our code. After install 
-COPY ./ /wurb_recorder
+COPY ./ /wurb_rec
 
-RUN mkdir /recorded_files
+# RUN mkdir /recorded_files

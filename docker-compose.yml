@@ -10,14 +10,14 @@ services:
       # Therefore "wurb_rec" must be deployed outside
       # docker. This part is for test only.
       #
-      build: wurb_recorder
+      build: wurb_rec
       restart: always
       env_file:
         - cloudedbats.env
       command: >
-        sh -c "uvicorn wurb_recorder.api_main:app --host 0.0.0.0 --port 19594 --log-level info"
-      volumes:
-        - ./recorded_files:/recorded_files
+        sh -c "uvicorn wurb_rec.api_main:app --host 0.0.0.0 --port 19594 --log-level info"
+      #volumes:
+      #  - ./recorded_files:/recorded_files
       # devices:
       #  - /dev/vchiq:/dev/vchiq
       #  - /dev/fb0:/dev/fb0
