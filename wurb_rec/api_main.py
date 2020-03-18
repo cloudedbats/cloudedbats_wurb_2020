@@ -12,19 +12,19 @@ import uvicorn
 
 # CloudedBats.
 try:
-    from wurb_recorder.wurb_recorder import UltrasoundDevices
+    from wurb_rec.wurb_recorder import UltrasoundDevices
 except:
     from wurb_recorder import UltrasoundDevices
 
 app = fastapi.FastAPI(
     title="CloudedBats WURB 2020",
-    description="CloudedBats WURB 2020 - with FastAPI, Docker, etc.",
+    description="CloudedBats WURB 2020 - with FastAPI, asyncio, Docker, etc.",
     version="0.1.0",
 )
 
 
-app.mount("/static", StaticFiles(directory="wurb_recorder/static"), name="static")
-templates = Jinja2Templates(directory="wurb_recorder/templates")
+app.mount("/static", StaticFiles(directory="wurb_rec/static"), name="static")
+templates = Jinja2Templates(directory="wurb_rec/templates")
 
 # CloudedBats.
 ultrasound_devices = UltrasoundDevices()
@@ -44,7 +44,7 @@ def shutdown_event():
 
 
 @app.get("/")
-async def read_root(request: fastapi.Request):
+async def webpage(request: fastapi.Request):
     device_name, sample_rate = ultrasound_devices.get_connected_device()
     return templates.TemplateResponse(
         "wurb_miniweb.html",
@@ -61,14 +61,28 @@ async def get_status():
     }
 
 
+@app.get("/start_rec")
+async def start_recording():
+    print("Called: start_rec")
+    ultrasound_devices.set_rec_status("Recording")
+    return {"rec_status": "Recording"}
+
+
+@app.get("/stop_rec")
+async def stop_recording():
+    print("Called: stop_rec")
+    ultrasound_devices.set_rec_status("Stopped")
+    return {"rec_status": "Stopped"}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     print("WS Called...")
     await websocket.accept()
-
-    device_name = ""
+    device_name = "-"
     sample_rate = 0
-    rec_status = "Device changed."
+    rec_status = "-"
+    rec_status = ultrasound_devices.get_rec_status()
     device_name, sample_rate = ultrasound_devices.get_connected_device()
     while True:
         await websocket.send_json(
@@ -78,19 +92,12 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 "sample_rate": str(sample_rate),
             }
         )
-        device_name, sample_rate = await ultrasound_devices.get_device_when_changed()
-
-
-@app.get("/start_rec")
-async def start_rec():
-    print("Called: start_rec")
-    return {"rec_status": "Recording"}
-
-
-@app.get("/stop_rec")
-async def stop_rec():
-    print("Called: stop_rec")
-    return {"rec_status": "Stopped"}
+        # Wait for next event to happen.
+        notification_event = ultrasound_devices.get_notification_event()
+        await notification_event.wait()
+        print("WS event released...")
+        rec_status = ultrasound_devices.get_rec_status()
+        device_name, sample_rate = ultrasound_devices.get_connected_device()
 
 
 # @app.get("/items/{item_id}")

@@ -18,7 +18,10 @@ services:
         sh -c "uvicorn wurb_recorder.api_main:app --host 0.0.0.0 --port 19594 --log-level info"
       volumes:
         - ./recorded_files:/recorded_files
-        # - /dev/snd:/dev/snd
+      # devices:
+      #  - /dev/vchiq:/dev/vchiq
+      #  - /dev/fb0:/dev/fb0
+      #  - /dev/snd:/dev/snd
       ports:
         - "19594:19594"
 

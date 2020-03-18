@@ -21,9 +21,6 @@
       try {
         document.getElementById("rec_status").innerHTML = "Waiting...";
         await fetch(action)
-        var resp = await fetch("/get_status")
-        var data = await resp.json();
-        document.getElementById("rec_status").innerHTML = data.rec_status;
       } catch (err) {
         console.log(err);
       }
@@ -31,13 +28,22 @@
   </script>
 
   <script>
-    var ws = new WebSocket("ws://localhost:19594/ws");
-    ws.onmessage = function(event) {
-      var data_json = JSON.parse(event.data);
-      document.getElementById("device_name").innerHTML = data_json.device_name;
-      document.getElementById("sample_rate").innerHTML = data_json.sample_rate;
-      document.getElementById("rec_status").innerHTML = data_json.rec_status;
-    };
+    startWs();
+
+    function startWs() {
+      var ws = new WebSocket("ws://localhost:19594/ws");
+      ws.onmessage = function(event) {
+        var data_json = JSON.parse(event.data);
+        document.getElementById("device_name").innerHTML = data_json.device_name;
+        document.getElementById("sample_rate").innerHTML = data_json.sample_rate + " Hz";
+        document.getElementById("rec_status").innerHTML = data_json.rec_status;
+      };
+      ws.onclose = function(){
+        // Try to reconnect in 5 seconds
+        // ws = null;
+        setTimeout(function(){startWs()}, 5000);
+      };
+    }
   </script>
 
 </body>
