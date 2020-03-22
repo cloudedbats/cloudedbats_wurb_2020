@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # Project: http://cloudedbats.org
-# Copyright (c) 2016-present Arnold Andreasson
+# Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import asyncio
@@ -20,28 +20,36 @@ class UltrasoundDevices(object):
         self.device_name = "-"
         self.sampling_freq_hz = 0
         self.check_interval_s = 1.0
-        self.rec_status = "Not started"
+        self.notification_event = None
+        self.device_checker_task = None
+
+    async def setup(self):
+        """ For asyncio events. """
         self.notification_event = asyncio.Event()
+        self.device_checker_task = asyncio.create_task(
+            self.check_connected_devices()
+        )
+
+    async def shutdown(self):
+        """ For asyncio events. """
+        await self.device_checker_task.cancel()
 
     def get_notification_event(self):
-        """ """
+        """ For asyncio events. """
         return self.notification_event
-
-    def get_rec_status(self):
-        """ """
-        return self.rec_status
-
-    def set_rec_status(self, rec_status):
-        """ """
-        self.rec_status = rec_status
-        # Create a new event and release all from old event.
-        notification_event = self.notification_event
-        self.notification_event = asyncio.Event()
-        notification_event.set()
 
     def get_connected_device(self):
         """ """
         return self.device_name, self.sampling_freq_hz
+
+    def set_connected_device(self, device_name, sampling_freq_hz):
+        """ """
+        self.device_name = device_name
+        self.sampling_freq_hz = sampling_freq_hz
+        # Create a new event and release all from the old event.
+        old_notification_event = self.notification_event
+        self.notification_event = asyncio.Event()
+        old_notification_event.set()
 
     async def check_connected_devices(self):
         while True:
@@ -66,10 +74,43 @@ class UltrasoundDevices(object):
                 await asyncio.sleep(self.check_interval_s)
             else:
                 # Make the new values public.
-                print("Connected device changed.")
-                self.device_name = device_name
-                self.sampling_freq_hz = sampling_freq_hz
-                # Create a new event and release all from old event.
-                notification_event = self.notification_event
-                self.notification_event = asyncio.Event()
-                notification_event.set()
+                self.set_connected_device(device_name, sampling_freq_hz)
+
+
+class WurbRecorder(object):
+    """ """
+
+    def __init__(self):
+        """ """
+        self.rec_status = "Not started"
+        self.notification_event = None
+
+    async def setup(self):
+        """ For asyncio events. """
+        self.notification_event = asyncio.Event()
+
+    async def shutdown(self):
+        """ For asyncio events. """
+        pass
+
+    def get_notification_event(self):
+        """ """
+        return self.notification_event
+
+    def get_rec_status(self):
+        """ """
+        return self.rec_status
+
+    def set_rec_status(self, rec_status):
+        """ """
+        self.rec_status = rec_status
+        # Create a new event and release all from the old event.
+        old_notification_event = self.notification_event
+        self.notification_event = asyncio.Event()
+        old_notification_event.set()
+
+    def check_status(self):
+        """ """
+        self.notification_event = asyncio.Event()
+        #### await asyncio.sleep(0.5)
+        #### return self.rec_status
