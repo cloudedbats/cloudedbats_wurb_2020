@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
-# Project: http://cloudedbats.org
+# Project: http://cloudedbats.org, https://github.com/cloudedbats
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
@@ -77,8 +77,9 @@ async def get_status():
     try:
         print("Called: get_status")
         await asyncio.sleep(0.5)
+        rec_status = recorder.get_rec_status()
         return {
-            "rec_status": "Don't know",
+            "rec_status": rec_status,
         }
     except Exception as e:
         print("Exception: ", e)
@@ -89,7 +90,10 @@ async def start_recording():
     try:
         print("Called: start_rec")
         recorder.set_rec_status("Recording")
-        return {"rec_status": "Recording"}
+        rec_status = recorder.get_rec_status()
+        return {
+            "rec_status": rec_status,
+        }
     except Exception as e:
         print("Exception: ", e)
 
@@ -99,7 +103,10 @@ async def stop_recording():
     try:
         print("Called: stop_rec")
         recorder.set_rec_status("Stopped")
-        return {"rec_status": "Stopped"}
+        rec_status = recorder.get_rec_status()
+        return {
+            "rec_status": rec_status,
+        }
     except Exception as e:
         print("Exception: ", e)
 
@@ -112,9 +119,9 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         device_name = "-"
         sample_rate = 0
         rec_status = "-"
-        rec_status = recorder.get_rec_status()
-        device_name, sample_rate = ultrasound_devices.get_connected_device()
         while True:
+            rec_status = recorder.get_rec_status()
+            device_name, sample_rate = ultrasound_devices.get_connected_device()
             await websocket.send_json(
                 {
                     "rec_status": rec_status,
@@ -130,9 +137,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 rec_notification.wait(),
             ]
             await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
-            print("WS event released...")
-            rec_status = recorder.get_rec_status()
-            device_name, sample_rate = ultrasound_devices.get_connected_device()
+
     except Exception as e:
         print("WS Exception: ", e)
 
