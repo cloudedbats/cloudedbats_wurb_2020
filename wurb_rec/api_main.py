@@ -30,33 +30,33 @@ templates = Jinja2Templates(directory="wurb_rec/templates")
 try:
     wurb_rec_manager = WurbRecManager()
 except Exception as e:
-    print("Exception import: ", e)
+    print("EXCEPTION: import: ", e)
 
 
 @app.on_event("startup")
 async def startup_event():
     """ """
     try:
-        print("DEBUG: startup")
-        wurb_rec_manager.startup()
+        print("DEBUG: Called: startup.")
+        await wurb_rec_manager.startup()
     except Exception as e:
-        print("Exception startup_event: ", e)
+        print("EXCEPTION: Called: startup: ", e)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """ """
     try:
-        print("DEBUG: shutdown")
-        wurb_rec_manager.shutdown()
+        print("DEBUG: Called: shutdown.")
+        await wurb_rec_manager.shutdown()
     except Exception as e:
-        print("Exception shutdown_event: ", e)
+        print("EXCEPTION: Called: shutdown: ", e)
 
 
 @app.get("/")
 async def webpage(request: fastapi.Request):
     try:
-        status_dict = wurb_rec_manager.get_status_dict()
+        status_dict = await wurb_rec_manager.get_status_dict()
         return templates.TemplateResponse(
             "wurb_miniweb.html",
             {
@@ -67,48 +67,48 @@ async def webpage(request: fastapi.Request):
             },
         )
     except Exception as e:
-        print("Exception webpage: ", e)
+        print("EXCEPTION: Called: webpage: ", e)
 
 
 @app.get("/start_rec")
 async def start_recording():
     try:
-        print("Called: start_rec")
-        wurb_rec_manager.start_rec()
+        print("DEBUG: Called: start_recording.")
+        await wurb_rec_manager.start_rec()
     except Exception as e:
-        print("Exception start_recording: ", e)
+        print("EXCEPTION: Called: start_recording: ", e)
 
 
 @app.get("/stop_rec")
 async def stop_recording():
     try:
-        print("Called: stop_rec")
-        wurb_rec_manager.stop_rec()
+        print("DEBUG: Called: stop_recording.")
+        await wurb_rec_manager.stop_rec()
     except Exception as e:
-        print("Exception stop_recording: ", e)
+        print("EXCEPTION: Called: stop_recording: ", e)
 
 
 @app.get("/get_status")
 async def get_status():
     try:
-        print("Called: get_status")
-        status_dict = wurb_rec_manager.get_status_dict()
+        print("DEBUG: Called: get_status.")
+        status_dict = await wurb_rec_manager.get_status_dict()
         return {
-                "rec_status": status_dict.get("rec_status", ""),
-                "device_name": status_dict.get("device_name", ""),
-                "sample_rate": str(status_dict.get("sample_rate", "")),
-            }
+            "rec_status": status_dict.get("rec_status", ""),
+            "device_name": status_dict.get("device_name", ""),
+            "sample_rate": str(status_dict.get("sample_rate", "")),
+        }
     except Exception as e:
-        print("Exception get_status: ", e)
+        print("EXCEPTION: Called: get_status: ", e)
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
-        print("WS Called...")
+        print("DEBUG: Called:  websocket_endpoint.")
         await websocket.accept()
         while True:
-            status_dict = wurb_rec_manager.get_status_dict()
+            status_dict = await wurb_rec_manager.get_status_dict()
             await websocket.send_json(
                 {
                     "rec_status": status_dict.get("rec_status", ""),
@@ -117,7 +117,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 }
             )
             # Wait for next event to happen.
-            rec_manager_notification = wurb_rec_manager.get_notification_event()
+            rec_manager_notification = await wurb_rec_manager.get_notification_event()
             # device_notification = ultrasound_devices.get_notification_event()
             # rec_notification = recorder.get_notification_event()
             events = [
@@ -128,7 +128,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
             await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
 
     except Exception as e:
-        print("Exception websocket: ", e)
+        print("EXCEPTION: Called: websocket_endpoint: ", e)
 
 
 # @app.get("/items/{item_id}")

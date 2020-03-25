@@ -18,51 +18,66 @@ class SoundStreamManager(object):
 
     def __init__(self, queue_max_size=120):
         """ """
-        self.queue_max_size = queue_max_size
-        self.clear()
+        try:
+            self.queue_max_size = queue_max_size
+            self.clear()
+        except Exception as e:
+            print("Exception: ", e)
 
     def clear(self):
         """ """
-        self.from_source_queue = asyncio.Queue(maxsize=self.queue_max_size)
-        self.to_target_queue = asyncio.Queue(maxsize=self.queue_max_size)
-        self.source_task = None
-        self.process_task = None
-        self.target_task = None
+        try:
+            self.from_source_queue = asyncio.Queue(maxsize=self.queue_max_size)
+            self.to_target_queue = asyncio.Queue(maxsize=self.queue_max_size)
+            self.source_task = None
+            self.process_task = None
+            self.target_task = None
+        except Exception as e:
+            print("Exception: ", e)
 
-    def start_streaming(self):
+    async def start_streaming(self):
         """ """
-        self.clear()
-        self.source_task = asyncio.create_task(self.soundSourceWorker())
-        self.process_task = asyncio.create_task(self.soundProcessWorker())
-        self.target_task = asyncio.create_task(self.soundTargetWorker())
+        try:
+            self.clear()
+            self.source_task = asyncio.create_task(self.sound_source_worker())
+            self.process_task = asyncio.create_task(self.sound_process_worker())
+            self.target_task = asyncio.create_task(self.sound_target_worker())
+        except Exception as e:
+            print("Exception: ", e)
 
     async def stop_streaming(self, stop_immediate=True):
         """ """
-        if stop_immediate:
-            # Stop all now.
-            if self.source_task:
-                self.source_task.cancel()
-            if self.process_task:
-                self.process_task.cancel()
-            if self.target_task:
-                self.target_task.cancel()
-        else:
-            # Stop source only and let process and target
-            # finish their work.
-            if self.source_task:
-                self.source_task.cancel()
-            await self.from_source_queue.put(None)  # Terminate.
+        try:
+            if stop_immediate:
+                # Stop all now.
+                if self.source_task:
+                    self.source_task.cancel()
+                if self.process_task:
+                    self.process_task.cancel()
+                if self.target_task:
+                    self.target_task.cancel()
+            else:
+                # Stop source only and let process and target
+                # finish their work.
+                if self.source_task:
+                    self.source_task.cancel()
+                await self.from_source_queue.put(None)  # Terminate.
+        except Exception as e:
+            print("Exception: ", e)
 
     async def wait_for_shutdown(self):
         """ To be called after stop_streaming. """
-        if self.source_task and (not self.source_task.done()):
-            await self.source_task
-        if self.source_task and (not self.source_task.done()):
-            await self.process_task
-        if self.source_task and (not self.source_task.done()):
-            await self.target_task
+        try:
+            if self.source_task and (not self.source_task.done()):
+                await self.source_task
+            if self.source_task and (not self.source_task.done()):
+                await self.process_task
+            if self.source_task and (not self.source_task.done()):
+                await self.target_task
+        except Exception as e:
+            print("Exception: ", e)
 
-    async def soundSourceWorker(self):
+    async def sound_source_worker(self):
         """ Abstract worker method for sound sources. Mainly files or streams.
             Test implementation to be used as template.
         """
@@ -76,17 +91,19 @@ class SoundStreamManager(object):
                     try:
                         self.from_source_queue.put_nowait(" A-" + str(counter))
                     except asyncio.QueueFull:
-                        self.removeItemsFromQueue(self.from_source_queue)
+                        await self.remove_items_from_queue(self.from_source_queue)
                         await self.from_source_queue.put(False)  # Flush.
                 except asyncio.CancelledError:
-                    print("DEBUG: ", "soundSourceWorker cancelled.")
+                    print("DEBUG: ", "sound_source_worker cancelled.")
                     break
                 except Exception as e:
-                    print("DEBUG: soundSourceWorker exception: ", e)
+                    print("DEBUG: sound_source_worker exception: ", e)
+        except Exception as e:
+            print("Exception: ", e)
         finally:
-            print("DEBUG: ", "soundSourceWorker terminated.")
+            print("DEBUG: ", "sound_source_worker terminated.")
 
-    async def soundProcessWorker(self):
+    async def sound_process_worker(self):
         """ Abstract worker for sound processing algorithms.
             Test implementation to be used as template.
         """
@@ -100,7 +117,7 @@ class SoundStreamManager(object):
                         break
                     if item == False:
                         print("DEBUG-2: Flush.")
-                        self.removeItemsFromQueue(self.to_target_queue)
+                        await self.remove_items_from_queue(self.to_target_queue)
                         await self.to_target_queue.put(False)  # Flush.
                     print("DEBUG-2: Item: ", item)
                     self.from_source_queue.task_done()
@@ -108,17 +125,19 @@ class SoundStreamManager(object):
                     try:
                         self.to_target_queue.put_nowait(item)
                     except asyncio.QueueFull:
-                        self.removeItemsFromQueue(self.to_target_queue)
+                        await self.remove_items_from_queue(self.to_target_queue)
                         await self.to_target_queue.put(False)  # Flush.
                 except asyncio.CancelledError:
                     print("DEBUG: ", "soundProcessWorker cancelled.")
                     break
                 except Exception as e:
                     print("DEBUG: soundProcessWorker exception: ", e)
+        except Exception as e:
+            print("Exception: ", e)
         finally:
             print("DEBUG: ", "soundProcessWorker terminated.")
 
-    async def soundTargetWorker(self):
+    async def sound_target_worker(self):
         """ Abstract worker for sound targets. Mainly files or streams.
             Test implementation to be used as template.
         """
@@ -140,35 +159,43 @@ class SoundStreamManager(object):
                     break
                 except Exception as e:
                     print("DEBUG: soundTargetWorker exception: ", e)
+        except Exception as e:
+            print("Exception: ", e)
         finally:
             print("DEBUG: soundTargetWorker terminated.")
 
-    def removeItemsFromQueue(self, queue):
+    async def remove_items_from_queue(self, queue):
         """ Helper method. """
-        while True:
-            try:
-                queue.get_nowait()
-                queue.task_done()
-            except asyncio.QueueEmpty:
-                return
+        try:
+            while True:
+                try:
+                    queue.get_nowait()
+                    queue.task_done()
+                except asyncio.QueueEmpty:
+                    return
+        except Exception as e:
+            print("Exception: ", e)
 
 
 # === MAIN - for test ===
 async def main():
     """ """
-    print("Test started.")
-    stream_manager = SoundStreamManager(queue_max_size=20)
-    print("Test 1.")
-    stream_manager.start_streaming()
-    await asyncio.sleep(2.0)
-    print("Test 2.")
-    await stream_manager.stop_streaming(stop_immediate=False)
-    await asyncio.sleep(2.0)
-    print("Test 3.")
-    await stream_manager.stop_streaming(stop_immediate=True)
-    print("Test 4.")
-    await stream_manager.wait_for_shutdown()
-    print("Test finished.")
+    try:
+        print("Test started.")
+        stream_manager = SoundStreamManager(queue_max_size=20)
+        print("Test 1.")
+        await stream_manager.start_streaming()
+        await asyncio.sleep(2.0)
+        print("Test 2.")
+        await stream_manager.stop_streaming(stop_immediate=False)
+        await asyncio.sleep(2.0)
+        print("Test 3.")
+        await stream_manager.stop_streaming(stop_immediate=True)
+        print("Test 4.")
+        await stream_manager.wait_for_shutdown()
+        print("Test finished.")
+    except Exception as e:
+        print("Exception: ", e)
 
 
 if __name__ == "__main__":
