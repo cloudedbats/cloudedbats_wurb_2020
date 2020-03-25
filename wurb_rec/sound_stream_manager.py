@@ -141,7 +141,7 @@ class SoundStreamManager(object):
                 except Exception as e:
                     print("DEBUG: soundTargetWorker exception: ", e)
         finally:
-            print("DEBUG: ", "soundTargetWorker terminated.")
+            print("DEBUG: soundTargetWorker terminated.")
 
     def removeItemsFromQueue(self, queue):
         """ Helper method. """

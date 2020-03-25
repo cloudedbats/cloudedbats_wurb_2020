@@ -15,6 +15,79 @@ except:
     from sound_stream_manager import SoundStreamManager
 
 
+class WurbRecManager(object):
+    """ """
+    def __init__(self):
+        """ """
+        self.rec_status = "Not started"
+        self.notification_event = None
+        self.ultrasound_devices = None
+        self.wurb_recorder = None
+
+    def startup(self):
+        """ """
+        self.ultrasound_devices = UltrasoundDevices()
+        self.wurb_recorder = WurbRecorder()
+
+        self.update_status_task = asyncio.create_task(self.update_status())
+
+        self.ultrasound_devices.start_checking_devices()
+
+    def shutdown(self):
+        """ """
+        self.ultrasound_devices.stop_checking_devices()
+        self.wurb_recorder.stop_streaming(stop_immediate=True)
+
+    def start_rec(self):
+        """ """
+        self.ultrasound_devices.stop_checking_devices()
+        self.wurb_recorder.start_streaming()
+
+    def stop_rec(self):
+        """ """
+        self.wurb_recorder.stop_streaming(stop_immediate=True)
+        self.ultrasound_devices.start_checking_devices()
+
+    def get_notification_event(self):
+        """ """
+        if self.notification_event == None:
+            self.notification_event = asyncio.Event()
+        return self.notification_event
+
+    def get_status_dict(self):
+        """ """
+        status_dict = {
+            "rec_status": self.wurb_recorder.rec_status,
+            "device_name": self.ultrasound_devices.device_name,
+            "sample_rate": str(self.ultrasound_devices.sampling_freq_hz),
+        }
+        return status_dict
+
+    async def update_status(self):
+        """ """
+        print("DEBUG: update_status activated.")
+        try:
+            while True:
+                device_notification = self.ultrasound_devices.get_notification_event()
+                # rec_notification = self.wurb_recorder.get_notification_event()
+                events = [
+                    device_notification.wait(),
+                    # rec_notification.wait(),
+                ]
+                await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED) #, timeout=2.0)
+                print("DEBUG: update_status released.")
+
+                # Create a new event and release all from the old event.
+                old_notification_event = self.notification_event
+                self.notification_event = asyncio.Event()
+                if old_notification_event:
+                    old_notification_event.set()
+        except Exception as e:
+            print("DEBUG: update_status exception: ", e)
+        finally:
+            print("DEBUG: update_status terminated.")
+
+
 class UltrasoundDevices(object):
     """ """
 
@@ -30,17 +103,16 @@ class UltrasoundDevices(object):
         self.notification_event = None
         self.device_checker_task = None
 
-    async def setup(self):
+    def start_checking_devices(self):
         """ For asyncio events. """
-        self.notification_event = asyncio.Event()
         self.device_checker_task = asyncio.create_task(self.check_connected_devices())
 
-    async def shutdown(self):
+    def stop_checking_devices(self):
         """ For asyncio events. """
-        await self.device_checker_task.cancel()
+        self.device_checker_task.cancel()
 
     def get_notification_event(self):
-        """ For asyncio events. """
+        """ """
         if not self.notification_event:
             self.notification_event = asyncio.Event()
         return self.notification_event
@@ -51,37 +123,49 @@ class UltrasoundDevices(object):
 
     def set_connected_device(self, device_name, sampling_freq_hz):
         """ """
+        print("DEBUG: set_connected_device called.")
         self.device_name = device_name
         self.sampling_freq_hz = sampling_freq_hz
         # Create a new event and release all from the old event.
         old_notification_event = self.notification_event
         self.notification_event = asyncio.Event()
-        old_notification_event.set()
+        if old_notification_event:
+            old_notification_event.set()
 
     async def check_connected_devices(self):
-        while True:
-            # Refresh device list.
-            sounddevice._terminate()
-            sounddevice._initialize()
-            device_dict = None
-            device_name = "-"
-            sampling_freq_hz = 0
-            for device_name_part in self.name_part_list:
-                try:
-                    device_dict = sounddevice.query_devices(device=device_name_part)
-                    if device_dict:
-                        device_name = device_dict["name"]
-                        sampling_freq_hz = int(device_dict["default_samplerate"])
-                    break
-                except:
-                    pass
-            if (self.device_name == device_name) and (
-                self.sampling_freq_hz == sampling_freq_hz
-            ):
-                await asyncio.sleep(self.check_interval_s)
-            else:
-                # Make the new values public.
-                self.set_connected_device(device_name, sampling_freq_hz)
+        """ """
+        print("DEBUG: check_connected_devices activated.")
+        try:
+            lock = asyncio.Lock()
+            while True:
+                async with lock:
+                    # Refresh device list.
+                    sounddevice._terminate()
+                    sounddevice._initialize()
+                
+                device_dict = None
+                device_name = "-"
+                sampling_freq_hz = 0
+                for device_name_part in self.name_part_list:
+                    try:
+                        device_dict = sounddevice.query_devices(device=device_name_part)
+                        if device_dict:
+                            device_name = device_dict["name"]
+                            sampling_freq_hz = int(device_dict["default_samplerate"])
+                        break
+                    except:
+                        pass
+                if (self.device_name == device_name) and (
+                    self.sampling_freq_hz == sampling_freq_hz
+                ):
+                    await asyncio.sleep(self.check_interval_s)
+                else:
+                    # Make the new values public.
+                    self.set_connected_device(device_name, sampling_freq_hz)
+        except Exception as e:
+            print("DEBUG: check_connected_devices exception: ", e)
+        finally:
+            print("DEBUG: check_connected_devices terminated.")
 
 
 class WurbRecorder(SoundStreamManager):
@@ -91,35 +175,8 @@ class WurbRecorder(SoundStreamManager):
         """ """
         super().__init__()
         self.rec_status = "Not started"
-        self.notification_event = None
+        # self.notification_event = None
         self.rec_stat_time = None
-
-    async def setup(self):
-        """ For asyncio events. """
-        self.notification_event = asyncio.Event()
-
-    async def shutdown(self):
-        """ For asyncio events. """
-        pass
-
-    def get_notification_event(self):
-        """ """
-        if not self.notification_event:
-            self.notification_event = asyncio.Event()
-        return self.notification_event
-
-    def get_rec_status(self):
-        """ """
-        return self.rec_status
-
-    def set_rec_status(self, rec_status):
-        """ """
-        self.rec_status = rec_status
-        # Create a new event and release all from the old event.
-        old_notification_event = self.notification_event
-        self.notification_event = asyncio.Event()
-        old_notification_event.set()
-
 
 
     async def soundSourceWorker(self):
@@ -140,19 +197,17 @@ class WurbRecorder(SoundStreamManager):
                 if self.rec_stat_time == None:
                     input_buffer_adc_time = input_buffer_adc_time + 0.121 # Adjust first buffer.
                     self.rec_stat_time = time.time() - input_buffer_adc_time
-                buffer_time = float(int(self.rec_stat_time + input_buffer_adc_time)) # No decimals for sec.
-
+                # buffer_time = float(int(self.rec_stat_time + input_buffer_adc_time)) # No decimals for sec.
+                buffer_time = round(self.rec_stat_time + input_buffer_adc_time / 0.5) * 0.5 
                 send_dict = {
                     "status": "", 
                     "time": buffer_time, 
                     "data": indata[:, 0], 
-                    # "data": indata.copy(), 
                 }
 
-                print("MAX: ", max(send_dict["data"]))
-                print("DATA: ", indata[:100])
+                print("DEBUG: audio_callback Data:", len(indata[:, 0]), "  Time: ", buffer_time)
 
-                loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
+#                loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
 
 
 
@@ -166,14 +221,27 @@ class WurbRecorder(SoundStreamManager):
             time_start = time.time()
             print("time_start: ", time_start)
 
-            stream = sounddevice.InputStream(
-                device="Pettersson", channels=1,
-                blocksize=384000, 
-                # latency="high", 
+            try: 
+                stream = sounddevice.InputStream(
+                    device="Pettersson", channels=1,
+                    blocksize=192000, 
+                    #blocksize=384000, 
+                    #blocksize=256000, 
+                    # latency="high", 
+                    dtype='int16', 
+                    samplerate=384000, 
+                    callback=audio_callback,
+                    )
+            except:
+                stream = sounddevice.InputStream(
+                    device="UltraMic", channels=1,
+                    blocksize=96000, 
+                    # latency="high", 
+                    dtype='int16', 
+                    samplerate=192000, 
+                    callback=audio_callback,
+                    )
 
-                dtype='int16', 
-
-                samplerate=384000, callback=audio_callback)
             print("DEBUG-2")
 
             with stream:
