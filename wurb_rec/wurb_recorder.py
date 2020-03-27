@@ -405,33 +405,31 @@ class WurbRecorder(SoundStreamManager):
                             await self.to_target_queue.put(False)  # Flush.
                             self.from_source_queue.task_done()    
                         else:
-                            # Store in 6 sec. list
-                            self.process_deque.append(item)
+                            # Store in 6 sec. long list
+                            new_item = {}
+                            new_item["status"] = "data-Counter-" + str(sound_detected_counter)
+                            new_item["time"] = item["time"]
+                            new_item["data"] = item["data"].copy()
+
+                            self.process_deque.append(new_item)
                             self.from_source_queue.task_done()
                             # Remove oldest item if the list is too long.
                             if len(self.process_deque) > 12:
                                 self.process_deque.popleft()
+
                             if sound_detected == False:
                                 sound_detected_counter = 0
-                                # Check for sound. (item)
-
-
-
-
-                                
+                                # Check for sound.
                                 sound_detected = sound_detector.check_for_sound(
                                     (item["time"], item["data"]))
                                 # sound_detected = True
 
-
-
-
-
-
-
                             if sound_detected == True:
                                 sound_detected_counter += 1
-                                if (sound_detected_counter >= 8) and (len(self.process_deque) >= 12):
+
+                                print("DEBUG-2: counter: ", sound_detected_counter, "   deque length: ", len(self.process_deque))
+
+                                if (sound_detected_counter >= 9) and (len(self.process_deque) >= 12):
                                     sound_detected = False
                                     sound_detected_counter = 0
 
@@ -519,6 +517,9 @@ class WurbRecorder(SoundStreamManager):
                         break
                     elif item == False:
                         print("DEBUG-3: Flush.")
+                        await self.remove_items_from_queue(self.to_target_queue)
+                        if wave_file_writer:
+                                wave_file_writer.close()
                         self.to_target_queue.task_done()
                         pass  # TODO.
                     else:
@@ -526,10 +527,17 @@ class WurbRecorder(SoundStreamManager):
                         print("DEBUG-3: Item: ", item['status'])
 
                         if item["status"] == "new_file":
+                            # 
+                            if wave_file_writer:
+                                wave_file_writer.close()
+
                             wave_file_writer = WaveFileWriter(self)
                         
                         if wave_file_writer:
                             wave_file_writer.write(item['data'])
+
+                            print("DEBUG-3 Time: ", item['time'])
+                            print("DEBUG-3 Max: ", max(item['data']))
 
                         if item["status"] == "close_file":
                             if wave_file_writer:
