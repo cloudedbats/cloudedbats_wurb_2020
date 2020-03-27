@@ -4,15 +4,23 @@
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
-import time
 import asyncio
+import time
+from collections import deque
 import sounddevice
+
+import os
+import wave
 
 # CloudedBats.
 try:
     from wurb_rec.sound_stream_manager import SoundStreamManager
 except:
     from sound_stream_manager import SoundStreamManager
+try:
+    from wurb_rec.wurb_sound_detector import SoundDetector
+except:
+    from wurb_sound_detector import SoundDetector
 
 
 class WurbRecManager(object):
@@ -25,6 +33,7 @@ class WurbRecManager(object):
             self.notification_event = None
             self.ultrasound_devices = None
             self.wurb_recorder = None
+            self.update_status_task = None
         except Exception as e:
             print("Exception: ", e)
 
@@ -41,6 +50,8 @@ class WurbRecManager(object):
     async def shutdown(self):
         """ """
         try:
+            if self.update_status_task:
+                self.update_status_task.cancel()
             await self.ultrasound_devices.stop_checking_devices()
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
         except Exception as e:
@@ -279,7 +290,8 @@ class WurbRecorder(SoundStreamManager):
         sound_source_event = asyncio.Event()
 
         def audio_callback(indata, frames, cffi_time, status):
-            """ This is called (from a separate thread) for each audio block. """
+            """ Locally defined callback.
+                This is called (from a separate thread) for each audio block. """
             try:
                 if status:
                     print("DEBUG: audio_callback Status:", status)  # , file=sys.stderr)
@@ -290,24 +302,29 @@ class WurbRecorder(SoundStreamManager):
                         input_buffer_adc_time + 0.121
                     )  # Adjust first buffer.
                     self.rec_stat_time = time.time() - input_buffer_adc_time
-                # buffer_time = float(int(self.rec_stat_time + input_buffer_adc_time)) # No decimals for sec.
-                buffer_time = (
+                # buffer_dac_time = float(int(self.rec_stat_time + input_buffer_adc_time)) # No decimals for sec.
+                buffer_dac_time = (
                     round(self.rec_stat_time + input_buffer_adc_time / 0.5) * 0.5
                 )
                 send_dict = {
-                    "status": "",
-                    "time": buffer_time,
-                    "data": indata[:, 0],
+                    "status": "data",
+                    "time": buffer_dac_time,
+                    "data": indata[:, 0], # Transform list of lists to list.
                 }
-                print(
-                    "DEBUG: audio_callback Data:",
-                    len(indata[:, 0]),
-                    "  Time: ",
-                    buffer_time,
-                )
+
+                loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
+
+                # print(
+                #     "DEBUG: audio_callback Data:",
+                #     len(indata[:, 0]),
+                #     "  Time: ",
+                #     buffer_time,
+                # )
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
                 loop.call_soon_threadsafe(sound_source_event.set)
+            
+            """ End of locally defined callback. """
 
         try:
             print(
@@ -359,6 +376,281 @@ class WurbRecorder(SoundStreamManager):
         #             print("DEBUG: sound_source_worker exception: ", e)
         # finally:
         #     print("DEBUG: ", "sound_source_worker terminated.")
+
+    async def sound_process_worker(self):
+        """ Abstract worker for sound processing algorithms.
+            Test implementation to be used as template.
+        """
+
+        self.process_deque = deque() # Double ended queue. TODO: Move this.
+        self.process_deque.clear()
+
+        sound_detected = False
+        sound_detected_counter = 0
+        sound_detector = SoundDetector().get_detector()
+
+        try:
+            while True:
+                try:
+                    try:
+                        item = await self.from_source_queue.get()
+                        if item == None:
+                            await self.to_target_queue.put(None)  # Terminate.
+                            print("DEBUG-2: Terminated by source.")
+                            self.from_source_queue.task_done()
+                            break
+                        elif item == False:
+                            print("DEBUG-2: Flush.")
+                            await self.remove_items_from_queue(self.to_target_queue)
+                            await self.to_target_queue.put(False)  # Flush.
+                            self.from_source_queue.task_done()    
+                        else:
+                            # Store in 6 sec. list
+                            self.process_deque.append(item)
+                            self.from_source_queue.task_done()
+                            # Remove oldest item if the list is too long.
+                            if len(self.process_deque) > 12:
+                                self.process_deque.popleft()
+                            if sound_detected == False:
+                                sound_detected_counter = 0
+                                # Check for sound. (item)
+
+
+
+
+                                
+                                sound_detected = sound_detector.check_for_sound(
+                                    (item["time"], item["data"]))
+                                # sound_detected = True
+
+
+
+
+
+
+
+                            if sound_detected == True:
+                                sound_detected_counter += 1
+                                if (sound_detected_counter >= 8) and (len(self.process_deque) >= 12):
+                                    sound_detected = False
+                                    sound_detected_counter = 0
+
+                                    for index in range(0, 12):
+                                        to_file_item = self.process_deque.popleft()
+                                        if index == 0:
+                                            to_file_item["status"] = "new_file"
+                                        if index == 11:
+                                            to_file_item["status"] = "close_file"
+                                        await self.to_target_queue.put(to_file_item)
+                                        await asyncio.sleep(0)
+
+                            await asyncio.sleep(0)
+
+                            # status = item.get('status', '') 
+                            # buffer_dac_time = item.get('time', '')  
+                            # data = item.get('data', '') 
+                            # print("DEBUG: Process status:", status, " time:", buffer_dac_time, " data: ", len(data))
+
+                    except asyncio.QueueFull:
+                        await self.remove_items_from_queue(self.to_target_queue)
+                        self.process_deque.clear()
+                        await self.to_target_queue.put(False)  # Flush.
+                except asyncio.CancelledError:
+                    print("DEBUG: ", "soundProcessWorker cancelled.")
+                    break
+                except Exception as e:
+                    print("DEBUG: soundProcessWorker exception: ", e)
+        except Exception as e:
+            print("Exception: ", e)
+        finally:
+            print("DEBUG: ", "soundProcessWorker terminated.")
+
+        # try:
+        #     while True:
+        #         try:
+        #             item = await self.from_source_queue.get()
+        #             if item == None:
+        #                 await self.to_target_queue.put(None)  # Terminate.
+        #                 print("DEBUG-2: Terminated by source.")
+        #                 break
+        #             if item == False:
+        #                 print("DEBUG-2: Flush.")
+        #                 await self.remove_items_from_queue(self.to_target_queue)
+        #                 await self.to_target_queue.put(False)  # Flush.
+        #             print("DEBUG-2: Item: ", item)
+        #             self.from_source_queue.task_done()
+        #             await asyncio.sleep(0.1)
+        #             try:
+        #                 self.to_target_queue.put_nowait(item)
+        #             except asyncio.QueueFull:
+        #                 await self.remove_items_from_queue(self.to_target_queue)
+        #                 await self.to_target_queue.put(False)  # Flush.
+        #         except asyncio.CancelledError:
+        #             print("DEBUG: ", "soundProcessWorker cancelled.")
+        #             break
+        #         except Exception as e:
+        #             print("DEBUG: soundProcessWorker exception: ", e)
+        # except Exception as e:
+        #     print("Exception: ", e)
+        # finally:
+        #     print("DEBUG: ", "soundProcessWorker terminated.")
+
+    async def sound_target_worker(self):
+        """ Abstract worker for sound targets. Mainly files or streams.
+            Test implementation to be used as template.
+        """
+
+        self._latitude = 0
+        self._longitude = 0
+        self._filename_prefix = "ASYNC"
+        self._out_sampling_rate_hz = 384000
+        self._filename_rec_type = "FS384"
+        self._dir_path = "wurb_rec_async"
+
+        wave_file_writer = None
+
+        try:
+            while True:
+                try:
+                    item = await self.to_target_queue.get()
+                    if item == None:
+                        print("DEBUG-3: Terminated by process.")
+                        self.to_target_queue.task_done()
+                        break
+                    elif item == False:
+                        print("DEBUG-3: Flush.")
+                        self.to_target_queue.task_done()
+                        pass  # TODO.
+                    else:
+
+                        print("DEBUG-3: Item: ", item['status'])
+
+                        if item["status"] == "new_file":
+                            wave_file_writer = WaveFileWriter(self)
+                        
+                        if wave_file_writer:
+                            wave_file_writer.write(item['data'])
+
+                        if item["status"] == "close_file":
+                            if wave_file_writer:
+                                wave_file_writer.close()
+                                wave_file_writer = None
+
+
+
+                        self.to_target_queue.task_done()
+                        
+                    await asyncio.sleep(0)
+
+
+
+
+
+
+                except asyncio.CancelledError:
+                    print("DEBUG: ", "soundTargetWorker cancelled.")
+                    break
+                except Exception as e:
+                    print("DEBUG: soundTargetWorker exception: ", e)
+        except Exception as e:
+            print("Exception: ", e)
+        finally:
+            print("DEBUG: soundTargetWorker terminated.")
+
+        # try:
+        #     while True:
+        #         try:
+        #             item = await self.to_target_queue.get()
+        #             if item == None:
+        #                 print("DEBUG-3: Terminated by process.")
+        #                 break
+        #             if item == False:
+        #                 print("DEBUG-3: Flush.")
+        #                 pass  # TODO.
+        #             print("DEBUG-3: Item: ", item)
+        #             self.to_target_queue.task_done()
+        #             await asyncio.sleep(0.2)
+        #         except asyncio.CancelledError:
+        #             print("DEBUG: ", "soundTargetWorker cancelled.")
+        #             break
+        #         except Exception as e:
+        #             print("DEBUG: soundTargetWorker exception: ", e)
+        # except Exception as e:
+        #     print("Exception: ", e)
+        # finally:
+        #     print("DEBUG: soundTargetWorker terminated.")
+
+
+class WaveFileWriter():
+    """ Each file is connected to a separate object to avoid concurrency problems. """
+    def __init__(self, sound_target_obj):
+        """ """
+        self._wave_file = None
+        self._sound_target_obj = sound_target_obj
+        self._size_counter = 0 
+        
+        # Create file name.
+        # Default time and position.
+        datetimestring = time.strftime("%Y%m%dT%H%M%S%z")
+        latlongstring = '' # Format: 'N56.78E12.34'
+        try:
+            if sound_target_obj._latitude >= 0: 
+                latlongstring += 'N' 
+            else: 
+                latlongstring += 'S'
+            latlongstring += str(abs(sound_target_obj._latitude))
+            #
+            if sound_target_obj._longitude >= 0: 
+                latlongstring += 'E' 
+            else: 
+                latlongstring += 'W'
+            latlongstring += str(abs(sound_target_obj._longitude))
+        except:
+            latlongstring = 'N00.00E00.00'
+        
+        # # Use GPS time if available.
+        # datetime_local_gps = wurb_core.WurbGpsReader().get_time_local_string()
+        # if datetime_local_gps:
+        #     datetimestring = datetime_local_gps
+        # # Use GPS position if available.
+        # latlong = wurb_core.WurbGpsReader().get_latlong_string()
+        # if latlong:
+        #     latlongstring = latlong
+            
+        # Filename example: "WURB1_20180420T205942+0200_N00.00E00.00_TE384.wav"
+        filename =  sound_target_obj._filename_prefix + \
+                    '_' + \
+                    datetimestring + \
+                    '_' + \
+                    latlongstring + \
+                    '_' + \
+                    sound_target_obj._filename_rec_type + \
+                    '.wav'
+        filenamepath = os.path.join(sound_target_obj._dir_path, filename)
+        #
+        if not os.path.exists(sound_target_obj._dir_path):
+            os.makedirs(sound_target_obj._dir_path) # For data, full access.
+        # Open wave file for writing.
+        self._wave_file = wave.open(filenamepath, 'wb')
+        self._wave_file.setnchannels(1) # 1=Mono.
+        self._wave_file.setsampwidth(2) # 2=16 bits.
+        self._wave_file.setframerate(sound_target_obj._out_sampling_rate_hz)
+        # #
+        # sound_target_obj._logger.info('Recorder: New sound file: ' + filename)
+        
+    def write(self, buffer):
+        """ """
+        self._wave_file.writeframes(buffer)
+        self._size_counter += len(buffer) / 2 # Count frames.
+
+    def close(self):
+        """ """
+        if self._wave_file is not None:
+            self._wave_file.close()
+            self._wave_file = None 
+
+            # length_in_sec = self._size_counter / self._sound_target_obj._out_sampling_rate_hz
+            # self._sound_target_obj._logger.info('Recorder: Sound file closed. Length:' + str(length_in_sec) + ' sec.')
 
 
 # === MAIN - for test ===

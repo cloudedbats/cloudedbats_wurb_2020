@@ -6,5 +6,6 @@ aiofiles
 # Sound.
 sounddevice
 numpy
+scipy
 # For Visual Studio Code.
 pylint

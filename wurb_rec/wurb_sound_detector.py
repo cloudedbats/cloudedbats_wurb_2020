@@ -7,7 +7,7 @@
 import logging
 import numpy as np
 import scipy.signal
-import wurb_core
+# import wurb_core
 # # Check if librosa is available.
 # librosa_available = False
 # try:
@@ -46,20 +46,20 @@ class SoundDetector(object):
     def __init__(self):
         """ """
         self._logger = logging.getLogger('CloudedBatsWURB')
-        self._settings = wurb_core.WurbSettings()
+        # self._settings = wurb_core.WurbSettings()
         
     def get_detector(self):
         """ Select detector depending in """
-        sound_detector = self._settings.text('sound_detector')
-        sound_detector = sound_detector.lower()
-        #
-        if sound_detector == 'none':
-            return SoundDetectorNone()
-        elif sound_detector == 'simple':
-            return SoundDetectorSimple()
-#         elif sound_detector == 'test1':
-#             return SoundDetectorTest1()
-        # Default.
+#         sound_detector = self._settings.text('sound_detector')
+#         sound_detector = sound_detector.lower()
+#         #
+#         if sound_detector == 'none':
+#             return SoundDetectorNone()
+#         elif sound_detector == 'simple':
+#             return SoundDetectorSimple()
+# #         elif sound_detector == 'test1':
+# #             return SoundDetectorTest1()
+#         # Default.
         return SoundDetectorSimple()
 
 
@@ -68,10 +68,12 @@ class SoundDetectorBase():
     def __init__(self):
         """ """
         self._logger = logging.getLogger('CloudedBatsWURB')
-        self._settings = wurb_core.WurbSettings()
-        #
-        self._debug = self._settings.boolean('sound_debug')
-        self.sampling_freq = self._settings.float('rec_sampling_freq_khz') * 1000
+        # self._settings = wurb_core.WurbSettings()
+        # #
+        # self._debug = self._settings.boolean('sound_debug')
+        # self.sampling_freq = self._settings.float('rec_sampling_freq_khz') * 1000
+        self._debug = True
+        self.sampling_freq = 192000
     
     def check_for_sound(self, time_and_data):
         """ Abstract. """
@@ -94,13 +96,16 @@ class SoundDetectorSimple(SoundDetectorBase):
         """ """
         super(SoundDetectorSimple, self).__init__()
         #
-        self.filter_min_hz = self._settings.float('sound_simple_filter_min_hz')        
-#         self.filter_max_hz = self._settings.float('sound_simple_filter_max_hz')        
-        self.threshold_dbfs = self._settings.float('sound_simple_threshold_dbfs')        
-        self.window_size = self._settings.integer('sound_simple_window_size')        
-        self.jump_size = self._settings.integer('sound_simple_jump')        
-        # self.window_size = 2048
-        # self.jump_size = 1000
+#         self.filter_min_hz = self._settings.float('sound_simple_filter_min_hz')        
+# #         self.filter_max_hz = self._settings.float('sound_simple_filter_max_hz')        
+#         self.threshold_dbfs = self._settings.float('sound_simple_threshold_dbfs')        
+#         self.window_size = self._settings.integer('sound_simple_window_size')        
+#         self.jump_size = self._settings.integer('sound_simple_jump')        
+        self.filter_min_hz = 15000
+#         self.filter_max_hz = 100000
+        self.threshold_dbfs = -50
+        self.window_size = 2048
+        self.jump_size = 1000
 
         # self.window_function = scipy.signal.blackmanharris(self.window_size)        
         self.window_function = scipy.signal.hann(self.window_size)        
@@ -112,7 +117,11 @@ class SoundDetectorSimple(SoundDetectorBase):
         """ This is the old algorithm used during 2017. """
         _rec_time, raw_data = time_and_data
         #
-        data_int16 = np.fromstring(raw_data, dtype=np.int16) # To ndarray.
+        # data_int16 = np.fromstring(raw_data, dtype=np.int16) # To ndarray.
+
+        data_int16 = raw_data
+
+
         # self._work_buffer = np.concatenate([self._work_buffer, data_int16])
         self._work_buffer = data_int16
         #
