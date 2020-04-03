@@ -5,57 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CloudedBats WURB 2020</title>
+    <!-- Bulma -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
-
-    <script language="javascript">
-
-        function hide_show_settings_basic(tab_name) {
-            var div_settings_basic_tab_id = document.getElementById("div_settings_basic_tab_id");
-            var div_settings_more_tab_id = document.getElementById("div_settings_more_tab_id");
-            var div_settings_scheduler_tab_id = document.getElementById("div_settings_scheduler_tab_id");
-            var div_settings_basic_id = document.getElementById("div_settings_basic_id");
-            var div_settings_more_id = document.getElementById("div_settings_more_id");
-            var div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
-
-            div_settings_basic_tab_id.classList.remove("is-active");
-            div_settings_more_tab_id.classList.remove("is-active");
-            div_settings_scheduler_tab_id.classList.remove("is-active");
-            div_settings_basic_id.style.visibility = "hidden";
-            div_settings_more_id.style.visibility = "hidden";
-            div_settings_scheduler_id.style.visibility = "hidden";
-            div_settings_basic_id.style.overflow = "hidden";
-            div_settings_more_id.style.overflow = "hidden";
-            div_settings_scheduler_id.style.overflow = "hidden";
-            div_settings_basic_id.style.height = "0";
-            div_settings_more_id.style.height = "0";
-            div_settings_scheduler_id.style.height = "0";
-            div_settings_basic_id.style.width = "0";
-            div_settings_more_id.style.width = "0";
-            div_settings_scheduler_id.style.width = "0";
-
-            if (tab_name == "basic") {
-                div_settings_basic_tab_id.classList.add("is-active");
-                div_settings_basic_id.style.visibility = null;
-                div_settings_basic_id.style.overflow = null;
-                div_settings_basic_id.style.height = null;
-                div_settings_basic_id.style.width = null;
-            } else if (tab_name == "more") {
-                div_settings_more_tab_id.classList.add("is-active");
-                div_settings_more_id.style.visibility = null;
-                div_settings_more_id.style.overflow = null;
-                div_settings_more_id.style.height = null;
-                div_settings_more_id.style.width = null;
-            } else if (tab_name == "scheduler") {
-                div_settings_scheduler_tab_id.classList.add("is-active");
-                div_settings_scheduler_id.style.visibility = null;
-                div_settings_scheduler_id.style.overflow = null;
-                div_settings_scheduler_id.style.height = null;
-                div_settings_scheduler_id.style.width = null;
-            }
-        }
-    </script>
-
+    <!-- CloudedBats -->
+    <link href="{{ url_for('static', path='/wurb_styles.css') }}" rel="stylesheet">
+    <script type="text/javascript" src="../static/wurb_javascript.js"></script>
 </head>
 
 <body>
@@ -71,10 +26,12 @@
                                 <p class="title">Recording unit</p>
                                 <p class="subtitle">Control the recording unit.</p>
                                 <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded is-medium">
+                                    <button class="button is-info is-rounded is-medium"
+                                        onclick="callRecordingUnit('/start_rec')">
                                         Start recording
                                     </button>
-                                    <button class="button is-info is-rounded is-medium">
+                                    <button class=" button is-info is-rounded is-medium"
+                                        onclick="callRecordingUnit('/stop_rec')">
                                         Stop recording
                                     </button>
                                 </div>
@@ -180,20 +137,20 @@
 
                                 <div class="tabs is-toggle-xxxx is-toggle-rounded-xxx is-medium">
                                     <ul>
-                                        <li id="div_settings_basic_tab_id" class="is-active"
-                                            onclick="hide_show_settings_basic('basic');">
+                                        <li id="tab_settings_basic_id" class="is-active"
+                                            onclick="hide_show_settings_tabs('basic');">
                                             <a>
                                                 <span><strong>Basic</strong></span>
                                             </a>
                                         </li>
-                                        <li id="div_settings_more_tab_id" class=""
-                                            onclick="hide_show_settings_basic('more');">
+                                        <li id="tab_settings_more_id" class=""
+                                            onclick="hide_show_settings_tabs('more');">
                                             <a>
                                                 <span><strong>More</strong></span>
                                             </a>
                                         </li>
-                                        <li id="div_settings_scheduler_tab_id" class=""
-                                            onclick="hide_show_settings_basic('scheduler');">
+                                        <li id="tab_settings_scheduler_id" class=""
+                                            onclick="hide_show_settings_tabs('scheduler');">
                                             <a>
                                                 <span><strong>Scheduler</strong></span>
                                             </a>

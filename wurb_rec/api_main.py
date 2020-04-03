@@ -18,7 +18,7 @@ except:
 
 app = fastapi.FastAPI(
     title="CloudedBats WURB 2020",
-    description="CloudedBats WURB 2020 - with FastAPI, asyncio, Docker, etc.",
+    description="CloudedBats WURB 2020 - with FastAPI, Python asyncio, etc.",
     version="0.1.0",
 )
 
@@ -58,7 +58,8 @@ async def webpage(request: fastapi.Request):
     try:
         status_dict = await wurb_rec_manager.get_status_dict()
         return templates.TemplateResponse(
-            "wurb_miniweb.html",
+            # "wurb_miniweb.html",
+            "wurb_rec_web.html",
             {
                 "request": request,
                 "rec_status": status_dict.get("rec_status", ""),
