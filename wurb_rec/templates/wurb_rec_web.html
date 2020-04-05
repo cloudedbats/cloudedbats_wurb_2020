@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CloudedBats WURB 2020</title>
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+    <meta name="viewport" content="">
+    <title>CloudedBats - Recorder for bats</title>
     <!-- Bulma -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
@@ -21,30 +22,22 @@
                     <div class="tile">
                         <div class="tile is-parent is-vertical">
 
-                            <!-- Tile: Recording unit -->
+                            <!-- Tile: Ultrasonic recorder -->
                             <article class="tile is-child box has-background-grey-lighter">
-                                <p class="title">Recording unit</p>
-                                <p class="subtitle">Control the recording unit.</p>
+                                <p class="title">Ultrasonic recorder</p>
+                                <p class="subtitle">Recording unit for bats.</p>
                                 <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded is-medium"
+                                    <button id="rec_start_button_id" class="button is-info is-rounded is-medium"
                                         onclick="callRecordingUnit('/start_rec')">
                                         Start recording
                                     </button>
-                                    <button class=" button is-info is-rounded is-medium"
+                                    <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
                                         onclick="callRecordingUnit('/stop_rec')">
                                         Stop recording
                                     </button>
                                 </div>
-                                <div class="buttons is-centered">
-                                    <div class="control">
-                                        <label class="checkbox subtitle">
-                                            <input type="checkbox">
-                                            Use scheduler
-                                        </label>
-                                    </div>
-                                </div>
                                 <div class="content">
-                                    <p class="subtitle">
+                                    <p class="subtitle is-centered">
                                         Status: <strong>
                                             <span id="rec_status_id">Not started</span>
                                         </strong>
@@ -54,14 +47,44 @@
                                             <span id="rec_info_id">Not connected to the recording unit.</span>
                                     </p>
                                 </div>
-                                <div class="buttons is-centered">
+
+                                <!-- <div class="content" style="height: 10em; overflow: auto;"> -->
+                                <div class="table-container" style="height: 10em; overflow: auto;">
+                                    <table class="table is-fullwidth is-bordered is-striped has-background-white-ter">
+                                        <tr>
+                                            <td>23:45:47 Recording stopped.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>23:38:02 Sound detected.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>23:34:07 Recording started.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>23:32:32 GPS position received.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>23:30:22 Hypercorn is an ASGI web server based on the sans-io hyper,
+                                                h11, h2, and wsproto libraries and inspired by Gunicorn. Hypercorn
+                                                supports HTTP/1, HTTP/2, WebSockets (over HTTP/1 and HTTP/2), ASGI/2,
+                                                and ASGI/3 specifications. Hypercorn can utilise asyncio, uvloop, or
+                                                trio worker types.
+                                                Hypercorn was initially part of Quart before being separated out into a
+                                                standalone ASGI server. Hypercorn forked from version 0.5.0 of Quart.
+                                                Hypercorn is developed on GitLab. You are very welcome to open issues or
+                                                propose merge requests.</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <!-- <div class="buttons is-centered">
                                     <button class="button is-info is-rounded">
                                         Shutdown unit
                                     </button>
                                     <button class="button is-info is-rounded">
                                         Restart unit
                                     </button>
-                                </div>
+                                </div> -->
                             </article>
 
                             <!-- Tile: Geographic position -->
@@ -78,6 +101,7 @@
                                             <div class="control">
                                                 <div class="select">
                                                     <select>
+                                                        <option>Manually entered</option>
                                                         <option>Use default position</option>
                                                         <option>From mobile unit</option>
                                                         <option>From USB-GPS on rec. unit</option>
@@ -89,12 +113,13 @@
                                 </div>
                                 <div class="field is-horizontal">
                                     <div class="field-label is-normal">
-                                        <label class="label">Latitude</label>
+                                        <label class="label">Latitude&nbsp;&nbsp&nbsp;</label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" placeholder="15.6789">
+                                                <input class="input" style="width: 33%;" type="text" value="15.6789"
+                                                    placeholder="15.6789">
                                             </div>
                                         </div>
                                     </div>
@@ -106,17 +131,10 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" placeholder="12.3456">
+                                                <input class="input" style="width: 33%;" type="text" value="12.3456"
+                                                    placeholder="12.3456">
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="buttons is-centered">
-                                    <div class="control">
-                                        <label class="checkbox">
-                                            <input type="checkbox">
-                                            Update automatically
-                                        </label>
                                     </div>
                                 </div>
                                 <div class="buttons is-centered">
@@ -133,9 +151,7 @@
                                 <!-- Content. -->
                                 <p class="title">Settings</p>
                                 <p class="subtitle">Settings used by the recording unit.</p>
-
-
-                                <div class="tabs is-toggle-xxxx is-toggle-rounded-xxx is-medium">
+                                <div class="tabs is-fullwidth is-medium">
                                     <ul>
                                         <li id="tab_settings_basic_id" class="is-active"
                                             onclick="hide_show_settings_tabs('basic');">
@@ -158,73 +174,68 @@
                                     </ul>
                                 </div>
 
-
                                 <!-- Settings: Basic. -->
-                                <div id="div_settings_basic_id" class="">
+                                <div id="div_settings_basic_id">
+                                    <!-- style="visibility:hidden; overflow:hidden; height:0; width:0;" class=""> -->
                                     <div class="field is-horizontal">
                                         <div class="field-label is-normal">
-                                            <label class="label">File&nbsp;prefix</label>
+                                            <label class="label">Rec.&nbsp;mode</label>
                                         </div>
                                         <div class="field-body">
                                             <div class="field is-narrow">
                                                 <div class="control">
-                                                    <input class="input" placeholder="wurb_">
+                                                    <div class="select">
+                                                        <select>
+                                                            <option>Manually controlled</option>
+                                                            <option>Recording on at startup</option>
+                                                            <option>Based on scheduler</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Low&nbsp;limit&nbsp;(kHz)</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="15.0">
-                                                </div>
-                                                <p class="help is-info">
-                                                    Lower detection limit for "Simple" detection.
-                                                </p>
+                                    <div id="div_settings_basic_id" class="">
+                                        <div class="field">
+                                            <label class="label">File&nbsp;name&nbsp;prefix</label>
+                                            <div class="control">
+                                                <input class="input" placeholder="wurb" value="wurb">
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Sensitivity&nbsp;(dBFS)</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="-50">
-                                                </div>
-                                                <p class="help is-info">
-                                                    The value -60 gives more files and -40 less.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
+                                        <div class="field">
                                             <label class="label">Default&nbsp;latitude</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="15.6789">
-                                                </div>
+                                            <div class="control">
+                                                <input class="input" style="width: 33%;" placeholder="15.6789"
+                                                    value="15.6789">
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
+                                        <div class="field">
                                             <label class="label">Default&nbsp;longitude</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="12.3456">
-                                                </div>
+                                            <div class="control">
+                                                <input class="input" style="width: 33%;" placeholder="12.3456"
+                                                    value="12.3456">
                                             </div>
+                                        </div>
+                                        <div class="field">
+                                            <label
+                                                class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
+                                            <div class="control">
+                                                <input class="input" style="width: 33%;" placeholder="15.0"
+                                                    value="15.0">
+                                            </div>
+                                            <p class="help is-info">
+                                                Lower detection limit.
+                                            </p>
+                                        </div>
+                                        <div class="field">
+                                            <label
+                                                class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
+                                            <div class="control">
+                                                <input class="input" style="width: 33%;" placeholder="-50" value="-50">
+                                            </div>
+                                            <p class="help is-info">
+                                                The value -60 gives more files and -40 less.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -232,33 +243,22 @@
                                 <!-- Settings: more. -->
                                 <div id="div_settings_more_id"
                                     style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">File&nbsp;path</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="/media/usb0/wurb_rec">
-                                                </div>
-                                            </div>
+                                    <div class="field">
+                                        <label class="label">Sound&nbsp;files&nbsp;path</label>
+                                        <div class="control">
+                                            <input class="input" placeholder="/media/usb0/wurb_rec"
+                                                value="/media/usb0/wurb_rec">
                                         </div>
                                     </div>
 
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Sound&nbsp;detection</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <div class="select">
-                                                        <select>
-                                                            <option>None (always on)</option>
-                                                            <option>Simple</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                    <div class="field">
+                                        <label class="label">Sound&nbsp;detection&nbsp;algorithm</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select>
+                                                    <option>None (recording always on)</option>
+                                                    <option>Simple (single trigging event)</option>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
@@ -267,104 +267,85 @@
                                 <!-- Settings: Scheduler. -->
                                 <div id="div_settings_scheduler_id"
                                     style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Recording&nbsp;on&nbsp;at&nbsp;</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <div class="select">
-                                                        <select>
-                                                            <option>Sunset</option>
-                                                            <option>Dawn</option>
-                                                            <option>Dusk</option>
-                                                            <option>Sunrise</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                    <div class="field">
+                                        <label class="label">Start&nbsp;recording&nbsp;at</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select>
+                                                    <option>Sunset</option>
+                                                    <option>Dusk</option>
+                                                    <option>Dawn</option>
+                                                    <option>Sunrise</option>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Adjust&nbsp;(minutes)</label>
+                                    <div class="field">
+                                        <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
+                                        <div class="control">
+                                            <input class="input" style="width: 33%;" type="text" placeholder="-15"
+                                                value="-15">
                                         </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="-15">
-                                                </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Stop&nbsp;recording&nbsp;at</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select>
+                                                    <option>Sunset</option>
+                                                    <option>Dusk</option>
+                                                    <option>Dawn</option>
+                                                    <option>Sunrise</option>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Recording&nbsp;off&nbsp;at</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <div class="select">
-                                                        <select>
-                                                            <option>Sunset</option>
-                                                            <option>Dawn</option>
-                                                            <option>Dusk</option>
-                                                            <option>Sunrise</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Adjust&nbsp;(minutes)</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="-15">
-                                                </div>
-                                            </div>
+                                    <div class="field">
+                                        <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
+                                        <div class="control">
+                                            <input class="input" style="width: 33%;" type="text" placeholder="15"
+                                                value="15">
                                         </div>
                                     </div>
                                 </div>
+
+
+
                                 <hr>
-                                <div class="">
-
-                                    <nav class="level">
-                                        <div class="level-left">
-                                            <p class="subtitle">Manage stored settings</p>
-                                        </div>
-                                        <div class="level-right">
-
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <div class="select">
-                                                        <select>
-                                                            <option>Last used settings </option>
-                                                            <option>Default settings</option>
-                                                            <option>user-settings-1</option>
-                                                            <option>user-settings-2</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                <div class="field is-horizontal">
+                                    <!-- <div class="field-label is-normal">
+                                        <label class="label">Select</label>
+                                    </div> -->
+                                    <div class="field-body">
+                                        <div class="control">
+                                            <div class="select">
+                                                <select>
+                                                    <option>Default settings</option>
+                                                    <option>user-settings-1</option>
+                                                    <option>user-settings-2</option>
+                                                    <option>user-settings-3</option>
+                                                    <option>user-settings-4</option>
+                                                    <option>user-settings-5</option>
+                                                </select>
                                             </div>
+                                            <button class="button is-info is-rounded">
+                                                Save as...
+                                            </button>
                                         </div>
-                                    </nav>
-                                    <div class="buttons is-centered">
-                                        <button class="button is-info is-rounded">
-                                            Save
-                                        </button>
-                                        <button class="button is-info is-rounded">
+                                    </div>
+                                </div>
+                                <!-- <div class="buttons is-centered">
+                                    <button class="button is-info is-rounded">
+                                        Save
+                                    </button>
+                                    <button class="button is-info is-rounded">
                                             Save as...
                                         </button>
                                         <button class="button is-info is-rounded">
                                             Delete
                                         </button>
-                                    </div>
-                                </div>
+                                </div> -->
+
                             </article>
                         </div>
                     </div>
@@ -373,57 +354,64 @@
 
                         <!-- Tile: Recorded files -->
                         <article class="tile is-child box has-background-grey-lighter">
-                            <nav class="level">
-                                <div class="level-left">
-                                    <p class="title"> Recorded files</p>
+                            <p class="title"> Recorded files</p>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-normal">
+                                    <label class="label">Filename&nbsp;filter</label>
                                 </div>
-                                <div class="level-right">
-
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Filename&nbsp;filter</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <input class="input" placeholder="20200601T02">
-                                                </div>
-                                            </div>
+                                <div class="field-body">
+                                    <div class="field is-narrow">
+                                        <div class="control">
+                                            <input class="input" placeholder="20200601T02">
                                         </div>
                                     </div>
                                 </div>
-                            </nav>
+                            </div>
 
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th><abbr title="Position">Row</abbr></th>
-                                        <th>Sound file</th>
-                                        <th>Download</th>
-                                        <th>Delete</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <th>1</th>
-                                        <td>WURB2_20170802T024532+0200_N43.3201W2.0054_FS384.wav</td>
-                                        <td><a ref="">download</a></td>
-                                        <td><a ref="">delete</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th>2</th>
-                                        <td>WURB2_20170802T025117+0200_N43.3201W2.0054_FS384.wav</td>
-                                        <td><a ref="">download</a></td>
-                                        <td><a ref="">delete</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th>3</th>
-                                        <td>WURB2_20170802T030204+0200_N43.3201W2.0054_FS384.wav</td>
-                                        <td><a ref="">download</a></td>
-                                        <td><a ref="">delete</a></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div style="height: 15em; overflow: auto;">
+                                <table class="table is-striped is-fullwidth">
+                                    <thead>
+                                        <tr>
+                                            <th><abbr title="Position">Row</abbr></th>
+                                            <th>Sound file</th>
+                                            <th>Download</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>1</th>
+                                            <td>WURB2_20170802T024532+0200_N43.3201W2.0054_FS384.wav</td>
+                                            <td><a ref="">download</a></td>
+                                            <td><a ref="">delete</a></td>
+                                        </tr>
+                                        <tr>
+                                            <th>2</th>
+                                            <td>WURB2_20170802T025117+0200_N43.3201W2.0054_FS384.wav</td>
+                                            <td><a ref="">download</a></td>
+                                            <td><a ref="">delete</a></td>
+                                        </tr>
+                                        <tr>
+                                            <th>3</th>
+                                            <td>WURB2_20170802T030204+0200_N43.3201W2.0054_FS384.wav</td>
+                                            <td><a ref="">download</a></td>
+                                            <td><a ref="">delete</a></td>
+                                        </tr>
+                                        <tr>
+                                            <th>4</th>
+                                            <td>WURB2_20170802T0301712+0200_N43.3201W2.0054_FS384.wav</td>
+                                            <td><a ref="">download</a></td>
+                                            <td><a ref="">delete</a></td>
+                                        </tr>
+                                        <tr>
+                                            <th>5</th>
+                                            <td>WURB2_20170802T032717+0200_N43.3201W2.0054_FS384.wav</td>
+                                            <td><a ref="">download</a></td>
+                                            <td><a ref="">delete</a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </article>
 
                         <!-- Tile: About -->
@@ -441,7 +429,7 @@
                                         cloudedbats_wurb_2020</a>.
                                 </p>
                                 <p>
-                                    Developed by: Arnold Andreasson, Sweden.<br />
+                                    Developed by: Arnold&nbsp;Andreasson,&nbsp;Sweden.<br />
                                     Contact and feedback: info@cloudedbats.org
                                 </p>
                             </div>

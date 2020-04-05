@@ -9,6 +9,7 @@ import fastapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
+# import hypercorn
 
 # CloudedBats.
 try:
@@ -28,6 +29,9 @@ templates = Jinja2Templates(directory="wurb_rec/templates")
 
 # CloudedBats.
 try:
+
+
+    
     wurb_rec_manager = WurbRecManager()
 except Exception as e:
     print("EXCEPTION: import: ", e)
@@ -138,8 +142,13 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
 
 if __name__ == "__main__":
 
-    uvicorn.run(app, host="0.0.0.0", port=19594, log_level="info")
-    # uvicorn.run(app, host="0.0.0.0", port=19594, log_level="debug")
-
+    # hypercorn.run(app, bind="0.0.0.0:19594", log_level="info")
     # Or from the command line:
-    # > uvicorn wurb_rec.api_main:app --reload --port 19594 --log-level info
+    # > hypercorn wurb_rec.api_main:app --bind 0.0.0.0:19594 --log-level debug &
+
+    # uvicorn.run(app, host="0.0.0.0", port=19594, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=19594, log_level="debug")
+    # Or from the command line:
+    # > uvicorn wurb_rec.api_main:app --reload --host="0.0.0.0" --port 19594 --log-level info
+
+

@@ -3,6 +3,9 @@ window.onload = function () {
   // Define global variables.
 
   // Recording unit tile.
+  
+  //rec_start_button_id
+  //rec_stop_button_id
   rec_status_id = document.getElementById("rec_status_id");
   rec_info_id = document.getElementById("rec_info_id");
 
@@ -19,6 +22,11 @@ window.onload = function () {
   // Recorded files tile.
 
 
+  // Start websocket.
+  var ws_url = (window.location.protocol === "https:") ? "wss://" : "ws://"
+  ws_url += window.location.host // Note: Host includes port.
+  ws_url += "/ws";
+  startWebsocket(ws_url);
 }
 
 // Utils.
@@ -69,10 +77,9 @@ async function callRecordingUnit(action) {
     console.log(err);
   }
 }
-startWs();
-
-function startWs() {
-  var ws = new WebSocket("ws://localhost:19594/ws");
+function startWebsocket(ws_url) {
+  // var ws = new WebSocket("ws://localhost:19594/ws");
+  var ws = new WebSocket(ws_url);
   ws.onmessage = function (event) {
     var data_json = JSON.parse(event.data);
     document.getElementById("rec_info_id").innerHTML = data_json.device_name;
@@ -80,8 +87,7 @@ function startWs() {
     document.getElementById("rec_status_id").innerHTML = data_json.rec_status;
   };
   ws.onclose = function () {
-    // Try to reconnect in 5 seconds
-    // ws = null;
-    setTimeout(function () { startWs() }, 5000);
+    // Try to reconnect each 5th second.
+    setTimeout(function () { startWebsocket(ws_url) }, 5000);
   };
 }
