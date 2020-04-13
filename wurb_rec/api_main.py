@@ -37,6 +37,7 @@ async def startup_event():
     """ """
     try:
         print("DEBUG: Called: startup.")
+        global wurb_rec_manager
         await wurb_rec_manager.startup()
     except Exception as e:
         print("EXCEPTION: Called: startup: ", e)
@@ -47,6 +48,7 @@ async def shutdown_event():
     """ """
     try:
         print("DEBUG: Called: shutdown.")
+        global wurb_rec_manager
         await wurb_rec_manager.shutdown()
     except Exception as e:
         print("EXCEPTION: Called: shutdown: ", e)
@@ -55,6 +57,7 @@ async def shutdown_event():
 @app.get("/")
 async def webpage(request: fastapi.Request):
     try:
+        global wurb_rec_manager
         status_dict = await wurb_rec_manager.get_status_dict()
         return templates.TemplateResponse(
             # "wurb_miniweb.html",
@@ -74,6 +77,7 @@ async def webpage(request: fastapi.Request):
 async def start_recording():
     try:
         print("DEBUG: Called: start_recording.")
+        global wurb_rec_manager
         await wurb_rec_manager.start_rec()
     except Exception as e:
         print("EXCEPTION: Called: start_recording: ", e)
@@ -83,6 +87,7 @@ async def start_recording():
 async def stop_recording():
     try:
         print("DEBUG: Called: stop_recording.")
+        global wurb_rec_manager
         await wurb_rec_manager.stop_rec()
     except Exception as e:
         print("EXCEPTION: Called: stop_recording: ", e)
@@ -92,6 +97,7 @@ async def stop_recording():
 async def get_status():
     try:
         print("DEBUG: Called: get_status.")
+        global wurb_rec_manager
         status_dict = await wurb_rec_manager.get_status_dict()
         return {
             "rec_status": status_dict.get("rec_status", ""),
@@ -106,6 +112,7 @@ async def get_status():
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
         print("DEBUG: Called:  websocket_endpoint.")
+        global wurb_rec_manager
         await websocket.accept()
         while True:
             status_dict = await wurb_rec_manager.get_status_dict()
@@ -117,10 +124,14 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 }
             )
             # Wait for next event to happen.
+
+            timer_notification = asyncio.sleep(1)
+
             rec_manager_notification = await wurb_rec_manager.get_notification_event()
             # device_notification = ultrasound_devices.get_notification_event()
             # rec_notification = recorder.get_notification_event()
             events = [
+                timer_notification,
                 rec_manager_notification.wait(),
                 # device_notification.wait(),
                 # rec_notification.wait(),

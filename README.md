@@ -153,7 +153,7 @@ Install software:
     sudo nano /etc/rc.local 
 
     # Add this before the "exit" row: 
-    sudo -u pi /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
+    sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
 
 And finally restart the detector:
 
