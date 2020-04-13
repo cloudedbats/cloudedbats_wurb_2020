@@ -37,7 +37,7 @@ Notes from a developers perspective:
 
 Note: For some strange reason M500-384 has problems if connected directly to a 
 Raspberry Pi 4 at startup. Workarounds are to use an extra USB 2.0 Hub, or 
-attach the mic. after startup.
+attach the M500-384 microphone after startup.
 
 Optional hardware:
 
@@ -45,7 +45,7 @@ Optional hardware:
 - GPS USB dongle. (Support for this not implemented yet.)
 - Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
 missing features: On/off button, real time clock, possibility to use other 
-power sources than 5V and scripting capability for turning the unit on/off 
+power sources than 5V, and scripting capability for turning the unit on/off 
 to save battery during daytime. 
 http://www.uugear.com/product/witty-pi-3-realtime-clock-and-power-management-for-raspberry-pi/
 
@@ -63,7 +63,7 @@ to connect to the Raspberry Pi via ssh.
 Insert the SD card into you Raspberry Pi, connect an Ethernet 
 cable and start it.
 
-### RPi setup:
+### Raspberry Pi setup:
 
 Connect to the Raspberry Pi from a computer over ssh. 
 The address "raspberrypi.local" can be used if your computer supports mDNS. 
@@ -82,12 +82,13 @@ Make some configurations:
 
     sudo raspi-config
 
-For example:
+For example, if you live in Sweden:
 
-- WiFi-country to SE.
-- Host name to wurb, 
-- Password to chiroptera
-- Etc.
+- Password: chiroptera
+- Network options - Hostname: wurb 
+- Localisation Options - Timezone: Europe - Stockholm
+- Localisation Options - WiFi-country: SE
+- Advanced Options - Expand Filesystem.
 
 Reboot and reconnect to:
 
@@ -120,12 +121,24 @@ Change to:
 - Password: chiroptera
 - Country Code: SE
 
+About Internet connection:
+
+When running the detector as a standalone unit and the Ethernet cable is not connected to 
+the Raspberry Pi, then Internet is not available. 
+That's ok if you only want to control the detector. If you have to, for example, 
+upgrade the Raspberry Pi, then you must connect an Ethernet cable to it to reach Internet.
+For advanced users there are a wide range of opportunities to set up networks with 
+multiple collaborating Raspberry Pi units.
+
+
 ### CloudedBats software
 
 Check that the Python version is 3.7 or later. If not you 
-have to download and install a new version.
+have to download and install a new version:
 
     python3 --version
+
+Install software:
 
     sudo apt install python3-venv
     sudo apt install libportaudio2
@@ -140,14 +153,20 @@ have to download and install a new version.
     sudo nano /etc/rc.local 
 
     # Add this before the "exit" row: 
+    cd /home/pi/cloudedbats_wurb_2020
     sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/uvicorn wurb_rec.api_main:app --host 0.0.0.0 --port 8000 &
 
     # For test:
     # sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/uvicorn --workers 1 --loop asyncio wurb_rec.api_main:app --host 0.0.0.0 --port 8000 &
 
+And finally restart the detector:
+
     sudo reboot
 
+
 ## Run the detector
+
+**Note: Again - work in progress - only a few parts have been implemented so far.**
 
 - Start the Raspberry Pi with an ultrasonic microphone attached.
 - Connect a computer or mobile phone to the WiFi network called "wifi4bats".
@@ -158,7 +177,7 @@ have to download and install a new version.
 - Go to the WiFi administration page at http://10.3.141.1
 - Select "System" and press "Shutdown" to turn off the detector.
 
-If files ar stored on the SD card then they can be downloaded by 
+If files are stored on the SD card then they can be downloaded by 
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
 
