@@ -1,5 +1,6 @@
 # Python.
 venv
+.venv
 __pycache__
 # MacOS.
 .DS_Store

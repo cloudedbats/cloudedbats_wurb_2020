@@ -13,15 +13,8 @@ import os
 import wave
 
 # CloudedBats.
-try:
-    from wurb_rec.sound_stream_manager import SoundStreamManager
-except:
-    from sound_stream_manager import SoundStreamManager
-try:
-    from wurb_rec.wurb_sound_detector import SoundDetector
-except:
-    from wurb_sound_detector import SoundDetector
-
+from wurb_rec.sound_stream_manager import SoundStreamManager
+from wurb_rec.wurb_sound_detector import SoundDetector
 
 class WurbRecManager(object):
     """ """

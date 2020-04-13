@@ -8,14 +8,9 @@ import asyncio
 import fastapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import uvicorn
-# import hypercorn
 
 # CloudedBats.
-try:
-    from wurb_rec.wurb_recorder import WurbRecManager
-except:
-    from wurb_recorder import WurbRecManager
+from wurb_rec.wurb_recorder import WurbRecManager
 
 app = fastapi.FastAPI(
     title="CloudedBats WURB 2020",
@@ -28,13 +23,13 @@ app.mount("/static", StaticFiles(directory="wurb_rec/static"), name="static")
 templates = Jinja2Templates(directory="wurb_rec/templates")
 
 # CloudedBats.
-try:
 
+wurb_rec_manager = None
 
-    
-    wurb_rec_manager = WurbRecManager()
-except Exception as e:
-    print("EXCEPTION: import: ", e)
+# try:
+#     wurb_rec_manager = WurbRecManager()
+# except Exception as e:
+#     print("EXCEPTION: import: ", e)
 
 
 @app.on_event("startup")
@@ -139,16 +134,4 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
 # @app.get("/items/{item_id}")
 # async def read_item(item_id: int, q: str = None, q2: int = None):
 #    return {"item_id": item_id, "q": q, "q2": q2}
-
-if __name__ == "__main__":
-
-    # hypercorn.run(app, bind="0.0.0.0:19594", log_level="info")
-    # Or from the command line:
-    # > hypercorn wurb_rec.api_main:app --bind 0.0.0.0:19594 --log-level debug &
-
-    # uvicorn.run(app, host="0.0.0.0", port=19594, log_level="info")
-    uvicorn.run(app, host="0.0.0.0", port=19594, log_level="debug")
-    # Or from the command line:
-    # > uvicorn wurb_rec.api_main:app --reload --host="0.0.0.0" --port 19594 --log-level info
-
 

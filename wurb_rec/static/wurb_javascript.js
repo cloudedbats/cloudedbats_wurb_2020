@@ -78,7 +78,7 @@ async function callRecordingUnit(action) {
   }
 }
 function startWebsocket(ws_url) {
-  // var ws = new WebSocket("ws://localhost:19594/ws");
+  // var ws = new WebSocket("ws://localhost:8000/ws");
   var ws = new WebSocket(ws_url);
   ws.onmessage = function (event) {
     var data_json = JSON.parse(event.data);
@@ -87,7 +87,8 @@ function startWebsocket(ws_url) {
     document.getElementById("rec_status_id").innerHTML = data_json.rec_status;
   };
   ws.onclose = function () {
-    // Try to reconnect each 5th second.
+    // Try to reconnect in 5th seconds.
+    ws = null;
     setTimeout(function () { startWebsocket(ws_url) }, 5000);
   };
 }
