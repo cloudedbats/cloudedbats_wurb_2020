@@ -153,11 +153,7 @@ Install software:
     sudo nano /etc/rc.local 
 
     # Add this before the "exit" row: 
-    cd /home/pi/cloudedbats_wurb_2020
-    sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/uvicorn wurb_rec.api_main:app --host 0.0.0.0 --port 8000 &
-
-    # For test:
-    # sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/uvicorn --workers 1 --loop asyncio wurb_rec.api_main:app --host 0.0.0.0 --port 8000 &
+    sudo -u pi /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
 
 And finally restart the detector:
 
