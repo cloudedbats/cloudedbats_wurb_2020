@@ -6,11 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CloudedBats - Recorder for bats</title>
     <!-- Bulma -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
-    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
+    <!-- <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
+    <!-- Bulma -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
-    <link href="{{ url_for('static', path='/wurb_styles.css') }}" rel="stylesheet">
-    <script type="text/javascript" src="../static/wurb_javascript.js"></script>
+    <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
+
+
+    <script type="text/javascript" src="../static/js/wurb_javascript.js"></script>
+
+
 </head>
 
 <body>
@@ -36,14 +42,17 @@
                                     </button>
                                 </div>
                                 <div class="content">
-                                    <p class="subtitle is-centered">
+                                    <p class="subtitle">
                                         Status: <strong>
-                                            <span id="rec_status_id">Not started</span>
+                                            <span id="rec_status_id">Waiting...</span>
                                         </strong>
                                     </p>
                                     <p>
-                                        <span id=rec_message_id>
-                                            <span id="rec_info_id">Not connected to the recording unit.</span>
+                                        <!-- Microphone: -->
+                                        <span id="rec_info_id"></span>
+                                        <br>
+                                        Detector time:
+                                        <span id="rec_detector_time_id"></span>
                                     </p>
                                 </div>
 
@@ -51,27 +60,16 @@
                                 <div class="table-container" style="height: 10em; overflow: auto;">
                                     <table class="table is-fullwidth is-bordered is-striped has-background-white-ter">
                                         <tr>
-                                            <td>23:45:47 Recording stopped.</td>
+                                            <td>23:45:47 TEST-Recording stopped.</td>
                                         </tr>
                                         <tr>
-                                            <td>23:38:02 Sound detected.</td>
+                                            <td>23:38:02 TEST-Sound detected.</td>
                                         </tr>
                                         <tr>
-                                            <td>23:34:07 Recording started.</td>
+                                            <td>23:34:07 TEST-Recording started.</td>
                                         </tr>
                                         <tr>
-                                            <td>23:32:32 GPS position received.</td>
-                                        </tr>
-                                        <tr>
-                                            <td>23:30:22 Hypercorn is an ASGI web server based on the sans-io hyper,
-                                                h11, h2, and wsproto libraries and inspired by Gunicorn. Hypercorn
-                                                supports HTTP/1, HTTP/2, WebSockets (over HTTP/1 and HTTP/2), ASGI/2,
-                                                and ASGI/3 specifications. Hypercorn can utilise asyncio, uvloop, or
-                                                trio worker types.
-                                                Hypercorn was initially part of Quart before being separated out into a
-                                                standalone ASGI server. Hypercorn forked from version 0.5.0 of Quart.
-                                                Hypercorn is developed on GitLab. You are very welcome to open issues or
-                                                propose merge requests.</td>
+                                            <td>23:32:32 TEST-GPS position received.</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -100,8 +98,8 @@
                                             <div class="control">
                                                 <div class="select">
                                                     <select>
-                                                        <option>Manually entered</option>
                                                         <option>Use default position</option>
+                                                        <option>Manually entered</option>
                                                         <option>From mobile unit</option>
                                                         <option>From USB-GPS on rec. unit</option>
                                                     </select>
@@ -117,7 +115,8 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" style="width: 50%;" type="text" value="15.6789"
+                                                <input class="input" style="width: 50%;" type="number"
+                                                    step="0.0001" min="-90.0" max="90.0"
                                                     placeholder="15.6789">
                                             </div>
                                         </div>
@@ -130,8 +129,9 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" style="width: 50%;" type="text" value="12.3456"
-                                                    placeholder="12.3456">
+                                                <input class="input" style="width: 50%;" type="number"
+                                                step="0.0001" min="-180.0" max="180.0"
+                                                placeholder="12.3456">
                                             </div>
                                         </div>
                                     </div>
