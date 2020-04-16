@@ -16,6 +16,7 @@ import wave
 from wurb_rec.sound_stream_manager import SoundStreamManager
 from wurb_rec.wurb_sound_detector import SoundDetector
 
+
 class WurbRecManager(object):
     """ """
 
@@ -36,7 +37,9 @@ class WurbRecManager(object):
             self.ultrasound_devices = UltrasoundDevices()
             self.wurb_recorder = WurbRecorder()
             self.update_status_task = asyncio.create_task(self.update_status())
-            await self.ultrasound_devices.start_checking_devices()
+
+            # await self.ultrasound_devices.start_checking_devices()
+
         except Exception as e:
             print("Exception: ", e)
 
@@ -45,7 +48,9 @@ class WurbRecManager(object):
         try:
             if self.update_status_task:
                 self.update_status_task.cancel()
-            await self.ultrasound_devices.stop_checking_devices()
+
+            # await self.ultrasound_devices.stop_checking_devices()
+
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
         except Exception as e:
             print("Exception: ", e)
@@ -53,28 +58,33 @@ class WurbRecManager(object):
     async def start_rec(self):
         """ """
         try:
-            await self.ultrasound_devices.stop_checking_devices()
+            # await self.ultrasound_devices.stop_checking_devices()
+            await self.ultrasound_devices.check_devices()
 
-            (
-                device_name,
-                sampling_freq_hz,
-            ) = await self.ultrasound_devices.get_connected_device()
+            device_name = self.ultrasound_devices.device_name
+            sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 180000:
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
             else:
                 await self.wurb_recorder.set_rec_status(
-                    "Not started, no valid microphone available."
+                    "Failed: No valid microphone available."
                 )
-                await self.ultrasound_devices.start_checking_devices()
+
+                # await self.ultrasound_devices.start_checking_devices()
+
         except Exception as e:
             print("Exception: ", e)
 
     async def stop_rec(self):
         """ """
         try:
+            await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
-            await self.ultrasound_devices.start_checking_devices()
+            await self.ultrasound_devices.reset_devices()
+
+            # await self.ultrasound_devices.start_checking_devices()
+
         except Exception as e:
             print("Exception: ", e)
 
@@ -135,25 +145,52 @@ class UltrasoundDevices(object):
         # - Pettersson: M500-384, u384, u256.
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.
         self.name_part_list = ["Pettersson", "UltraMic"]
-        self.device_name = "-"
+        self.device_name = ""
         self.sampling_freq_hz = 0
-        self.check_interval_s = 1.0
+        self.check_interval_s = 5.0
         self.notification_event = None
-        self.device_checker_task = None
+        # self.device_checker_task = None
 
-    async def start_checking_devices(self):
+    async def check_devices(self):
         """ For asyncio events. """
         try:
-            self.device_checker_task = asyncio.create_task(
-                self.check_connected_devices()
-            )
+
+            lock = asyncio.Lock()
+            async with lock:
+                # Refresh device list.
+                sounddevice._terminate()
+                sounddevice._initialize()
+                await asyncio.sleep(0.2)
+
+            await self.set_connected_device("", 0)
+
+            device_dict = None
+            device_name = ""
+            sampling_freq_hz = 0
+            for device_name_part in self.name_part_list:
+                try:
+                    device_dict = sounddevice.query_devices(device=device_name_part)
+                    if device_dict:
+                        device_name = device_dict["name"]
+                        if ":" in device_name:
+                            device_name = device_name.split(":")[
+                                0
+                            ]  # Extract name only.
+                        sampling_freq_hz = int(device_dict["default_samplerate"])
+                    break
+                except:
+                    pass
+
+            await self.set_connected_device(device_name, sampling_freq_hz)
+
         except Exception as e:
             print("Exception: ", e)
 
-    async def stop_checking_devices(self):
+    async def reset_devices(self):
         """ For asyncio events. """
         try:
-            self.device_checker_task.cancel()
+            await self.set_connected_device("", 0)
+
         except Exception as e:
             print("Exception: ", e)
 
@@ -187,52 +224,100 @@ class UltrasoundDevices(object):
         except Exception as e:
             print("Exception: ", e)
 
-    async def check_connected_devices(self):
-        """ """
-        print("DEBUG: check_connected_devices activated.")
-        try:
-            lock = asyncio.Lock()
-            while True:
-                async with lock:
-                    # Refresh device list.
-                    sounddevice._terminate()
-                    sounddevice._initialize()
+    # async def start_checking_devices(self):
+    #     """ For asyncio events. """
+    #     try:
+    #         self.device_checker_task = asyncio.create_task(
+    #             self.check_connected_devices()
+    #         )
+    #     except Exception as e:
+    #         print("Exception: ", e)
 
-                await asyncio.sleep(0.2)
+    # async def stop_checking_devices(self):
+    #     """ For asyncio events. """
+    #     try:
+    #         self.device_checker_task.cancel()
+    #     except Exception as e:
+    #         print("Exception: ", e)
 
-                device_dict = None
-                device_name = "-"
-                sampling_freq_hz = 0
-                for device_name_part in self.name_part_list:
-                    try:
-                        device_dict = sounddevice.query_devices(device=device_name_part)
-                        if device_dict:
-                            device_name = device_dict["name"]
-                            sampling_freq_hz = int(device_dict["default_samplerate"])
-                        break
-                    except:
-                        pass
-                if (self.device_name == device_name) and (
-                    self.sampling_freq_hz == sampling_freq_hz
-                ):
-                    await asyncio.sleep(self.check_interval_s)
-                else:
-                    # Make the new values public.
-                    await self.set_connected_device(device_name, sampling_freq_hz)
-        except Exception as e:
-            print("DEBUG: check_connected_devices exception: ", e)
-        finally:
-            print("DEBUG: check_connected_devices terminated.")
+    # async def get_notification_event(self):
+    #     """ """
+    #     try:
+    #         if self.notification_event == None:
+    #             self.notification_event = asyncio.Event()
+    #         return self.notification_event
+    #     except Exception as e:
+    #         print("Exception: ", e)
+
+    # async def get_connected_device(self):
+    #     """ """
+    #     try:
+    #         return self.device_name, self.sampling_freq_hz
+    #     except Exception as e:
+    #         print("Exception: ", e)
+
+    # async def set_connected_device(self, device_name, sampling_freq_hz):
+    #     """ """
+    #     try:
+    #         print("DEBUG: set_connected_device called.")
+    #         self.device_name = device_name
+    #         self.sampling_freq_hz = sampling_freq_hz
+    #         # Create a new event and release all from the old event.
+    #         old_notification_event = self.notification_event
+    #         self.notification_event = asyncio.Event()
+    #         if old_notification_event:
+    #             old_notification_event.set()
+    #     except Exception as e:
+    #         print("Exception: ", e)
+
+    # async def check_connected_devices(self):
+    #     """ """
+    #     print("DEBUG: check_connected_devices activated.")
+    #     try:
+    #         lock = asyncio.Lock()
+    #         while True:
+    #             # async with lock:
+    #             #     # Refresh device list.
+    #             #     sounddevice._terminate()
+    #             #     sounddevice._initialize()
+
+    #             # await asyncio.sleep(0.2)
+
+    #             device_dict = None
+    #             device_name = ""
+    #             sampling_freq_hz = 0
+    #             for device_name_part in self.name_part_list:
+    #                 try:
+    #                     device_dict = sounddevice.query_devices(device=device_name_part)
+    #                     if device_dict:
+    #                         device_name = device_dict["name"]
+    #                         if ":" in device_name:
+    #                             device_name = device_name.split(":")[0] # Extract name only.
+    #                         sampling_freq_hz = int(device_dict["default_samplerate"])
+    #                     break
+    #                 except:
+    #                     pass
+    #             if (self.device_name == device_name) and (
+    #                 self.sampling_freq_hz == sampling_freq_hz
+    #             ):
+    #                 await asyncio.sleep(self.check_interval_s)
+    #             else:
+    #                 # Make the new values public.
+    #                 await self.set_connected_device(device_name, sampling_freq_hz)
+    #     except Exception as e:
+    #         print("DEBUG: check_connected_devices exception: ", e)
+    #     finally:
+    #         print("DEBUG: check_connected_devices terminated.")
 
 
 class WurbRecorder(SoundStreamManager):
     """ """
 
-    def __init__(self):
+    def __init__(self, queue_max_size=120):
         """ """
-        super().__init__()
-        self.rec_status = "Not started"
-        self.device_name = "-"
+        super().__init__(queue_max_size)
+        self.rec_status = ""
+        self.device_name = ""
         self.sampling_freq_hz = 0
         self.notification_event = None
         self.rec_start_time = None
@@ -294,15 +379,17 @@ class WurbRecorder(SoundStreamManager):
                     # Adjust first buffer.
                     input_buffer_adc_time = input_buffer_adc_time + 0.121
                     self.rec_start_time = time.time() - input_buffer_adc_time
-                 # Round to half seconds.
-                buffer_dac_time = int((self.rec_start_time + input_buffer_adc_time) * 2) / 2
-                # print("DEBUG: buffer_dac_time: ", buffer_dac_time, "   ", 
+                # Round to half seconds.
+                buffer_dac_time = (
+                    int((self.rec_start_time + input_buffer_adc_time) * 2) / 2
+                )
+                # print("DEBUG: buffer_dac_time: ", buffer_dac_time, "   ",
                 #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_dac_time)))
 
                 send_dict = {
                     "status": "data",
                     "time": buffer_dac_time,
-                    "data": indata[:, 0], # Transform list of lists to list.
+                    "data": indata[:, 0],  # Transform list of lists to list.
                 }
                 # Add to queue. Should be attached to the main async loop.
                 loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
@@ -310,7 +397,7 @@ class WurbRecorder(SoundStreamManager):
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
                 loop.call_soon_threadsafe(sound_source_event.set)
-            
+
             """ End of locally defined callback. """
 
         try:
@@ -318,8 +405,12 @@ class WurbRecorder(SoundStreamManager):
                 "DEBUG: Rec started: ", self.device_name, "   ", self.sampling_freq_hz
             )
             time_start = time.time()
-            print("DEBUG: Rec start: ", time_start, "   ", 
-                time.strftime("%Y%m%dT%H%M%S%z", time.localtime(time_start)))
+            print(
+                "DEBUG: Rec start: ",
+                time_start,
+                "   ",
+                time.strftime("%Y%m%dT%H%M%S%z", time.localtime(time_start)),
+            )
 
             blocksize = int(self.sampling_freq_hz / 2)
 
@@ -351,7 +442,7 @@ class WurbRecorder(SoundStreamManager):
             Test implementation to be used as template.
         """
 
-        self.process_deque = deque() # Double ended queue. TODO: Move this.
+        self.process_deque = deque()  # Double ended queue. TODO: Move this.
         self.process_deque.clear()
 
         sound_detected = False
@@ -375,7 +466,9 @@ class WurbRecorder(SoundStreamManager):
                         else:
                             # Store in 6 sec. long list
                             new_item = {}
-                            new_item["status"] = "data-Counter-" + str(sound_detected_counter)
+                            new_item["status"] = "data-Counter-" + str(
+                                sound_detected_counter
+                            )
                             new_item["time"] = item["time"]
                             new_item["data"] = item["data"].copy()
 
@@ -388,14 +481,17 @@ class WurbRecorder(SoundStreamManager):
                                 sound_detected_counter = 0
                                 # Check for sound.
                                 sound_detected = sound_detector.check_for_sound(
-                                    (item["time"], item["data"]))
+                                    (item["time"], item["data"])
+                                )
                                 # sound_detected = True
 
                             if sound_detected == True:
                                 sound_detected_counter += 1
-                                # print("DEBUG-2: counter: ", sound_detected_counter, 
+                                # print("DEBUG-2: counter: ", sound_detected_counter,
                                 #       "   deque length: ", len(self.process_deque))
-                                if (sound_detected_counter >= 9) and (len(self.process_deque) >= 12):
+                                if (sound_detected_counter >= 9) and (
+                                    len(self.process_deque) >= 12
+                                ):
                                     sound_detected = False
                                     sound_detected_counter = 0
                                     # Send to target.
@@ -410,9 +506,9 @@ class WurbRecorder(SoundStreamManager):
 
                             await asyncio.sleep(0)
 
-                            # status = item.get('status', '') 
-                            # buffer_dac_time = item.get('time', '')  
-                            # data = item.get('data', '') 
+                            # status = item.get('status', '')
+                            # buffer_dac_time = item.get('time', '')
+                            # data = item.get('data', '')
                             # print("DEBUG: Process status:", status, " time:", buffer_dac_time, " data: ", len(data))
 
                     except asyncio.QueueFull:
@@ -455,30 +551,30 @@ class WurbRecorder(SoundStreamManager):
                         print("DEBUG-3: Flush.")
                         await self.remove_items_from_queue(self.to_target_queue)
                         if wave_file_writer:
-                                wave_file_writer.close()
+                            wave_file_writer.close()
                         pass  # TODO.
                     else:
 
-                        print("DEBUG-3: Item: ", item['status'])
+                        print("DEBUG-3: Item: ", item["status"])
 
                         if item["status"] == "new_file":
-                            # 
+                            #
                             if wave_file_writer:
                                 wave_file_writer.close()
 
                             wave_file_writer = WaveFileWriter(self)
-                        
-                        if wave_file_writer:
-                            wave_file_writer.write(item['data'])
 
-                            print("DEBUG-3 Time: ", item['time'])
-                            print("DEBUG-3 Max: ", max(item['data']))
+                        if wave_file_writer:
+                            wave_file_writer.write(item["data"])
+
+                            print("DEBUG-3 Time: ", item["time"])
+                            print("DEBUG-3 Max: ", max(item["data"]))
 
                         if item["status"] == "close_file":
                             if wave_file_writer:
                                 wave_file_writer.close()
                                 wave_file_writer = None
-                        
+
                     await asyncio.sleep(0)
 
                 except asyncio.CancelledError:
@@ -492,33 +588,34 @@ class WurbRecorder(SoundStreamManager):
             print("DEBUG: soundTargetWorker terminated.")
 
 
-class WaveFileWriter():
+class WaveFileWriter:
     """ Each file is connected to a separate object to avoid concurrency problems. """
+
     def __init__(self, sound_target_obj):
         """ """
         self._wave_file = None
         self._sound_target_obj = sound_target_obj
-        self._size_counter = 0 
-        
+        self._size_counter = 0
+
         # Create file name.
         # Default time and position.
         datetimestring = time.strftime("%Y%m%dT%H%M%S%z")
-        latlongstring = '' # Format: 'N56.78E12.34'
+        latlongstring = ""  # Format: 'N56.78E12.34'
         try:
-            if sound_target_obj._latitude >= 0: 
-                latlongstring += 'N' 
-            else: 
-                latlongstring += 'S'
+            if sound_target_obj._latitude >= 0:
+                latlongstring += "N"
+            else:
+                latlongstring += "S"
             latlongstring += str(abs(sound_target_obj._latitude))
             #
-            if sound_target_obj._longitude >= 0: 
-                latlongstring += 'E' 
-            else: 
-                latlongstring += 'W'
+            if sound_target_obj._longitude >= 0:
+                latlongstring += "E"
+            else:
+                latlongstring += "W"
             latlongstring += str(abs(sound_target_obj._longitude))
         except:
-            latlongstring = 'N00.00E00.00'
-        
+            latlongstring = "N00.00E00.00"
+
         # # Use GPS time if available.
         # datetime_local_gps = wurb_core.WurbGpsReader().get_time_local_string()
         # if datetime_local_gps:
@@ -527,38 +624,40 @@ class WaveFileWriter():
         # latlong = wurb_core.WurbGpsReader().get_latlong_string()
         # if latlong:
         #     latlongstring = latlong
-            
+
         # Filename example: "WURB1_20180420T205942+0200_N00.00E00.00_TE384.wav"
-        filename =  sound_target_obj._filename_prefix + \
-                    '_' + \
-                    datetimestring + \
-                    '_' + \
-                    latlongstring + \
-                    '_' + \
-                    sound_target_obj._filename_rec_type + \
-                    '.wav'
+        filename = (
+            sound_target_obj._filename_prefix
+            + "_"
+            + datetimestring
+            + "_"
+            + latlongstring
+            + "_"
+            + sound_target_obj._filename_rec_type
+            + ".wav"
+        )
         filenamepath = os.path.join(sound_target_obj._dir_path, filename)
         #
         if not os.path.exists(sound_target_obj._dir_path):
-            os.makedirs(sound_target_obj._dir_path) # For data, full access.
+            os.makedirs(sound_target_obj._dir_path)  # For data, full access.
         # Open wave file for writing.
-        self._wave_file = wave.open(filenamepath, 'wb')
-        self._wave_file.setnchannels(1) # 1=Mono.
-        self._wave_file.setsampwidth(2) # 2=16 bits.
+        self._wave_file = wave.open(filenamepath, "wb")
+        self._wave_file.setnchannels(1)  # 1=Mono.
+        self._wave_file.setsampwidth(2)  # 2=16 bits.
         self._wave_file.setframerate(sound_target_obj.sampling_freq_hz)
         # #
         # sound_target_obj._logger.info('Recorder: New sound file: ' + filename)
-        
+
     def write(self, buffer):
         """ """
         self._wave_file.writeframes(buffer)
-        self._size_counter += len(buffer) / 2 # Count frames.
+        self._size_counter += len(buffer) / 2  # Count frames.
 
     def close(self):
         """ """
         if self._wave_file is not None:
             self._wave_file.close()
-            self._wave_file = None 
+            self._wave_file = None
 
             # length_in_sec = self._size_counter / self._sound_target_obj.sampling_freq_hz
             # self._sound_target_obj._logger.info('Recorder: Sound file closed. Length:' + str(length_in_sec) + ' sec.')
