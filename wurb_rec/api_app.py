@@ -4,6 +4,7 @@
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
+import time
 import asyncio
 import fastapi
 from fastapi.staticfiles import StaticFiles
@@ -60,14 +61,13 @@ async def webpage(request: fastapi.Request):
         global wurb_rec_manager
         status_dict = await wurb_rec_manager.get_status_dict()
         return templates.TemplateResponse(
-            # "wurb_miniweb.html",
             "wurb_rec_web.html",
             {
                 "request": request,
                 "rec_status": status_dict.get("rec_status", ""),
                 "device_name": status_dict.get("device_name", ""),
-                "sample_rate": str(status_dict.get("sample_rate", "")),
-            },
+                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+             },
         )
     except Exception as e:
         print("EXCEPTION: Called: webpage: ", e)
@@ -102,7 +102,7 @@ async def get_status():
         return {
             "rec_status": status_dict.get("rec_status", ""),
             "device_name": status_dict.get("device_name", ""),
-            "sample_rate": str(status_dict.get("sample_rate", "")),
+            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
         }
     except Exception as e:
         print("EXCEPTION: Called: get_status: ", e)
@@ -120,7 +120,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 {
                     "rec_status": status_dict.get("rec_status", ""),
                     "device_name": status_dict.get("device_name", ""),
-                    "sample_rate": str(status_dict.get("sample_rate", "")),
+                    "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
                 }
             )
             # Wait for next event to happen.
@@ -145,4 +145,3 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
 # @app.get("/items/{item_id}")
 # async def read_item(item_id: int, q: str = None, q2: int = None):
 #    return {"item_id": item_id, "q": q, "q2": q2}
-
