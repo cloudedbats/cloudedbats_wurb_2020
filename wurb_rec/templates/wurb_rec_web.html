@@ -98,9 +98,9 @@
                                                 <div class="select">
                                                     <select>
                                                         <option>Use default position</option>
-                                                        <option>Manually entered</option>
-                                                        <option>From mobile unit</option>
-                                                        <option>From USB-GPS on rec. unit</option>
+                                                        <!-- <option>Manually entered position</option> -->
+                                                        <option>Position/time from mobile unit</option>
+                                                        <option>Use USB-GPS on recording unit</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -114,8 +114,8 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" style="width: 50%;" type="number" step="0.0001"
-                                                    min="-90.0" max="90.0" placeholder="15.6789">
+                                                <input id="latitude_id" class="input" type="number"
+                                                    step="0.0001" min="-90.0" max="90.0" placeholder="15.6789" value="15.6789">
                                             </div>
                                         </div>
                                     </div>
@@ -127,16 +127,23 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input class="input" style="width: 50%;" type="number" step="0.0001"
-                                                    min="-180.0" max="180.0" placeholder="12.3456">
+                                                <input id="longitude_id" class="input" type="number"
+                                                    step="0.0001" min="-180.0" max="180.0" placeholder="12.3456" value="12.3456">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded">
-                                        Save as default position
+                                    <button class="button is-info is-rounded" onclick="setPosition()">
+                                        Set position
                                     </button>
+                                    <button class="button is-info is-rounded" onclick="setDetectorTime()">
+                                        Set time
+                                    </button>
+                                    <!-- <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
+                                        onclick="callRecordingUnit('/stop_rec')">
+                                        Stop recording
+                                    </button> -->
                                 </div>
                             </article>
                         </div>
@@ -201,23 +208,20 @@
                                         <div class="field">
                                             <label class="label">Default&nbsp;latitude&nbsp;(DD)</label>
                                             <div class="control">
-                                                <input class="input" style="width: 33%;" placeholder="15.6789"
-                                                    value="15.6789">
+                                                <input class="input" placeholder="15.6789" value="15.6789">
                                             </div>
                                         </div>
                                         <div class="field">
                                             <label class="label">Default&nbsp;longitude&nbsp;(DD)</label>
                                             <div class="control">
-                                                <input class="input" style="width: 33%;" placeholder="12.3456"
-                                                    value="12.3456">
+                                                <input class="input" placeholder="12.3456" value="12.3456">
                                             </div>
                                         </div>
                                         <div class="field">
                                             <label
                                                 class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
                                             <div class="control">
-                                                <input class="input" style="width: 33%;" placeholder="15.0"
-                                                    value="15.0">
+                                                <input class="input" placeholder="15.0" value="15.0">
                                             </div>
                                             <p class="help is-info">
                                                 Lower detection limit.
@@ -227,7 +231,7 @@
                                             <label
                                                 class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
                                             <div class="control">
-                                                <input class="input" style="width: 33%;" placeholder="-50" value="-50">
+                                                <input class="input" placeholder="-50" value="-50">
                                             </div>
                                             <p class="help is-info">
                                                 The value -60 gives more files and -40 less.
@@ -279,8 +283,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input class="input" style="width: 33%;" type="text" placeholder="-15"
-                                                value="-15">
+                                            <input class="input" type="text" placeholder="-15" value="-15">
                                         </div>
                                     </div>
                                     <div class="field">
@@ -299,8 +302,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input class="input" style="width: 33%;" type="text" placeholder="15"
-                                                value="15">
+                                            <input class="input" type="text" placeholder="15" value="15">
                                         </div>
                                     </div>
                                 </div>

@@ -597,6 +597,28 @@ class WaveFileWriter:
         self._sound_target_obj = sound_target_obj
         self._size_counter = 0
 
+        import pathlib
+
+        target_dir_1st_path = "/mount/usb0/"
+        target_dir_2nd_path = "/user/pi/"
+        target_dir_3rd_path = "./"
+
+        if pathlib.Path(target_dir_1st_path).exists():
+            print("DEBUG: exists: target_dir_1st_path")
+        if pathlib.Path(target_dir_2nd_path).exists():
+            print("DEBUG: exists: target_dir_2nd_path")
+        if pathlib.Path(target_dir_3rd_path).exists():
+            print("DEBUG: exists: target_dir_3rd_path")
+
+        if pathlib.Path(target_dir_1st_path).is_mount():
+            print("DEBUG: is_mount: target_dir_1st_path")
+        if pathlib.Path(target_dir_2nd_path).is_mount():
+            print("DEBUG: is_mount: target_dir_2nd_path")
+        if pathlib.Path(target_dir_3rd_path).is_mount():
+            print("DEBUG: is_mount: target_dir_3rd_path")
+
+
+
         # Create file name.
         # Default time and position.
         datetimestring = time.strftime("%Y%m%dT%H%M%S%z")

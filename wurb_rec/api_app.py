@@ -108,6 +108,36 @@ async def get_status():
         print("EXCEPTION: Called: get_status: ", e)
 
 
+@app.get("/set_position/")
+async def set_position(latitude: str = "0.0", longitude: str = "0.0"):
+    try:
+        print("DEBUG: Called: set_position: ", latitude, " : ", longitude)
+        global wurb_rec_manager
+        # await wurb_rec_manager.set_position(latitude, longitude)
+        # return {
+        #     "rec_status": status_dict.get("rec_status", ""),
+        #     "device_name": status_dict.get("device_name", ""),
+        #     "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+        # }
+    except Exception as e:
+        print("EXCEPTION: Called: set_position: ", e)
+
+
+@app.get("/set_time/")
+async def set_time(posix_time_ms: str):
+    try:
+        print("DEBUG: Called: set_time: ", posix_time_ms)
+        global wurb_rec_manager
+        # await wurb_rec_manager.set_time(posix_time_ms)
+        # return {
+        #     "rec_status": status_dict.get("rec_status", ""),
+        #     "device_name": status_dict.get("device_name", ""),
+        #     "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+        # }
+    except Exception as e:
+        print("EXCEPTION: Called: set_time: ", e)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
