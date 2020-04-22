@@ -57,30 +57,22 @@
 
                                 <!-- <div class="content" style="height: 10em; overflow: auto;"> -->
                                 <div class="table-container" style="height: 10em; overflow: auto;">
-                                    <table class="table is-fullwidth is-bordered is-striped has-background-white-ter">
+                                    <table id="rec_log_table_id"
+                                        class="table is-fullwidth is-bordered is-striped has-background-white-ter">
                                         <tr>
-                                            <td>23:45:47 TEST-Recording stopped.</td>
+                                            <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td>23:38:02 TEST-Sound detected.</td>
+                                            <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td>23:34:07 TEST-Recording started.</td>
+                                            <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td>23:32:32 TEST-GPS position received.</td>
+                                            <td>&nbsp;</td>
                                         </tr>
-                                    </table>
+                                   </table>
                                 </div>
-
-                                <!-- <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded">
-                                        Shutdown unit
-                                    </button>
-                                    <button class="button is-info is-rounded">
-                                        Restart unit
-                                    </button>
-                                </div> -->
                             </article>
 
                             <!-- Tile: Geographic position -->
@@ -96,11 +88,14 @@
                                         <div class="field is-narrow">
                                             <div class="control">
                                                 <div class="select">
-                                                    <select>
-                                                        <option>Use default position</option>
-                                                        <!-- <option>Manually entered position</option> -->
-                                                        <option>Position/time from mobile unit</option>
-                                                        <option>Use USB-GPS on recording unit</option>
+                                                    <select id="geo_source_option_id"
+                                                        onchange="geoLocationSourceOnChange(this.value)">
+                                                        <option value="geo-default">Use default position</option>
+                                                        <option value="geo-manually">Manually entered position</option>
+                                                        <option value="geo-client-gps">Position/time from mobile unit
+                                                        </option>
+                                                        <option value="geo-usb-gps">Use USB-GPS on recording unit
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -114,8 +109,8 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input id="latitude_id" class="input" type="number"
-                                                    step="0.0001" min="-90.0" max="90.0" placeholder="15.6789" value="15.6789">
+                                                <input id="geo_latitude_id" class="input" type="number" step="0.0001"
+                                                    min="-90.0" max="90.0" placeholder="15.6789">
                                             </div>
                                         </div>
                                     </div>
@@ -127,17 +122,19 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input id="longitude_id" class="input" type="number"
-                                                    step="0.0001" min="-180.0" max="180.0" placeholder="12.3456" value="12.3456">
+                                                <input id="geo_longitude_id" class="input" type="number" step="0.0001"
+                                                    min="-180.0" max="180.0" placeholder="12.3456">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded" onclick="setPosition()">
+                                    <button id="geo_set_pos_button_id" class="button is-info is-rounded"
+                                        onclick="setPosition()">
                                         Set position
                                     </button>
-                                    <button class="button is-info is-rounded" onclick="setDetectorTime()">
+                                    <button id="geo_set_time_button_id" class="button is-info is-rounded"
+                                        onclick="setDetectorTime()">
                                         Set time
                                     </button>
                                     <!-- <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
@@ -208,13 +205,15 @@
                                         <div class="field">
                                             <label class="label">Default&nbsp;latitude&nbsp;(DD)</label>
                                             <div class="control">
-                                                <input class="input" placeholder="15.6789" value="15.6789">
-                                            </div>
+                                                <input id="settings_default_latitude_id" class="input" type="number" step="0.0001"
+                                                min="-90.0" max="90.0" placeholder="15.6789" value="15.6789">
+                                           </div>
                                         </div>
                                         <div class="field">
                                             <label class="label">Default&nbsp;longitude&nbsp;(DD)</label>
                                             <div class="control">
-                                                <input class="input" placeholder="12.3456" value="12.3456">
+                                                <input id="settings_default_longitude_id" class="input" type="number" step="0.0001"
+                                                min="-180.0" max="180.0" placeholder="12.3456" value="12.3456">
                                             </div>
                                         </div>
                                         <div class="field">
