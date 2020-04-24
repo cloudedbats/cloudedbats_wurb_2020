@@ -3,30 +3,30 @@ window.onload = function () {
   // Define global variables.
 
   // Recording unit tile.
-  var rec_start_button_id = document.getElementById("rec_start_button_id");
-  var rec_stop_button_id = document.getElementById("rec_stop_button_id");
-  var rec_status_id = document.getElementById("rec_status_id");
-  var rec_info_id = document.getElementById("rec_info_id");
-  var rec_detector_time_id = document.getElementById("rec_detector_time_id");
-  var rec_log_table_id = document.getElementById("rec_log_table_id");
+  const rec_start_button_id = document.getElementById("rec_start_button_id");
+  const rec_stop_button_id = document.getElementById("rec_stop_button_id");
+  const rec_status_id = document.getElementById("rec_status_id");
+  const rec_info_id = document.getElementById("rec_info_id");
+  const rec_detector_time_id = document.getElementById("rec_detector_time_id");
+  const rec_log_table_id = document.getElementById("rec_log_table_id");
 
-  // Geographic position tile.
-  var geo_source_option_id = document.getElementById("geo_source_option_id");
-  var geo_latitude_id = document.getElementById("geo_latitude_id");
-  var geo_longitude_id = document.getElementById("geo_longitude_id");
-  var geo_set_pos_button_id = document.getElementById("geo_set_pos_button_id");
-  var geo_set_time_button_id = document.getElementById("geo_set_time_button_id");
+  // Geographic location tile.
+  const geo_source_option_id = document.getElementById("geo_source_option_id");
+  const geo_latitude_id = document.getElementById("geo_latitude_id");
+  const geo_longitude_id = document.getElementById("geo_longitude_id");
+  const geo_set_pos_button_id = document.getElementById("geo_set_pos_button_id");
+  const geo_set_time_button_id = document.getElementById("geo_set_time_button_id");
 
   // Settings tile.
-  var tab_settings_basic_id = document.getElementById("tab_settings_basic_id");
-  var tab_settings_more_id = document.getElementById("tab_settings_more_id");
-  var tab_settings_scheduler_id = document.getElementById("tab_settings_scheduler_id");
-  var div_settings_basic_id = document.getElementById("div_settings_basic_id");
-  var div_settings_more_id = document.getElementById("div_settings_more_id");
-  var div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
+  const tab_settings_basic_id = document.getElementById("tab_settings_basic_id");
+  const tab_settings_more_id = document.getElementById("tab_settings_more_id");
+  const tab_settings_scheduler_id = document.getElementById("tab_settings_scheduler_id");
+  const div_settings_basic_id = document.getElementById("div_settings_basic_id");
+  const div_settings_more_id = document.getElementById("div_settings_more_id");
+  const div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
 
-  var settings_default_latitude_id = document.getElementById("settings_default_latitude_id");
-  var settings_default_longitude_id = document.getElementById("settings_default_longitude_id");
+  const settings_default_latitude_id = document.getElementById("settings_default_latitude_id");
+  const settings_default_longitude_id = document.getElementById("settings_default_longitude_id");
 
   // Recorded files tile.
 
@@ -118,20 +118,20 @@ function geoLocationSourceOnChange(val) {
 function activateGeoLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(showPosition, errorCallback, { timeout: 10000 });
-    // navigator.geolocation.getCurrentPosition(showPosition);
-    // // navigator.geolocation.watchPosition(showPosition);
-    // // navigator.geolocation.clearWatch(showPosition);
+    // navigator.geolocation.getCurrentPosition(showLocation);
+    // // navigator.geolocation.watchPosition(showLocation);
+    // // navigator.geolocation.clearWatch(showLocation);
   } else {
-    alert(`Geo position from client:\nNot supported by this browser.`);
+    alert(`Geo location from client:\nNot supported by this browser.`);
   };
 };
-function showPosition(position) {
-  rec_info_id.innerHTML = position.coords.latitude;
-  latitude_id.value = position.coords.latitude;
-  longitude_id.value = position.coords.longitude;
+function showPosition(location) {
+  rec_info_id.innerHTML = location.coords.latitude;
+  latitude_id.value = location.coords.latitude;
+  longitude_id.value = location.coords.longitude;
 };
 function errorCallback(error) {
-  alert(`Geo position from client:\nERROR(${error.code}): ${error.message}`);
+  alert(`Geo location from client:\nERROR(${error.code}): ${error.message}`);
 };
 
 
@@ -145,15 +145,15 @@ async function callRecordingUnit(action) {
   };
 };
 
-async function setPosition() {
+async function setLocation() {
   try {
     let latitude_value = geo_latitude_id.value;
     let longitude_value = geo_longitude_id.value;
-    // var url_string = "/set_position/?latitude=" + latitude_value + "&longitude=" + longitude_value;
-    let url_string = `/set_position/?latitude=${latitude_value}&longitude=${longitude_value}`;
+    // let url_string = "/set_location/?latitude=" + latitude_value + "&longitude=" + longitude_value;
+    let url_string = `/set_location/?latitude=${latitude_value}&longitude=${longitude_value}`;
     await fetch(url_string);
   } catch (err) {
-    alert(`ERROR setPosition: ${err}`);
+    alert(`ERROR setLocation: ${err}`);
     console.log(err);
   };
 };
@@ -173,16 +173,16 @@ async function setDetectorTime() {
 
 
 function startWebsocket(ws_url) {
-  // var ws = new WebSocket("ws://localhost:8000/ws");
-  var ws = new WebSocket(ws_url);
+  // let ws = new WebSocket("ws://localhost:8000/ws");
+  let ws = new WebSocket(ws_url);
   ws.onmessage = function (event) {
-    var data_json = JSON.parse(event.data);
+    let data_json = JSON.parse(event.data);
     document.getElementById("rec_status_id").innerHTML = data_json.rec_status;
     document.getElementById("rec_info_id").innerHTML = data_json.device_name;
     document.getElementById("rec_detector_time_id").innerHTML = data_json.detector_time;
 
     document.getElementById("rec_log_table_id").innerHTML =
-      "<tr><td>23:45:47 TEST-Recording stopped.</td>";
+      "<tr><td>23:45:47 TEST.</td>";
 
   }
   ws.onclose = function () {

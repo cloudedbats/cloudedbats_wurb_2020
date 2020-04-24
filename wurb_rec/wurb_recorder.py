@@ -535,7 +535,7 @@ class WurbRecorder(SoundStreamManager):
         self._filename_prefix = "ASYNC"
         # self._out_sampling_rate_hz = 384000
         self._filename_rec_type = "FS384"
-        self._dir_path = "wurb_rec_async"
+        self._dir_path = "recorded_files"
 
         wave_file_writer = None
 
@@ -620,7 +620,7 @@ class WaveFileWriter:
 
 
         # Create file name.
-        # Default time and position.
+        # Default time and location.
         datetimestring = time.strftime("%Y%m%dT%H%M%S%z")
         latlongstring = ""  # Format: 'N56.78E12.34'
         try:
@@ -642,7 +642,7 @@ class WaveFileWriter:
         # datetime_local_gps = wurb_core.WurbGpsReader().get_time_local_string()
         # if datetime_local_gps:
         #     datetimestring = datetime_local_gps
-        # # Use GPS position if available.
+        # # Use GPS location if available.
         # latlong = wurb_core.WurbGpsReader().get_latlong_string()
         # if latlong:
         #     latlongstring = latlong

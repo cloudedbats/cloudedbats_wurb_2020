@@ -141,6 +141,7 @@ have to download and install a new version:
 Install software:
 
     sudo apt install python3-venv
+    sudo apt install python3-dev
     sudo apt install libportaudio2
     sudo apt install libatlas-base-dev # Only needed if gunicorn is used.
 
@@ -169,13 +170,15 @@ And finally restart the detector:
 - Open a web browser and go to http://10.3.141.1:8000
 - Press "Start recording".
 - Record some bats.
-- Press "Start recording".
+- Press "Stop recording".
 - Go to the WiFi administration page at http://10.3.141.1
 - Select "System" and press "Shutdown" to turn off the detector.
 
 If files are stored on the SD card then they can be downloaded by 
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
+
+(Path to files during development: /home/pi/cloudedbats_wurb_2020/recorded_files)
 
 Note: Some mobile phones complains if the "wifi4bats" network not is 
 connected to internet. If that happens, then tell it to forget the network, 

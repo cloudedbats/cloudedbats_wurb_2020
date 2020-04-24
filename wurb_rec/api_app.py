@@ -5,6 +5,7 @@
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import time
+import datetime
 import asyncio
 import fastapi
 from fastapi.staticfiles import StaticFiles
@@ -108,19 +109,19 @@ async def get_status():
         print("EXCEPTION: Called: get_status: ", e)
 
 
-@app.get("/set_position/")
-async def set_position(latitude: str = "0.0", longitude: str = "0.0"):
+@app.get("/set_location/")
+async def set_location(latitude: str = "0.0", longitude: str = "0.0"):
     try:
-        print("DEBUG: Called: set_position: ", latitude, " : ", longitude)
+        print("DEBUG: Called: set_location: ", latitude, " : ", longitude)
         global wurb_rec_manager
-        # await wurb_rec_manager.set_position(latitude, longitude)
+        # await wurb_rec_manager.set_location(latitude, longitude)
         # return {
         #     "rec_status": status_dict.get("rec_status", ""),
         #     "device_name": status_dict.get("device_name", ""),
         #     "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
         # }
     except Exception as e:
-        print("EXCEPTION: Called: set_position: ", e)
+        print("EXCEPTION: Called: set_location: ", e)
 
 
 @app.get("/set_time/")
@@ -128,6 +129,11 @@ async def set_time(posix_time_ms: str):
     try:
         print("DEBUG: Called: set_time: ", posix_time_ms)
         global wurb_rec_manager
+
+        # posix_time_ms = int(int(posix_time_ms) / 1000)
+        # print(datetime.datetime.utcfromtimestamp(posix_time_ms).strftime('%Y-%m-%d %H:%M:%S'))
+        # # os.system('sudo date --set "' + str(self.gps_time) + '"')
+
         # await wurb_rec_manager.set_time(posix_time_ms)
         # return {
         #     "rec_status": status_dict.get("rec_status", ""),
