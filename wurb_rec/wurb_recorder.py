@@ -13,9 +13,10 @@ import os
 import wave
 
 # CloudedBats.
+from wurb_rec.wurb_settings import WurbSettings
+from wurb_rec.wurb_logging import WurbLogging
 from wurb_rec.sound_stream_manager import SoundStreamManager
 from wurb_rec.wurb_sound_detector import SoundDetector
-
 
 class WurbRecManager(object):
     """ """
@@ -28,6 +29,10 @@ class WurbRecManager(object):
             self.ultrasound_devices = None
             self.wurb_recorder = None
             self.update_status_task = None
+
+            self.wurb_settings = None
+            self.wurb_logging = None
+
         except Exception as e:
             print("Exception: ", e)
 
@@ -36,6 +41,8 @@ class WurbRecManager(object):
         try:
             self.ultrasound_devices = UltrasoundDevices()
             self.wurb_recorder = WurbRecorder()
+            self.wurb_settings = WurbSettings()
+            self.wurb_logging = WurbLogging()
             self.update_status_task = asyncio.create_task(self.update_status())
 
             # await self.ultrasound_devices.start_checking_devices()

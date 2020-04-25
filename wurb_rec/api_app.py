@@ -114,12 +114,7 @@ async def set_location(latitude: str = "0.0", longitude: str = "0.0"):
     try:
         print("DEBUG: Called: set_location: ", latitude, " : ", longitude)
         global wurb_rec_manager
-        # await wurb_rec_manager.set_location(latitude, longitude)
-        # return {
-        #     "rec_status": status_dict.get("rec_status", ""),
-        #     "device_name": status_dict.get("device_name", ""),
-        #     "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
-        # }
+        await wurb_rec_manager.wurb_settings.set_location(latitude, longitude)
     except Exception as e:
         print("EXCEPTION: Called: set_location: ", e)
 
@@ -129,17 +124,8 @@ async def set_time(posix_time_ms: str):
     try:
         print("DEBUG: Called: set_time: ", posix_time_ms)
         global wurb_rec_manager
-
-        # posix_time_ms = int(int(posix_time_ms) / 1000)
-        # print(datetime.datetime.utcfromtimestamp(posix_time_ms).strftime('%Y-%m-%d %H:%M:%S'))
-        # # os.system('sudo date --set "' + str(self.gps_time) + '"')
-
-        # await wurb_rec_manager.set_time(posix_time_ms)
-        # return {
-        #     "rec_status": status_dict.get("rec_status", ""),
-        #     "device_name": status_dict.get("device_name", ""),
-        #     "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
-        # }
+        posix_time_s = int(int(posix_time_ms) / 1000)
+        await wurb_rec_manager.wurb_settings.set_detector_time(posix_time_s)
     except Exception as e:
         print("EXCEPTION: Called: set_time: ", e)
 
