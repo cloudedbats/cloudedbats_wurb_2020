@@ -77,30 +77,30 @@ function hide_show_settings_tabs(tab_name) {
   };
 };
 
-function geoLocationSourceOnChange(val) {
-  // alert("geoSourceOnChange: " + val);
+function geoLocationSourceOnChange() {
+  let selected_value = geo_source_option_id.options[geo_source_option_id.selectedIndex].value;
   geo_latitude_id.value = settings_default_latitude_id.value
   geo_longitude_id.value = settings_default_longitude_id.value
-  if (val == "geo-default") {
+  if (selected_value == "geo-default") {
     geo_latitude_id.disabled = true;
     geo_longitude_id.disabled = true;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
-  else if (val == "geo-manually") {
+  else if (selected_value == "geo-manually") {
     geo_latitude_id.disabled = false;
     geo_longitude_id.disabled = false;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
-  else if (val == "geo-client-gps") {
+  else if (selected_value == "geo-client-gps") {
     activateGeoLocation()
     geo_latitude_id.disabled = true;
     geo_longitude_id.disabled = true;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
-  else if (val == "geo-usb-gps") {
+  else if (selected_value == "geo-usb-gps") {
     geo_latitude_id.disabled = true;
     geo_longitude_id.disabled = true;
     geo_set_pos_button_id.disabled = true;
@@ -111,7 +111,7 @@ function geoLocationSourceOnChange(val) {
     geo_latitude_id.disabled = true;
     geo_longitude_id.disabled = true;
     geo_set_pos_button_id.disabled = true;
-    geo_set_time_button_id.disabled = true;
+    geo_set_time_button_id.disabled = false;
   }
 }
 

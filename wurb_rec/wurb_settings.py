@@ -17,7 +17,7 @@ class WurbSettings(object):
         self.latitude_dd = None
         self.longitude_dd = None
         self.os_raspbian = None
- 
+
 
     async def set_location(self, latitude_dd, longitude_dd):
         """ """
@@ -26,26 +26,39 @@ class WurbSettings(object):
 
     async def set_detector_time(self, posix_time_s):
         """ """
-        if self.is_os_raspbian():
-            time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime('%Y-%m-%d %H:%M:%S')
-            print(time_string)
-            os.system('sudo date --set "' + time_string + '"')
+
+        time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime('%Y-%m-%d %H:%M:%S')
+        print(time_string)
+
+        try:
+            if self.is_os_raspbian():
+                time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime('%Y-%m-%d %H:%M:%S')
+                print(time_string)
+                os.system('sudo date --set "' + time_string + '"')
+        except Exception as e:
+            print("EXCEPTION: set_detector_time: ", e)
+
 
     def is_os_raspbian(self):
         """ """
         if self.os_raspbian is not None:
             return self.os_raspbian
         else:
-            os_version_path = pathlib.Path("/etc/os_version")
-            if os_version_path.exists():
-                with os_version_path.open("r") as os_file:
-                    os_file_content = os_file.read()
-                    if "Raspbian" in os_file_content:
-                        self.os_raspbian = True
-                    else:
-                        self.os_raspbian = False
-            else:
-                self.os_raspbian = False
+            try:
+                os_version_path = pathlib.Path("/etc/os-release")
+                if os_version_path.exists():
+                    with os_version_path.open("r") as os_file:
+                        os_file_content = os_file.read()
+                        print("Content of /etc/os-release: ", os_file_content)
+                        if "raspbian" in os_file_content:
+                            self.os_raspbian = True
+                        else:
+                            self.os_raspbian = False
+                else:
+                    self.os_raspbian = False
+            except Exception as e:
+                print("EXCEPTION: is_os_raspbian: ", e)
+
         #
         return self.os_raspbian
 
