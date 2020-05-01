@@ -43,37 +43,41 @@ window.onload = function () {
 
 // Utils.
 
-function hide_div(div_id) {
-  div_id.style.visibility = "hidden";
-  div_id.style.overflow = "hidden";
-  div_id.style.height = "0";
-  div_id.style.width = "0";
+function hideDivision(div_id) {
+  if (div_id != 'undefined') {
+    div_id.style.visibility = "hidden";
+    div_id.style.overflow = "hidden";
+    div_id.style.height = "0";
+    div_id.style.width = "0";
+  }
 };
 
-function show_div(div_id) {
-  div_id.style.visibility = null;
-  div_id.style.overflow = null;
-  div_id.style.height = null;
-  div_id.style.width = null;
+function showDivision(div_id) {
+  if (div_id != 'undefined') {
+    div_id.style.visibility = null;
+    div_id.style.overflow = null;
+    div_id.style.height = null;
+    div_id.style.width = null;
+  }
 };
 
-function hide_show_settings_tabs(tab_name) {
+function hideShowSettingsTabs(tab_name) {
   tab_settings_basic_id.classList.remove("is-active");
   tab_settings_more_id.classList.remove("is-active");
   tab_settings_scheduler_id.classList.remove("is-active");
-  hide_div(div_settings_basic_id)
-  hide_div(div_settings_more_id)
-  hide_div(div_settings_scheduler_id)
+  hideDivision(div_settings_basic_id)
+  hideDivision(div_settings_more_id)
+  hideDivision(div_settings_scheduler_id)
 
   if (tab_name == "basic") {
     tab_settings_basic_id.classList.add("is-active");
-    show_div(div_settings_basic_id)
+    showDivision(div_settings_basic_id)
   } else if (tab_name == "more") {
     tab_settings_more_id.classList.add("is-active");
-    show_div(div_settings_more_id)
+    showDivision(div_settings_more_id)
   } else if (tab_name == "scheduler") {
     tab_settings_scheduler_id.classList.add("is-active");
-    show_div(div_settings_scheduler_id)
+    showDivision(div_settings_scheduler_id)
   };
 };
 
