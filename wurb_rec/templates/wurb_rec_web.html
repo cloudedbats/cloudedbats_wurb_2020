@@ -150,19 +150,18 @@
                                 <div class="tabs is-fullwidth is-medium">
                                     <ul>
                                         <li id="tab_settings_basic_id" class="is-active"
-                                            onclick="hide_show_settings_tabs('basic');">
+                                            onclick="hideShowSettingsTabs('basic');">
                                             <a>
                                                 <span><strong>Basic</strong></span>
                                             </a>
                                         </li>
-                                        <li id="tab_settings_more_id" class=""
-                                            onclick="hide_show_settings_tabs('more');">
+                                        <li id="tab_settings_more_id" class="" onclick="hideShowSettingsTabs('more');">
                                             <a>
                                                 <span><strong>More</strong></span>
                                             </a>
                                         </li>
                                         <li id="tab_settings_scheduler_id" class=""
-                                            onclick="hide_show_settings_tabs('scheduler');">
+                                            onclick="hideShowSettingsTabs('scheduler');">
                                             <a>
                                                 <span><strong>Scheduler</strong></span>
                                             </a>
@@ -191,49 +190,46 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="div_settings_basic_id" class="">
-                                        <div class="field">
-                                            <label class="label">File&nbsp;name&nbsp;prefix</label>
-                                            <div class="control">
-                                                <input class="input" placeholder="wurb" value="wurb">
-                                            </div>
+                                    <div class="field">
+                                        <label class="label">File&nbsp;name&nbsp;prefix</label>
+                                        <div class="control">
+                                            <input class="input" placeholder="wurb" value="wurb">
                                         </div>
-                                        <div class="field">
-                                            <label class="label">Default&nbsp;latitude&nbsp;(DD)</label>
-                                            <div class="control">
-                                                <input id="settings_default_latitude_id" class="input" type="number"
-                                                    step="0.0001" min="-90.0" max="90.0" placeholder="15.6789"
-                                                    value="15.6789">
-                                            </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Default&nbsp;latitude&nbsp;(DD)</label>
+                                        <div class="control">
+                                            <input id="settings_default_latitude_id" class="input" type="number"
+                                                step="0.0001" min="-90.0" max="90.0" placeholder="15.6789"
+                                                value="15.6789">
                                         </div>
-                                        <div class="field">
-                                            <label class="label">Default&nbsp;longitude&nbsp;(DD)</label>
-                                            <div class="control">
-                                                <input id="settings_default_longitude_id" class="input" type="number"
-                                                    step="0.0001" min="-180.0" max="180.0" placeholder="12.3456"
-                                                    value="12.3456">
-                                            </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Default&nbsp;longitude&nbsp;(DD)</label>
+                                        <div class="control">
+                                            <input id="settings_default_longitude_id" class="input" type="number"
+                                                step="0.0001" min="-180.0" max="180.0" placeholder="12.3456"
+                                                value="12.3456">
                                         </div>
-                                        <div class="field">
-                                            <label
-                                                class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
-                                            <div class="control">
-                                                <input class="input" placeholder="15.0" value="15.0">
-                                            </div>
-                                            <p class="help is-info">
-                                                Lower detection limit.
-                                            </p>
+                                    </div>
+                                    <div class="field">
+                                        <label
+                                            class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
+                                        <div class="control">
+                                            <input class="input" placeholder="15.0" value="15.0">
                                         </div>
-                                        <div class="field">
-                                            <label
-                                                class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
-                                            <div class="control">
-                                                <input class="input" placeholder="-50" value="-50">
-                                            </div>
-                                            <p class="help is-info">
-                                                The value -60 gives more files and -40 less.
-                                            </p>
+                                        <p class="help is-info">
+                                            Lower detection limit.
+                                        </p>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
+                                        <div class="control">
+                                            <input class="input" placeholder="-50" value="-50">
                                         </div>
+                                        <p class="help is-info">
+                                            The value -60 gives more files and -40 less.
+                                        </p>
                                     </div>
                                 </div>
 
