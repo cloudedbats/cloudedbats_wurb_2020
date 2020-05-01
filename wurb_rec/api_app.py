@@ -130,6 +130,16 @@ async def set_time(posix_time_ms: str):
         print("EXCEPTION: Called: set_time: ", e)
 
 
+@app.get("/rpi_control/")
+async def rpi_control(command: str):
+    try:
+        print("DEBUG: Called: rpi_control: ", command)
+        global wurb_rec_manager
+        await wurb_rec_manager.wurb_settings.rpi_control(command)
+    except Exception as e:
+        print("EXCEPTION: Called: rpi_control: ", e)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:

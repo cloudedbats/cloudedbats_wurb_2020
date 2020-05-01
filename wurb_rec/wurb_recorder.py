@@ -75,7 +75,7 @@ class WurbRecManager(object):
                 await self.wurb_recorder.start_streaming()
             else:
                 await self.wurb_recorder.set_rec_status(
-                    "Failed: No valid microphone available."
+                    "Failed: No valid microphone."
                 )
 
                 # await self.ultrasound_devices.start_checking_devices()

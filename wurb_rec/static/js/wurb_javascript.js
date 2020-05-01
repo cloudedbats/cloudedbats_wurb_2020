@@ -171,6 +171,16 @@ async function setDetectorTime() {
   };
 };
 
+async function raspberryPiControl(command) {
+  try {
+    let url_string = `/rpi_control/?command=${command}`;
+    await fetch(url_string);
+  } catch (err) {
+    alert(`ERROR raspberryPiControl: ${err}`);
+    console.log(err);
+  };
+};
+
 
 function startWebsocket(ws_url) {
   // let ws = new WebSocket("ws://localhost:8000/ws");

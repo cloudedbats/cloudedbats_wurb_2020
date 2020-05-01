@@ -18,5 +18,9 @@ if __name__ == "__main__":
 
     uvicorn.run(
         # "wurb_rec.api_app:app", workers=1, loop='asyncio', host="0.0.0.0", port=8000, log_level="info" # "debug",
-        "wurb_rec.api_app:app", loop='asyncio', host="0.0.0.0", port=8000, log_level="info",
+        "wurb_rec.api_app:app",
+        loop="asyncio",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
     )

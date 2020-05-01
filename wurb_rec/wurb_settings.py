@@ -9,6 +9,7 @@ import os
 import datetime
 import pathlib
 
+
 class WurbSettings(object):
     """ """
 
@@ -18,7 +19,6 @@ class WurbSettings(object):
         self.longitude_dd = None
         self.os_raspbian = None
 
-
     async def set_location(self, latitude_dd, longitude_dd):
         """ """
         self.latitude_dd = latitude_dd
@@ -27,17 +27,35 @@ class WurbSettings(object):
     async def set_detector_time(self, posix_time_s):
         """ """
 
-        time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime('%Y-%m-%d %H:%M:%S')
+        time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         print(time_string)
 
         try:
             if self.is_os_raspbian():
-                time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime('%Y-%m-%d %H:%M:%S')
+                time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
                 print(time_string)
                 os.system('sudo date --set "' + time_string + '"')
         except Exception as e:
             print("EXCEPTION: set_detector_time: ", e)
 
+    async def rpi_control(self, command):
+        """ """
+        print("DEBUG: Settings: rpi_control: ", command)
+        if self.is_os_raspbian():
+            if command == "rpi_shutdown":
+                os.system("sudo shutdown -h now")
+            elif command == "rpi_reboot":
+                os.system("sudo reboot")
+            elif command == "rpi_update_sw":
+                os.system("cd /home/pi/cloudedbats_wurb_2020 && git pull")
+            else:
+                print("DEBUG: Settings: rpi_control: Failed, no valid command.")
+        else:
+            print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
 
     def is_os_raspbian(self):
         """ """
@@ -61,4 +79,3 @@ class WurbSettings(object):
 
         #
         return self.os_raspbian
-

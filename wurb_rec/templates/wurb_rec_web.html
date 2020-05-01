@@ -12,11 +12,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
-
-
-    <script type="text/javascript" src="../static/js/wurb_javascript.js"></script>
-
-
+    <script src="{{ url_for('static', path='js/wurb_javascript.js') }}"></script>
 </head>
 
 <body>
@@ -32,11 +28,11 @@
                                 <p class="title">Ultrasonic recorder</p>
                                 <p class="subtitle">Recording unit for bats.</p>
                                 <div class="buttons is-centered">
-                                    <button id="rec_start_button_id" class="button is-info is-rounded is-medium"
+                                    <button id="rec_start_button_id" class="button is-info is-rounded"
                                         onclick="callRecordingUnit('/start_rec')">
                                         Start recording
                                     </button>
-                                    <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
+                                    <button id="rec_stop_button_id" class="button is-info is-rounded"
                                         onclick="callRecordingUnit('/stop_rec')">
                                         Stop recording
                                     </button>
@@ -261,6 +257,23 @@
                                                     <option>Simple (single trigging event)</option>
                                                 </select>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">RaspberryPi control</label>
+                                        <div class="control">
+                                            <button class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_shutdown')">
+                                                Shutdown
+                                            </button>
+                                            <button class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_reboot')">
+                                                Reboot
+                                            </button>
+                                            <button class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_update_sw')">
+                                                Software update
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
