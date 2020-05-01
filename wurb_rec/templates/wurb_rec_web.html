@@ -219,7 +219,7 @@
                                             <input class="input" placeholder="15.0" value="15.0">
                                         </div>
                                         <p class="help is-info">
-                                            Lower detection limit.
+                                            Sound frequencies above this limit are checked.
                                         </p>
                                     </div>
                                     <div class="field">
@@ -237,11 +237,13 @@
                                 <div id="div_settings_more_id"
                                     style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
                                     <div class="field">
-                                        <label class="label">Sound&nbsp;files&nbsp;path</label>
+                                        <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
                                         <div class="control">
-                                            <input class="input" placeholder="/media/usb0/wurb_rec"
-                                                value="/media/usb0/wurb_rec">
+                                            <input class="input" placeholder="recorded_files" value="recorded_files">
                                         </div>
+                                        <p class="help is-info">
+                                            Search order for parent directories: "/media/usb0/", "/home/pi/" and "./".
+                                        </p>
                                     </div>
 
                                     <div class="field">
@@ -444,6 +446,10 @@
                                     More information and source code at GitHub:
                                     <a href="https://github.com/cloudedbats/cloudedbats_wurb_2020">
                                         cloudedbats_wurb_2020</a>.
+                                </p>
+                                <p>
+                                    REST API for programmatic control:
+                                    <a href="/docs">OpenAPI 3.0</a>.
                                 </p>
                                 <p>
                                     Developed by: Arnold&nbsp;Andreasson,&nbsp;Sweden.<br />

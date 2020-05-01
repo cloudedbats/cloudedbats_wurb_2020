@@ -44,16 +44,17 @@ class WurbSettings(object):
 
     async def rpi_control(self, command):
         """ """
-        print("DEBUG: Settings: rpi_control: ", command)
+        # First check: OS Raspbian.
         if self.is_os_raspbian():
+            # Second check: User pi exists.
             if command == "rpi_shutdown":
-                os.system("sudo shutdown -h now")
+                os.system("cd /home/pi && sudo shutdown -h now")
             elif command == "rpi_reboot":
-                os.system("sudo reboot")
+                os.system("cd /home/pi && sudo reboot")
             elif command == "rpi_update_sw":
                 os.system("cd /home/pi/cloudedbats_wurb_2020 && git pull")
             else:
-                print("DEBUG: Settings: rpi_control: Failed, no valid command.")
+                print("DEBUG: Settings: rpi_control: Failed, command not valid:", command)
         else:
             print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
 

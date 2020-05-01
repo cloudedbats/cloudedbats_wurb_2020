@@ -9,7 +9,7 @@ import asyncio
 
 class SoundStreamManager(object):
     """ Manager base class for sound processing. 
-        The module contains workers methods for sources, 
+        The module contains worker methods for sources, 
         processing algorithms and targets. 
         Based on asynchio for concurrency.
         Dataflow:
