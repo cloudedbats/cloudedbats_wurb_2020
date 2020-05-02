@@ -4,11 +4,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CloudedBats - Recorder for bats</title>
+    <title>CloudedBats - Ultrasonic recorder for bats</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <!-- Bulma -->
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
     <!-- <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
-    <!-- Bulma -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
@@ -346,13 +348,16 @@
                                             <!-- <option>user-settings-5</option> -->
                                             <!-- </select> -->
                                             <!-- </div> -->
-                                            <button id="settings_save_button_id" class="button is-info is-rounded" onclick="saveSettings()">
+                                            <button id="settings_save_button_id" class="button is-info is-rounded"
+                                                onclick="saveSettings()">
                                                 Save
                                             </button>
-                                            <button id="settings_reset_button_id" class="button is-info is-rounded" onclick="loadSettings(false)">
+                                            <button id="settings_reset_button_id" class="button is-info is-rounded"
+                                                onclick="loadSettings(false)">
                                                 Reset
                                             </button>
-                                            <button id="settings_default_button_id" class="button is-info is-rounded" onclick="loadSettings(true)">
+                                            <button id="settings_default_button_id" class="button is-info is-rounded"
+                                                onclick="loadSettings(true)">
                                                 Default
                                             </button>
                                         </div>
