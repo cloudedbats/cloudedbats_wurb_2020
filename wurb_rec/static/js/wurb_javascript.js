@@ -17,19 +17,29 @@ window.onload = function () {
   const geo_set_pos_button_id = document.getElementById("geo_set_pos_button_id");
   const geo_set_time_button_id = document.getElementById("geo_set_time_button_id");
 
-  // Settings tile.
+  // Settings tile. Tab hide/show.
   const tab_settings_basic_id = document.getElementById("tab_settings_basic_id");
   const tab_settings_more_id = document.getElementById("tab_settings_more_id");
   const tab_settings_scheduler_id = document.getElementById("tab_settings_scheduler_id");
   const div_settings_basic_id = document.getElementById("div_settings_basic_id");
   const div_settings_more_id = document.getElementById("div_settings_more_id");
   const div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
-
+  // Fields and buttons.
+  const settings_rec_mode_id = document.getElementById("settings_rec_mode_id");
+  const settings_filename_prefix_id = document.getElementById("settings_filename_prefix_id");
   const settings_default_latitude_id = document.getElementById("settings_default_latitude_id");
   const settings_default_longitude_id = document.getElementById("settings_default_longitude_id");
-
-  // Recorded files tile.
-
+  const settings_detection_limit_id = document.getElementById("settings_detection_limit_id");
+  const settings_detection_sensitivity_id = document.getElementById("settings_detection_sensitivity_id");
+  const settings_file_directory_id = document.getElementById("settings_file_directory_id");
+  const settings_detection_algorithm_id = document.getElementById("settings_detection_algorithm_id");
+  const settings_scheduler_start_event_id = document.getElementById("settings_scheduler_start_event_id");
+  const settings_scheduler_start_adjust_id = document.getElementById("settings_scheduler_start_adjust_id");
+  const settings_scheduler_stop_event_id = document.getElementById("settings_scheduler_stop_event_id");
+  const settings_scheduler_stop_adjust_id = document.getElementById("settings_scheduler_stop_adjust_id");
+  const settings_save_button_id = document.getElementById("settings_save_button_id");
+  const settings_reset_button_id = document.getElementById("settings_reset_button_id");
+  const settings_default_button_id = document.getElementById("settings_default_button_id");
 
   // Start websocket.
   var ws_url = (window.location.protocol === "https:") ? "wss://" : "ws://"
@@ -40,8 +50,6 @@ window.onload = function () {
   // Check geolocation:
   geoLocationSourceOnChange();
 };
-
-// Utils.
 
 function hideDivision(div_id) {
   if (div_id != 'undefined') {
@@ -123,8 +131,8 @@ function activateGeoLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(showPosition, errorCallback, { timeout: 10000 });
     // navigator.geolocation.getCurrentPosition(showLocation);
-    // // navigator.geolocation.watchPosition(showLocation);
-    // // navigator.geolocation.clearWatch(showLocation);
+    // navigator.geolocation.watchPosition(showLocation);
+    // navigator.geolocation.clearWatch(showLocation);
   } else {
     alert(`Geo location from client:\nNot supported by this browser.`);
   };
@@ -138,30 +146,84 @@ function errorCallback(error) {
   alert(`Geo location from client:\nERROR(${error.code}): ${error.message}`);
 };
 
-
-async function callRecordingUnit(action) {
+async function startRecording() {
   try {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
-    await fetch(action);
+    // Save settings before recording starts.
+    saveSettings()
+    await fetch('/start_rec');
   } catch (err) {
     alert(`ERROR callRecordingUnit: ${err}`);
     console.log(err);
   };
 };
 
-async function setLocation() {
+async function stopRecording(action) {
   try {
-    let latitude_value = geo_latitude_id.value;
-    let longitude_value = geo_longitude_id.value;
-    // let url_string = "/set_location/?latitude=" + latitude_value + "&longitude=" + longitude_value;
-    let url_string = `/set_location/?latitude=${latitude_value}&longitude=${longitude_value}`;
-    await fetch(url_string);
+    document.getElementById("rec_status_id").innerHTML = "Waiting...";
+    await fetch('/stop_rec');
   } catch (err) {
-    alert(`ERROR setLocation: ${err}`);
+    alert(`ERROR callRecordingUnit: ${err}`);
     console.log(err);
   };
 };
 
+async function saveSettings() {
+  try {
+    let settings = {
+      geo_source_option: geo_source_option_id.value,
+      geo_latitude: geo_latitude_id.value,
+      geo_longitude: geo_longitude_id.value,
+      rec_mode: settings_rec_mode_id.value,
+      filename_prefix: settings_filename_prefix_id.value,
+      default_latitude: settings_default_latitude_id.value,
+      default_longitude: settings_default_longitude_id.value,
+      detection_limit: settings_detection_limit_id.value,
+      detection_sensitivity: settings_detection_sensitivity_id.value,
+      file_directory: settings_file_directory_id.value,
+      detection_algorithm: settings_detection_algorithm_id.value,
+      scheduler_start_event: settings_scheduler_start_event_id.value,
+      scheduler_start_adjust: settings_scheduler_start_adjust_id.value,
+      scheduler_stop_event: settings_scheduler_stop_event_id.value,
+      scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
+    }
+    await fetch("/save_settings/",
+      {
+        method: "POST",
+        body: JSON.stringify(settings)
+      })
+  } catch (err) {
+    alert(`ERROR saveSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+async function loadSettings(use_default) {
+  try {
+    // await fetch(action);
+  } catch (err) {
+    alert(`ERROR loadSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+async function setLocation() {
+  try {
+    let location = {
+      geo_source_option: geo_source_option_id.value,
+      geo_latitude: geo_latitude_id.value,
+      geo_longitude: geo_longitude_id.value,
+    }
+    await fetch("/set_location/",
+      {
+        method: "POST",
+        body: JSON.stringify(location)
+      })
+  } catch (err) {
+    alert(`ERROR saveSettings: ${err}`);
+    console.log(err);
+  };
+};
 
 async function setDetectorTime() {
   try {
@@ -184,7 +246,6 @@ async function raspberryPiControl(command) {
     console.log(err);
   };
 };
-
 
 function startWebsocket(ws_url) {
   // let ws = new WebSocket("ws://localhost:8000/ws");

@@ -29,11 +29,11 @@
                                 <p class="subtitle">Recording unit for bats.</p>
                                 <div class="buttons is-centered">
                                     <button id="rec_start_button_id" class="button is-info is-rounded"
-                                        onclick="callRecordingUnit('/start_rec')">
+                                        onclick="startRecording()">
                                         Start recording
                                     </button>
                                     <button id="rec_stop_button_id" class="button is-info is-rounded"
-                                        onclick="callRecordingUnit('/stop_rec')">
+                                        onclick="stopRecording()">
                                         Stop recording
                                     </button>
                                 </div>
@@ -146,7 +146,7 @@
                             <article class="tile is-child box has-background-grey-lighter">
                                 <!-- Content. -->
                                 <p class="title">Settings</p>
-                                <p class="subtitle">Settings used by the recording unit.</p>
+                                <p class="subtitle">Settings for the recording unit.</p>
                                 <div class="tabs is-fullwidth is-medium">
                                     <ul>
                                         <li id="tab_settings_basic_id" class="is-active"
@@ -180,10 +180,11 @@
                                             <div class="field is-narrow">
                                                 <div class="control">
                                                     <div class="select">
-                                                        <select>
-                                                            <option>Manually controlled</option>
-                                                            <option>Recording on at startup</option>
-                                                            <option>Based on scheduler</option>
+                                                        <select id="settings_rec_mode_id">
+                                                            <option value="rec-mode-manual">Manually controlled</option>
+                                                            <option value="rec-mode-on">Recording on at startup</option>
+                                                            <option value="rec-mode-scheduler">Based on scheduler
+                                                            </option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -193,7 +194,8 @@
                                     <div class="field">
                                         <label class="label">File&nbsp;name&nbsp;prefix</label>
                                         <div class="control">
-                                            <input class="input" placeholder="wurb" value="wurb">
+                                            <input id="settings_filename_prefix_id" class="input" placeholder="wurb"
+                                                value="wurb">
                                         </div>
                                     </div>
                                     <div class="field">
@@ -216,7 +218,8 @@
                                         <label
                                             class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
                                         <div class="control">
-                                            <input class="input" placeholder="15.0" value="15.0">
+                                            <input id="settings_detection_limit_id" class="input" placeholder="15.0"
+                                                value="15.0">
                                         </div>
                                         <p class="help is-info">
                                             Sound frequencies above this limit are checked.
@@ -225,7 +228,8 @@
                                     <div class="field">
                                         <label class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
                                         <div class="control">
-                                            <input class="input" placeholder="-50" value="-50">
+                                            <input id="settings_detection_sensitivity_id" class="input"
+                                                placeholder="-50" value="-50">
                                         </div>
                                         <p class="help is-info">
                                             The value -60 gives more files and -40 less.
@@ -239,7 +243,8 @@
                                     <div class="field">
                                         <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
                                         <div class="control">
-                                            <input class="input" placeholder="recorded_files" value="recorded_files">
+                                            <input id="settings_file_directory_id" class="input"
+                                                placeholder="recorded_files" value="recorded_files">
                                         </div>
                                         <p class="help is-info">
                                             Search order for parent directories: "/media/usb0/", "/home/pi/" and "./".
@@ -250,9 +255,10 @@
                                         <label class="label">Sound&nbsp;detection&nbsp;algorithm</label>
                                         <div class="control">
                                             <div class="select">
-                                                <select>
-                                                    <option>None (recording always on)</option>
-                                                    <option>Simple (single trigging event)</option>
+                                                <select id="settings_detection_algorithm_id">
+                                                    <option value="detection-none">None (recording always on)</option>
+                                                    <option value="detection-simple">Simple (single trigging event)
+                                                    </option>
                                                 </select>
                                             </div>
                                         </div>
@@ -283,11 +289,11 @@
                                         <label class="label">Start&nbsp;recording&nbsp;at</label>
                                         <div class="control">
                                             <div class="select">
-                                                <select>
-                                                    <option>Sunset</option>
-                                                    <option>Dusk</option>
-                                                    <option>Dawn</option>
-                                                    <option>Sunrise</option>
+                                                <select id="settings_scheduler_start_event_id">
+                                                    <option value="on-sunset">Sunset</option>
+                                                    <option value="on-dusk">Dusk</option>
+                                                    <option value="on-dawn">Dawn</option>
+                                                    <option value="on-sunrise">Sunrise</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -295,18 +301,19 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input class="input" type="text" placeholder="-15" value="-15">
+                                            <input id="settings_scheduler_start_adjust_id" class="input" type="text"
+                                                placeholder="-15" value="-15">
                                         </div>
                                     </div>
                                     <div class="field">
                                         <label class="label">Stop&nbsp;recording&nbsp;at</label>
                                         <div class="control">
                                             <div class="select">
-                                                <select>
-                                                    <option>Sunset</option>
-                                                    <option>Dusk</option>
-                                                    <option>Dawn</option>
-                                                    <option>Sunrise</option>
+                                                <select id="settings_scheduler_stop_event_id">
+                                                    <option value="off-sunset">Sunset</option>
+                                                    <option value="off-dusk">Dusk</option>
+                                                    <option value="off-dawn">Dawn</option>
+                                                    <option value="off-sunrise">Sunrise</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -314,7 +321,8 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input class="input" type="text" placeholder="15" value="15">
+                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="text"
+                                                placeholder="15" value="15">
                                         </div>
                                     </div>
                                 </div>
@@ -338,13 +346,13 @@
                                             <!-- <option>user-settings-5</option> -->
                                             <!-- </select> -->
                                             <!-- </div> -->
-                                            <button class="button is-info is-rounded" disabled>
+                                            <button id="settings_save_button_id" class="button is-info is-rounded" onclick="saveSettings()">
                                                 Save
                                             </button>
-                                            <button class="button is-info is-rounded" disabled>
+                                            <button id="settings_reset_button_id" class="button is-info is-rounded" onclick="loadSettings(false)">
                                                 Reset
                                             </button>
-                                            <button class="button is-info is-rounded" disabled>
+                                            <button id="settings_default_button_id" class="button is-info is-rounded" onclick="loadSettings(true)">
                                                 Default
                                             </button>
                                         </div>

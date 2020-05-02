@@ -10,6 +10,7 @@ import asyncio
 import fastapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 # CloudedBats.
 import wurb_rec
@@ -26,6 +27,34 @@ templates = Jinja2Templates(directory="wurb_rec/templates")
 # CloudedBats.
 wurb_rec_manager = None
 
+# Schemas.
+class WurbLocation(BaseModel):
+    geo_source_option: str = None
+    geo_latitude: float = None
+    geo_longitude: float = None
+
+
+class WurbSettings(BaseModel):
+    geo_source_option: str = None
+    geo_latitude: float = None
+    geo_longitude: float = None
+    rec_mode: str = None
+    filename_prefix: str = None
+    default_latitude: float = None
+    default_longitude: float = None
+    detection_limit: float = None
+    detection_sensitivity: float = None
+    file_directory: str = None
+    detection_algorithm: str = None
+    scheduler_start_event: str = None
+    scheduler_start_adjust: float = None
+    scheduler_stop_event: str = None
+    scheduler_stop_adjust: float = None
+    # description: str = None
+    # tax: float = None
+    # tags: List[str] = []
+
+
 @app.on_event("startup")
 async def startup_event():
     """ """
@@ -36,6 +65,7 @@ async def startup_event():
     except Exception as e:
         print("EXCEPTION: Called: startup: ", e)
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """ """
@@ -45,6 +75,7 @@ async def shutdown_event():
         await wurb_rec_manager.shutdown()
     except Exception as e:
         print("EXCEPTION: Called: shutdown: ", e)
+
 
 @app.get("/")
 async def webpage(request: fastapi.Request):
@@ -58,10 +89,11 @@ async def webpage(request: fastapi.Request):
                 "rec_status": status_dict.get("rec_status", ""),
                 "device_name": status_dict.get("device_name", ""),
                 "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
-             },
+            },
         )
     except Exception as e:
         print("EXCEPTION: Called: webpage: ", e)
+
 
 @app.get("/start_rec")
 async def start_recording():
@@ -72,6 +104,7 @@ async def start_recording():
     except Exception as e:
         print("EXCEPTION: Called: start_recording: ", e)
 
+
 @app.get("/stop_rec")
 async def stop_recording():
     try:
@@ -80,6 +113,7 @@ async def stop_recording():
         await wurb_rec_manager.stop_rec()
     except Exception as e:
         print("EXCEPTION: Called: stop_recording: ", e)
+
 
 @app.get("/get_status")
 async def get_status():
@@ -95,14 +129,18 @@ async def get_status():
     except Exception as e:
         print("EXCEPTION: Called: get_status: ", e)
 
-@app.get("/set_location/")
-async def set_location(latitude: str = "0.0", longitude: str = "0.0"):
+
+@app.post("/set_location/")
+async def set_location(location: WurbLocation):
     try:
-        print("DEBUG: Called: set_location: ", latitude, " : ", longitude)
+        print("DEBUG: Called: set_location: ", location)
         global wurb_rec_manager
-        await wurb_rec_manager.wurb_settings.set_location(latitude, longitude)
+        await wurb_rec_manager.wurb_settings.set_location(
+            location.geo_latitude, location.geo_longitude
+        )
     except Exception as e:
-        print("EXCEPTION: Called: set_location: ", e)
+        print("EXCEPTION: Called: save_settings: ", e)
+
 
 @app.get("/set_time/")
 async def set_time(posix_time_ms: str):
@@ -114,6 +152,18 @@ async def set_time(posix_time_ms: str):
     except Exception as e:
         print("EXCEPTION: Called: set_time: ", e)
 
+
+@app.post("/save_settings/")
+async def save_settings(settings: WurbSettings):
+    try:
+        print("DEBUG: Called: save_settings: ", settings)
+        global wurb_rec_manager
+        # posix_time_s = int(int(posix_time_ms) / 1000)
+        # await wurb_rec_manager.wurb_settings.set_detector_time(posix_time_s)
+    except Exception as e:
+        print("EXCEPTION: Called: save_settings: ", e)
+
+
 @app.get("/rpi_control/")
 async def rpi_control(command: str):
     try:
@@ -122,6 +172,7 @@ async def rpi_control(command: str):
         await wurb_rec_manager.wurb_settings.rpi_control(command)
     except Exception as e:
         print("EXCEPTION: Called: rpi_control: ", e)
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
@@ -155,6 +206,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
 
     except Exception as e:
         print("EXCEPTION: Called: websocket_endpoint: ", e)
+
 
 # @app.get("/items/{item_id}")
 # async def read_item(item_id: int, q: str = None, q2: int = None):
