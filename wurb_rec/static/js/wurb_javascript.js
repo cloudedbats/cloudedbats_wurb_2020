@@ -47,6 +47,9 @@ window.onload = function () {
   ws_url += "/ws";
   startWebsocket(ws_url);
 
+  // Update stored settings.
+  getSettings()
+
   // Check geolocation:
   geoLocationSourceOnChange();
 };
@@ -187,7 +190,7 @@ async function saveSettings() {
       scheduler_stop_event: settings_scheduler_stop_event_id.value,
       scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
     }
-    await fetch("/save_settings/",
+    await fetch("/update_settings/",
       {
         method: "POST",
         body: JSON.stringify(settings)
@@ -198,14 +201,45 @@ async function saveSettings() {
   };
 };
 
-async function loadSettings(use_default) {
+async function getSettings() {
   try {
-    // await fetch(action);
+    let response = await fetch("/get_settings/?default=false");
+    let data = await response.json();
+    update_settings(data);
   } catch (err) {
     alert(`ERROR loadSettings: ${err}`);
     console.log(err);
   };
 };
+
+async function getDefaultSettings() {
+  try {
+    let response = await fetch("/get_settings/?default=true");
+    let data = await response.json();
+    update_settings(data);
+} catch (err) {
+    alert(`ERROR loadSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+function update_settings(settings) {
+  geo_source_option_id.value = settings.geo_source_option
+  geo_latitude_id.value = settings.geo_latitude
+  geo_longitude_id.value = settings.geo_longitude
+  settings_rec_mode_id.value = settings.rec_mode
+  settings_filename_prefix_id.value = settings.filename_prefix
+  settings_default_latitude_id.value = settings.default_latitude
+  settings_default_longitude_id.value = settings.default_longitude
+  settings_detection_limit_id.value = settings.detection_limit
+  settings_detection_sensitivity_id.value = settings.detection_sensitivity
+  settings_file_directory_id.value = settings.file_directory
+  settings_detection_algorithm_id.value = settings.detection_algorithm
+  settings_scheduler_start_event_id.value = settings.scheduler_start_event
+  settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
+  settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
+  settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
+}
 
 async function setLocation() {
   try {
@@ -214,7 +248,7 @@ async function setLocation() {
       geo_latitude: geo_latitude_id.value,
       geo_longitude: geo_longitude_id.value,
     }
-    await fetch("/set_location/",
+    await fetch("/update_settings/",
       {
         method: "POST",
         body: JSON.stringify(location)
@@ -256,8 +290,8 @@ function startWebsocket(ws_url) {
     document.getElementById("rec_info_id").innerHTML = data_json.device_name;
     document.getElementById("rec_detector_time_id").innerHTML = data_json.detector_time;
 
-    document.getElementById("rec_log_table_id").innerHTML =
-      "<tr><td>23:45:47 TEST.</td>";
+    // document.getElementById("rec_log_table_id").innerHTML =
+    //   "<tr><td>23:45:47 TEST.</td>";
 
   }
   ws.onclose = function () {

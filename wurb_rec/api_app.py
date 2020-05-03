@@ -50,9 +50,6 @@ class WurbSettings(BaseModel):
     scheduler_start_adjust: float = None
     scheduler_stop_event: str = None
     scheduler_stop_adjust: float = None
-    # description: str = None
-    # tax: float = None
-    # tags: List[str] = []
 
 
 @app.on_event("startup")
@@ -130,18 +127,6 @@ async def get_status():
         print("EXCEPTION: Called: get_status: ", e)
 
 
-@app.post("/set_location/")
-async def set_location(location: WurbLocation):
-    try:
-        print("DEBUG: Called: set_location: ", location)
-        global wurb_rec_manager
-        await wurb_rec_manager.wurb_settings.set_location(
-            location.geo_latitude, location.geo_longitude
-        )
-    except Exception as e:
-        print("EXCEPTION: Called: save_settings: ", e)
-
-
 @app.get("/set_time/")
 async def set_time(posix_time_ms: str):
     try:
@@ -153,15 +138,25 @@ async def set_time(posix_time_ms: str):
         print("EXCEPTION: Called: set_time: ", e)
 
 
-@app.post("/save_settings/")
-async def save_settings(settings: WurbSettings):
+@app.post("/update_settings/")
+async def update_settings(settings: WurbSettings):
     try:
-        print("DEBUG: Called: save_settings: ", settings)
+        print("DEBUG: Called: update_settings: ", settings)
         global wurb_rec_manager
-        # posix_time_s = int(int(posix_time_ms) / 1000)
-        # await wurb_rec_manager.wurb_settings.set_detector_time(posix_time_s)
+        await wurb_rec_manager.wurb_settings.update_settings(settings.dict())
     except Exception as e:
-        print("EXCEPTION: Called: save_settings: ", e)
+        print("EXCEPTION: Called: update_settings: ", e)
+
+
+@app.get("/get_settings/")
+async def get_settings(default: bool = False):
+    try:
+        print("DEBUG: Called: get_settings.")
+        global wurb_rec_manager
+        current_settings_dict = await wurb_rec_manager.wurb_settings.get_settings(default)
+        return current_settings_dict
+    except Exception as e:
+        print("EXCEPTION: Called: get_settings: ", e)
 
 
 @app.get("/rpi_control/")
