@@ -88,8 +88,8 @@
                                                 <div class="select">
                                                     <select id="geo_source_option_id"
                                                         onchange="geoLocationSourceOnChange()">
-                                                        <option value="geo-default">Use default location</option>
-                                                        <option value="geo-manually">Manually entered location</option>
+                                                        <option value="geo-not-used">Not used</option>
+                                                        <option value="geo-manual">Manually entered location</option>
                                                         <option value="geo-client-gps">Location from mobile unit
                                                         </option>
                                                         <option value="geo-usb-gps">Use USB-GPS on recording unit
@@ -107,7 +107,7 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input id="geo_latitude_id" class="input" type="number" step="0.0001"
+                                                <input id="latitude_dd_id" class="input" type="number" step="0.0001"
                                                     min="-90.0" max="90.0" placeholder="15.6789">
                                             </div>
                                         </div>
@@ -120,7 +120,7 @@
                                     <div class="field-body">
                                         <div class="field is-narrow">
                                             <div class="control">
-                                                <input id="geo_longitude_id" class="input" type="number" step="0.0001"
+                                                <input id="longitude_dd_id" class="input" type="number" step="0.0001"
                                                     min="-180.0" max="180.0" placeholder="12.3456">
                                             </div>
                                         </div>
@@ -194,6 +194,16 @@
                                         </div>
                                     </div>
                                     <div class="field">
+                                        <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
+                                        <div class="control">
+                                            <input id="settings_file_directory_id" class="input"
+                                                placeholder="recorded_files" value="recorded_files">
+                                        </div>
+                                        <p class="help is-info">
+                                            On USB memory if available, otherwise internally.
+                                        </p>
+                                    </div>
+                                    <div class="field">
                                         <label class="label">File&nbsp;name&nbsp;prefix</label>
                                         <div class="control">
                                             <input id="settings_filename_prefix_id" class="input" placeholder="wurb"
@@ -201,36 +211,20 @@
                                         </div>
                                     </div>
                                     <div class="field">
-                                        <label class="label">Default&nbsp;latitude&nbsp;(DD)</label>
-                                        <div class="control">
-                                            <input id="settings_default_latitude_id" class="input" type="number"
-                                                step="0.0001" min="-90.0" max="90.0" placeholder="15.6789"
-                                                value="15.6789">
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Default&nbsp;longitude&nbsp;(DD)</label>
-                                        <div class="control">
-                                            <input id="settings_default_longitude_id" class="input" type="number"
-                                                step="0.0001" min="-180.0" max="180.0" placeholder="12.3456"
-                                                value="12.3456">
-                                        </div>
-                                    </div>
-                                    <div class="field">
                                         <label
                                             class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
                                         <div class="control">
-                                            <input id="settings_detection_limit_id" class="input" placeholder="15.0"
-                                                value="15.0">
+                                            <input id="settings_detection_limit_id" class="input" type="number" 
+                                                placeholder="15.0" value="15.0">
                                         </div>
                                         <p class="help is-info">
-                                            Sound frequencies above this limit are checked.
+                                            Sound above this frequency limit are checked.
                                         </p>
                                     </div>
                                     <div class="field">
                                         <label class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
                                         <div class="control">
-                                            <input id="settings_detection_sensitivity_id" class="input"
+                                            <input id="settings_detection_sensitivity_id" class="input" type="number" 
                                                 placeholder="-50" value="-50">
                                         </div>
                                         <p class="help is-info">
@@ -242,17 +236,6 @@
                                 <!-- Settings: more. -->
                                 <div id="div_settings_more_id"
                                     style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
-                                    <div class="field">
-                                        <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
-                                        <div class="control">
-                                            <input id="settings_file_directory_id" class="input"
-                                                placeholder="recorded_files" value="recorded_files">
-                                        </div>
-                                        <p class="help is-info">
-                                            Search order for parent directories: "/media/usb0/", "/home/pi/" and "./".
-                                        </p>
-                                    </div>
-
                                     <div class="field">
                                         <label class="label">Sound&nbsp;detection&nbsp;algorithm</label>
                                         <div class="control">
@@ -303,7 +286,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input id="settings_scheduler_start_adjust_id" class="input" type="text"
+                                            <input id="settings_scheduler_start_adjust_id" class="input" type="number" 
                                                 placeholder="-15" value="-15">
                                         </div>
                                     </div>
@@ -323,7 +306,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="text"
+                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="number" 
                                                 placeholder="15" value="15">
                                         </div>
                                     </div>
@@ -354,7 +337,7 @@
                                             </button>
                                             <button id="settings_reset_button_id" class="button is-info is-rounded"
                                                 onclick="getSettings()">
-                                                Reset
+                                                Last saved
                                             </button>
                                             <button id="settings_default_button_id" class="button is-info is-rounded"
                                                 onclick="getDefaultSettings()">

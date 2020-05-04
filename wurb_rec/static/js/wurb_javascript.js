@@ -12,8 +12,8 @@ window.onload = function () {
 
   // Geographic location tile.
   const geo_source_option_id = document.getElementById("geo_source_option_id");
-  const geo_latitude_id = document.getElementById("geo_latitude_id");
-  const geo_longitude_id = document.getElementById("geo_longitude_id");
+  const latitude_dd_id = document.getElementById("latitude_dd_id");
+  const longitude_dd_id = document.getElementById("longitude_dd_id");
   const geo_set_pos_button_id = document.getElementById("geo_set_pos_button_id");
   const geo_set_time_button_id = document.getElementById("geo_set_time_button_id");
 
@@ -27,8 +27,6 @@ window.onload = function () {
   // Fields and buttons.
   const settings_rec_mode_id = document.getElementById("settings_rec_mode_id");
   const settings_filename_prefix_id = document.getElementById("settings_filename_prefix_id");
-  const settings_default_latitude_id = document.getElementById("settings_default_latitude_id");
-  const settings_default_longitude_id = document.getElementById("settings_default_longitude_id");
   const settings_detection_limit_id = document.getElementById("settings_detection_limit_id");
   const settings_detection_sensitivity_id = document.getElementById("settings_detection_sensitivity_id");
   const settings_file_directory_id = document.getElementById("settings_file_directory_id");
@@ -93,38 +91,38 @@ function hideShowSettingsTabs(tab_name) {
 };
 
 function geoLocationSourceOnChange() {
-  let selected_value = geo_source_option_id.options[geo_source_option_id.selectedIndex].value;
-  geo_latitude_id.value = settings_default_latitude_id.value
-  geo_longitude_id.value = settings_default_longitude_id.value
-  if (selected_value == "geo-default") {
-    geo_latitude_id.disabled = true;
-    geo_longitude_id.disabled = true;
-    geo_set_pos_button_id.disabled = false;
+  let selected_value = geo_source_option_id.options[geo_source_option_id.selectedIndex].value
+  if (selected_value == "geo-not-used") {
+    latitude_dd_id.value = "0.0";
+    longitude_dd_id.value = "0.0";
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    geo_set_pos_button_id.disabled = true;
     geo_set_time_button_id.disabled = false;
   }
-  else if (selected_value == "geo-manually") {
-    geo_latitude_id.disabled = false;
-    geo_longitude_id.disabled = false;
+  else if (selected_value == "geo-manual") {
+    latitude_dd_id.disabled = false;
+    longitude_dd_id.disabled = false;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
   else if (selected_value == "geo-client-gps") {
     activateGeoLocation()
-    geo_latitude_id.disabled = true;
-    geo_longitude_id.disabled = true;
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
   else if (selected_value == "geo-usb-gps") {
-    geo_latitude_id.disabled = true;
-    geo_longitude_id.disabled = true;
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
     geo_set_pos_button_id.disabled = true;
     geo_set_time_button_id.disabled = true;
     alert(`Sorry, USB-GPS not implemented yet.`);
   }
   else {
-    geo_latitude_id.disabled = true;
-    geo_longitude_id.disabled = true;
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
     geo_set_pos_button_id.disabled = true;
     geo_set_time_button_id.disabled = false;
   }
@@ -175,12 +173,10 @@ async function saveSettings() {
   try {
     let settings = {
       geo_source_option: geo_source_option_id.value,
-      geo_latitude: geo_latitude_id.value,
-      geo_longitude: geo_longitude_id.value,
+      latitude_dd: latitude_dd_id.value,
+      longitude_dd: longitude_dd_id.value,
       rec_mode: settings_rec_mode_id.value,
       filename_prefix: settings_filename_prefix_id.value,
-      default_latitude: settings_default_latitude_id.value,
-      default_longitude: settings_default_longitude_id.value,
       detection_limit: settings_detection_limit_id.value,
       detection_sensitivity: settings_detection_sensitivity_id.value,
       file_directory: settings_file_directory_id.value,
@@ -217,7 +213,7 @@ async function getDefaultSettings() {
     let response = await fetch("/get_settings/?default=true");
     let data = await response.json();
     update_settings(data);
-} catch (err) {
+  } catch (err) {
     alert(`ERROR loadSettings: ${err}`);
     console.log(err);
   };
@@ -225,12 +221,10 @@ async function getDefaultSettings() {
 
 function update_settings(settings) {
   geo_source_option_id.value = settings.geo_source_option
-  geo_latitude_id.value = settings.geo_latitude
-  geo_longitude_id.value = settings.geo_longitude
+  latitude_dd_id.value = settings.latitude_dd
+  longitude_dd_id.value = settings.longitude_dd
   settings_rec_mode_id.value = settings.rec_mode
   settings_filename_prefix_id.value = settings.filename_prefix
-  settings_default_latitude_id.value = settings.default_latitude
-  settings_default_longitude_id.value = settings.default_longitude
   settings_detection_limit_id.value = settings.detection_limit
   settings_detection_sensitivity_id.value = settings.detection_sensitivity
   settings_file_directory_id.value = settings.file_directory
@@ -239,14 +233,16 @@ function update_settings(settings) {
   settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
   settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
   settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
+  // Check geolocation:
+  // geoLocationSourceOnChange();
 }
 
 async function setLocation() {
   try {
     let location = {
       geo_source_option: geo_source_option_id.value,
-      geo_latitude: geo_latitude_id.value,
-      geo_longitude: geo_longitude_id.value,
+      latitude_dd: latitude_dd_id.value,
+      longitude_dd: longitude_dd_id.value,
     }
     await fetch("/update_settings/",
       {

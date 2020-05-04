@@ -29,16 +29,14 @@ class WurbSettings(object):
     def setup_default_settings(self):
         """ """
         self.default_settings = {
-            "geo_source_option": "geo-default",
-            "geo_latitude": "56.7890",
-            "geo_longitude": "12.3456",
+            "geo_source_option": "geo-not-used",
+            "latitude_dd": "0.0",
+            "longitude_dd": "0.0",
             "rec_mode": "rec-mode-manual",
+            "file_directory": "recorded_files",
             "filename_prefix": "wurb",
-            "default_latitude": "56.78",
-            "default_longitude": "12.34",
             "detection_limit": "17.0",
             "detection_sensitivity": "-50",
-            "file_directory": "recorded_files",
             "detection_algorithm": "detection-simple",
             "scheduler_start_event": "on-sunset",
             "scheduler_start_adjust": "-15",
@@ -81,13 +79,9 @@ class WurbSettings(object):
     async def update_settings(self, settings_dict={}):
         """ """
         for key, value in settings_dict.items():
-            self.current_settings[key] = value
+            if value is not None:
+                self.current_settings[key] = value
         self.save_settings()
-
-    async def set_location(self, latitude_dd, longitude_dd):
-        """ """
-        self.current_settings["geo_latitude"] = str(latitude_dd)
-        self.current_settings["geo_longitude"] = str(longitude_dd)
 
     async def set_detector_time(self, posix_time_s):
         """ Only valid for Raspbian and user pi. """

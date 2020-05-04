@@ -30,21 +30,19 @@ wurb_rec_manager = None
 # Schemas.
 class WurbLocation(BaseModel):
     geo_source_option: str = None
-    geo_latitude: float = None
-    geo_longitude: float = None
+    latitude_dd: float = None
+    longitude_dd: float = None
 
 
 class WurbSettings(BaseModel):
     geo_source_option: str = None
-    geo_latitude: float = None
-    geo_longitude: float = None
+    latitude_dd: float = None
+    longitude_dd: float = None
     rec_mode: str = None
+    file_directory: str = None
     filename_prefix: str = None
-    default_latitude: float = None
-    default_longitude: float = None
     detection_limit: float = None
     detection_sensitivity: float = None
-    file_directory: str = None
     detection_algorithm: str = None
     scheduler_start_event: str = None
     scheduler_start_adjust: float = None
