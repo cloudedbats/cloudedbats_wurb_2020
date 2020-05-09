@@ -186,7 +186,7 @@
                                                     <div class="select">
                                                         <select id="settings_rec_mode_id">
                                                             <option value="rec-mode-manual">Manually controlled</option>
-                                                            <option value="rec-mode-on">Recording on at startup</option>
+                                                            <option value="rec-mode-on">Rec. always on</option>
                                                             <option value="rec-mode-scheduler">Based on scheduler
                                                             </option>
                                                         </select>
@@ -216,7 +216,7 @@
                                         <label
                                             class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
                                         <div class="control">
-                                            <input id="settings_detection_limit_id" class="input" type="number" 
+                                            <input id="settings_detection_limit_id" class="input" type="number"
                                                 placeholder="15.0" value="15.0">
                                         </div>
                                         <p class="help is-info">
@@ -226,7 +226,7 @@
                                     <div class="field">
                                         <label class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
                                         <div class="control">
-                                            <input id="settings_detection_sensitivity_id" class="input" type="number" 
+                                            <input id="settings_detection_sensitivity_id" class="input" type="number"
                                                 placeholder="-50" value="-50">
                                         </div>
                                         <p class="help is-info">
@@ -243,7 +243,8 @@
                                         <div class="control">
                                             <div class="select">
                                                 <select id="settings_detection_algorithm_id">
-                                                    <option value="detection-none">None (recording always on)</option>
+                                                    <option value="detection-none">None (everything is recorded)
+                                                    </option>
                                                     <option value="detection-simple">Simple (single trigging event)
                                                     </option>
                                                 </select>
@@ -281,6 +282,30 @@
                                                     <option value="on-dusk">Dusk</option>
                                                     <option value="on-dawn">Dawn</option>
                                                     <option value="on-sunrise">Sunrise</option>
+                                                    <option value="on-00">00:00</option>
+                                                    <option value="on-01">01:00</option>
+                                                    <option value="on-02">02:00</option>
+                                                    <option value="on-03">03:00</option>
+                                                    <option value="on-04">04:00</option>
+                                                    <option value="on-05">05:00</option>
+                                                    <option value="on-06">06:00</option>
+                                                    <option value="on-07">07:00</option>
+                                                    <option value="on-08">08:00</option>
+                                                    <option value="on-09">09:00</option>
+                                                    <option value="on-10">10:00</option>
+                                                    <option value="on-11">11:00</option>
+                                                    <option value="on-12">12:00</option>
+                                                    <option value="on-13">13:00</option>
+                                                    <option value="on-14">14:00</option>
+                                                    <option value="on-15">15:00</option>
+                                                    <option value="on-16">16:00</option>
+                                                    <option value="on-17">17:00</option>
+                                                    <option value="on-18">18:00</option>
+                                                    <option value="on-19">19:00</option>
+                                                    <option value="on-20">20:00</option>
+                                                    <option value="on-21">21:00</option>
+                                                    <option value="on-22">22:00</option>
+                                                    <option value="on-23">23:00</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -288,7 +313,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input id="settings_scheduler_start_adjust_id" class="input" type="number" 
+                                            <input id="settings_scheduler_start_adjust_id" class="input" type="number"
                                                 placeholder="-15" value="-15">
                                         </div>
                                     </div>
@@ -301,6 +326,30 @@
                                                     <option value="off-dusk">Dusk</option>
                                                     <option value="off-dawn">Dawn</option>
                                                     <option value="off-sunrise">Sunrise</option>
+                                                    <option value="off-00">00:00</option>
+                                                    <option value="off-01">01:00</option>
+                                                    <option value="off-02">02:00</option>
+                                                    <option value="off-03">03:00</option>
+                                                    <option value="off-04">04:00</option>
+                                                    <option value="off-05">05:00</option>
+                                                    <option value="off-06">06:00</option>
+                                                    <option value="off-07">07:00</option>
+                                                    <option value="off-08">08:00</option>
+                                                    <option value="off-09">09:00</option>
+                                                    <option value="off-10">10:00</option>
+                                                    <option value="off-11">11:00</option>
+                                                    <option value="off-12">12:00</option>
+                                                    <option value="off-13">13:00</option>
+                                                    <option value="off-14">14:00</option>
+                                                    <option value="off-15">15:00</option>
+                                                    <option value="off-16">16:00</option>
+                                                    <option value="off-17">17:00</option>
+                                                    <option value="off-18">18:00</option>
+                                                    <option value="off-19">19:00</option>
+                                                    <option value="off-20">20:00</option>
+                                                    <option value="off-21">21:00</option>
+                                                    <option value="off-22">22:00</option>
+                                                    <option value="off-23">23:00</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -308,7 +357,7 @@
                                     <div class="field">
                                         <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
                                         <div class="control">
-                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="number" 
+                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="number"
                                                 placeholder="15" value="15">
                                         </div>
                                     </div>
@@ -323,16 +372,6 @@
                                     </div> -->
                                     <div class="field-body">
                                         <div class="control">
-                                            <!-- <div class="select"> -->
-                                            <!-- <select> -->
-                                            <!-- <option>Default settings</option> -->
-                                            <!-- <option>user-settings-1</option> -->
-                                            <!-- <option>user-settings-2</option> -->
-                                            <!-- <option>user-settings-3</option> -->
-                                            <!-- <option>user-settings-4</option> -->
-                                            <!-- <option>user-settings-5</option> -->
-                                            <!-- </select> -->
-                                            <!-- </div> -->
                                             <button id="settings_save_button_id" class="button is-info is-rounded"
                                                 onclick="saveSettings()">
                                                 Save
@@ -367,7 +406,7 @@
                     <div class="tile is-parent is-vertical">
 
                         <!-- Tile: Recorded files -->
-                        <article class="tile is-child box has-background-grey-lighter">
+                        <!-- <article class="tile is-child box has-background-grey-lighter">
                             <p class="title"> Recorded files</p>
                             <div class="field is-horizontal">
                                 <div class="field-label is-normal">
@@ -386,50 +425,50 @@
                             </div>
 
                             <div style="height: 15em; overflow: auto;">
-                                <table class="table is-striped is-fullwidth">
-                                    <thead>
-                                        <tr>
-                                            <th><abbr title="Location">Row</abbr></th>
-                                            <th>Sound file</th>
-                                            <th>Download</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <th>1</th>
-                                            <td>WURB2_20170802T024532+0200_N43.3201W2.0054_FS384.wav</td>
-                                            <td><a ref="">download</a></td>
-                                            <td><a ref="">delete</a></td>
-                                        </tr>
-                                        <tr>
-                                            <th>2</th>
-                                            <td>WURB2_20170802T025117+0200_N43.3201W2.0054_FS384.wav</td>
-                                            <td><a ref="">download</a></td>
-                                            <td><a ref="">delete</a></td>
-                                        </tr>
-                                        <tr>
-                                            <th>3</th>
-                                            <td>WURB2_20170802T030204+0200_N43.3201W2.0054_FS384.wav</td>
-                                            <td><a ref="">download</a></td>
-                                            <td><a ref="">delete</a></td>
-                                        </tr>
-                                        <tr>
-                                            <th>4</th>
-                                            <td>WURB2_20170802T0301712+0200_N43.3201W2.0054_FS384.wav</td>
-                                            <td><a ref="">download</a></td>
-                                            <td><a ref="">delete</a></td>
-                                        </tr>
-                                        <tr>
-                                            <th>5</th>
-                                            <td>WURB2_20170802T032717+0200_N43.3201W2.0054_FS384.wav</td>
-                                            <td><a ref="">download</a></td>
-                                            <td><a ref="">delete</a></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    <table class="table is-striped is-fullwidth">
+                                        <thead>
+                                            <tr>
+                                                <th><abbr title="Location">Row</abbr></th>
+                                                <th>Sound file</th>
+                                                <th>Download</th>
+                                                <th>Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <th>1</th>
+                                                <td>WURB2_20170802T024532+0200_N43.3201W2.0054_FS384.wav</td>
+                                                <td><a ref="">download</a></td>
+                                                <td><a ref="">delete</a></td>
+                                            </tr>
+                                            <tr>
+                                                <th>2</th>
+                                                <td>WURB2_20170802T025117+0200_N43.3201W2.0054_FS384.wav</td>
+                                                <td><a ref="">download</a></td>
+                                                <td><a ref="">delete</a></td>
+                                            </tr>
+                                            <tr>
+                                                <th>3</th>
+                                                <td>WURB2_20170802T030204+0200_N43.3201W2.0054_FS384.wav</td>
+                                                <td><a ref="">download</a></td>
+                                                <td><a ref="">delete</a></td>
+                                            </tr>
+                                            <tr>
+                                                <th>4</th>
+                                                <td>WURB2_20170802T0301712+0200_N43.3201W2.0054_FS384.wav</td>
+                                                <td><a ref="">download</a></td>
+                                                <td><a ref="">delete</a></td>
+                                            </tr>
+                                            <tr>
+                                                <th>5</th>
+                                                <td>WURB2_20170802T032717+0200_N43.3201W2.0054_FS384.wav</td>
+                                                <td><a ref="">download</a></td>
+                                                <td><a ref="">delete</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                             </div>
-                        </article>
+                        </article> -->
 
                         <!-- Tile: About -->
                         <article class="tile is-child box has-background-grey-lighter">
