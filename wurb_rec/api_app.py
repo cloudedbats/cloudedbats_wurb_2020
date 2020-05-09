@@ -87,7 +87,7 @@ async def webpage(request: fastapi.Request):
         print("EXCEPTION: Called: webpage: ", e)
 
 
-@app.get("/start_rec")
+@app.get("/start-rec")
 async def start_recording():
     try:
         print("DEBUG: Called: start_rec.")
@@ -97,7 +97,7 @@ async def start_recording():
         print("EXCEPTION: Called: start_rec: ", e)
 
 
-@app.get("/stop_rec")
+@app.get("/stop-rec")
 async def stop_recording():
     try:
         print("DEBUG: Called: stop_rec.")
@@ -107,7 +107,7 @@ async def stop_recording():
         print("EXCEPTION: Called: stop_rec: ", e)
 
 
-@app.get("/get_status")
+@app.get("/get-status")
 async def get_status():
     try:
         print("DEBUG: Called: get_status.")
@@ -122,7 +122,7 @@ async def get_status():
         print("EXCEPTION: Called: get_status: ", e)
 
 
-@app.post("/save_location/")
+@app.post("/save-location/")
 async def save_location(settings: LocationSettings):
     try:
         print("DEBUG: Called: save_location: ", settings)
@@ -132,7 +132,7 @@ async def save_location(settings: LocationSettings):
         print("EXCEPTION: Called: save_location: ", e)
 
 
-@app.get("/get_location/")
+@app.get("/get-location/")
 async def get_location(default: bool = False):
     try:
         print("DEBUG: Called: get_location.")
@@ -143,18 +143,18 @@ async def get_location(default: bool = False):
         print("EXCEPTION: Called: get_location: ", e)
 
 
-@app.get("/set_time/")
-async def set_time(posix_time_ms: str):
+@app.get("/set-time/")
+async def set_time(posixtime: str):
     try:
-        print("DEBUG: Called: set_time: ", posix_time_ms)
+        print("DEBUG: Called: set_time: ", posixtime)
         global wurb_rec_manager
-        posix_time_s = int(int(posix_time_ms) / 1000)
+        posix_time_s = int(int(posixtime) / 1000)
         await wurb_rec_manager.wurb_settings.set_detector_time(posix_time_s)
     except Exception as e:
         print("EXCEPTION: Called: set_time: ", e)
 
 
-@app.post("/save_settings/")
+@app.post("/save-settings/")
 async def save_settings(settings: DetectorSettings):
     try:
         print("DEBUG: Called: save_settings: ", settings)
@@ -164,7 +164,7 @@ async def save_settings(settings: DetectorSettings):
         print("EXCEPTION: Called: save_settings: ", e)
 
 
-@app.get("/get_settings/")
+@app.get("/get-settings/")
 async def get_settings(default: bool = False):
     try:
         print("DEBUG: Called: get_settings.")
@@ -177,7 +177,7 @@ async def get_settings(default: bool = False):
         print("EXCEPTION: Called: get_settings: ", e)
 
 
-@app.get("/rpi_control/")
+@app.get("/rpi-control/")
 async def rpi_control(command: str):
     try:
         print("DEBUG: Called: rpi_control: ", command)
@@ -230,6 +230,6 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         print("EXCEPTION: Called: websocket_endpoint: ", e)
 
 
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: int, q: str = None, q2: int = None):
-#    return {"item_id": item_id, "q": q, "q2": q2}
+# @app.get("/items/{item-id}")
+# async def read_item(item-id: int, q: str = None, q2: int = None):
+#    return {"item-id": item_id, "q": q, "q2": q2}

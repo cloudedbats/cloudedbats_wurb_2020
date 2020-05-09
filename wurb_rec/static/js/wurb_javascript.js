@@ -40,8 +40,8 @@ window.onload = function () {
   const settings_default_button_id = document.getElementById("settings_default_button_id");
 
   // Update stored location and settings.
-  // getLocation()
-  // getSettings()
+  getLocation()
+  getSettings()
   // Check geolocation:
   geoLocationSourceOnChange();
 
@@ -153,7 +153,7 @@ async function startRecording() {
     // Save location and settings before recording starts.
     saveLocation()
     saveSettings()
-    await fetch('/start_rec');
+    await fetch('/start-rec');
   } catch (err) {
     alert(`ERROR startRecording: ${err}`);
     console.log(err);
@@ -163,7 +163,7 @@ async function startRecording() {
 async function stopRecording(action) {
   try {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
-    await fetch('/stop_rec');
+    await fetch('/stop-rec');
   } catch (err) {
     alert(`ERROR stopRecording: ${err}`);
     console.log(err);
@@ -177,7 +177,7 @@ async function saveLocation() {
       latitude_dd: latitude_dd_id.value,
       longitude_dd: longitude_dd_id.value,
     }
-    await fetch("/save_location/",
+    await fetch("/save-location/",
       {
         method: "POST",
         body: JSON.stringify(location)
@@ -190,7 +190,7 @@ async function saveLocation() {
 
 async function getLocation() {
   try {
-    let response = await fetch("/get_location");
+    let response = await fetch("/get-location");
     let data = await response.json();
     updateLocation(data);
   } catch (err) {
@@ -202,8 +202,8 @@ async function getLocation() {
 async function setDetectorTime() {
   try {
     let posix_time_ms = new Date().getTime();
-    // let url_string = "/set_time/?posix_time_ms=" + posix_time_ms;    
-    let url_string = `/set_time/?posix_time_ms=${posix_time_ms}`;
+    // let url_string = "/set_time/?posixtime=" + posix_time_ms;    
+    let url_string = `/set-time/?posixtime=${posix_time_ms}`;
     await fetch(url_string);
   } catch (err) {
     alert(`ERROR setDetectorTime: ${err}`);
@@ -225,7 +225,7 @@ async function saveSettings() {
       scheduler_stop_event: settings_scheduler_stop_event_id.value,
       scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
     }
-    await fetch("/save_settings/",
+    await fetch("/save-settings/",
       {
         method: "POST",
         body: JSON.stringify(settings)
@@ -238,7 +238,7 @@ async function saveSettings() {
 
 async function getSettings() {
   try {
-    let response = await fetch("/get_settings/?default=false");
+    let response = await fetch("/get-settings/?default=false");
     let data = await response.json();
     updateSettings(data);
   } catch (err) {
@@ -249,7 +249,7 @@ async function getSettings() {
 
 async function getDefaultSettings() {
   try {
-    let response = await fetch("/get_settings/?default=true");
+    let response = await fetch("/get-settings/?default=true");
     let data = await response.json();
     updateSettings(data);
   } catch (err) {
@@ -260,7 +260,7 @@ async function getDefaultSettings() {
 
 async function raspberryPiControl(command) {
   try {
-    let url_string = `/rpi_control/?command=${command}`;
+    let url_string = `/rpi-control/?command=${command}`;
     await fetch(url_string);
   } catch (err) {
     alert(`ERROR raspberryPiControl: ${err}`);

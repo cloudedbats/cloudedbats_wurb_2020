@@ -41,7 +41,7 @@ class WurbSettings(object):
             "detection_algorithm": "detection-simple",
             "scheduler_start_event": "on-sunset",
             "scheduler_start_adjust": "-15",
-            "scheduler_stop_event": "off-sunset",
+            "scheduler_stop_event": "off-sunrise",
             "scheduler_stop_adjust": "15",
         }
 
