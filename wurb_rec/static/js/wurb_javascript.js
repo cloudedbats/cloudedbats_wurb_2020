@@ -39,17 +39,17 @@ window.onload = function () {
   const settings_reset_button_id = document.getElementById("settings_reset_button_id");
   const settings_default_button_id = document.getElementById("settings_default_button_id");
 
+  // Update stored location and settings.
+  // getLocation()
+  // getSettings()
+  // Check geolocation:
+  geoLocationSourceOnChange();
+
   // Start websocket.
   var ws_url = (window.location.protocol === "https:") ? "wss://" : "ws://"
   ws_url += window.location.host // Note: Host includes port.
   ws_url += "/ws";
   startWebsocket(ws_url);
-
-  // Update stored settings.
-  getSettings()
-
-  // Check geolocation:
-  geoLocationSourceOnChange();
 };
 
 function hideDivision(div_id) {
@@ -97,7 +97,7 @@ function geoLocationSourceOnChange() {
     longitude_dd_id.value = "0.0";
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
-    geo_set_pos_button_id.disabled = true;
+    geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
   }
   else if (selected_value == "geo-manual") {
@@ -150,11 +150,12 @@ function errorCallback(error) {
 async function startRecording() {
   try {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
-    // Save settings before recording starts.
+    // Save location and settings before recording starts.
+    saveLocation()
     saveSettings()
     await fetch('/start_rec');
   } catch (err) {
-    alert(`ERROR callRecordingUnit: ${err}`);
+    alert(`ERROR startRecording: ${err}`);
     console.log(err);
   };
 };
@@ -164,93 +165,36 @@ async function stopRecording(action) {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
     await fetch('/stop_rec');
   } catch (err) {
-    alert(`ERROR callRecordingUnit: ${err}`);
+    alert(`ERROR stopRecording: ${err}`);
     console.log(err);
   };
 };
 
-async function saveSettings() {
-  try {
-    let settings = {
-      geo_source_option: geo_source_option_id.value,
-      latitude_dd: latitude_dd_id.value,
-      longitude_dd: longitude_dd_id.value,
-      rec_mode: settings_rec_mode_id.value,
-      filename_prefix: settings_filename_prefix_id.value,
-      detection_limit: settings_detection_limit_id.value,
-      detection_sensitivity: settings_detection_sensitivity_id.value,
-      file_directory: settings_file_directory_id.value,
-      detection_algorithm: settings_detection_algorithm_id.value,
-      scheduler_start_event: settings_scheduler_start_event_id.value,
-      scheduler_start_adjust: settings_scheduler_start_adjust_id.value,
-      scheduler_stop_event: settings_scheduler_stop_event_id.value,
-      scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
-    }
-    await fetch("/update_settings/",
-      {
-        method: "POST",
-        body: JSON.stringify(settings)
-      })
-  } catch (err) {
-    alert(`ERROR saveSettings: ${err}`);
-    console.log(err);
-  };
-};
-
-async function getSettings() {
-  try {
-    let response = await fetch("/get_settings/?default=false");
-    let data = await response.json();
-    update_settings(data);
-  } catch (err) {
-    alert(`ERROR loadSettings: ${err}`);
-    console.log(err);
-  };
-};
-
-async function getDefaultSettings() {
-  try {
-    let response = await fetch("/get_settings/?default=true");
-    let data = await response.json();
-    update_settings(data);
-  } catch (err) {
-    alert(`ERROR loadSettings: ${err}`);
-    console.log(err);
-  };
-};
-
-function update_settings(settings) {
-  geo_source_option_id.value = settings.geo_source_option
-  latitude_dd_id.value = settings.latitude_dd
-  longitude_dd_id.value = settings.longitude_dd
-  settings_rec_mode_id.value = settings.rec_mode
-  settings_filename_prefix_id.value = settings.filename_prefix
-  settings_detection_limit_id.value = settings.detection_limit
-  settings_detection_sensitivity_id.value = settings.detection_sensitivity
-  settings_file_directory_id.value = settings.file_directory
-  settings_detection_algorithm_id.value = settings.detection_algorithm
-  settings_scheduler_start_event_id.value = settings.scheduler_start_event
-  settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
-  settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
-  settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
-  // Check geolocation:
-  // geoLocationSourceOnChange();
-}
-
-async function setLocation() {
+async function saveLocation() {
   try {
     let location = {
       geo_source_option: geo_source_option_id.value,
       latitude_dd: latitude_dd_id.value,
       longitude_dd: longitude_dd_id.value,
     }
-    await fetch("/update_settings/",
+    await fetch("/save_location/",
       {
         method: "POST",
         body: JSON.stringify(location)
       })
   } catch (err) {
-    alert(`ERROR saveSettings: ${err}`);
+    alert(`ERROR saveLocation: ${err}`);
+    console.log(err);
+  };
+};
+
+async function getLocation() {
+  try {
+    let response = await fetch("/get_location");
+    let data = await response.json();
+    updateLocation(data);
+  } catch (err) {
+    alert(`ERROR getLocation: ${err}`);
     console.log(err);
   };
 };
@@ -267,6 +211,53 @@ async function setDetectorTime() {
   };
 };
 
+async function saveSettings() {
+  try {
+    let settings = {
+      rec_mode: settings_rec_mode_id.value,
+      filename_prefix: settings_filename_prefix_id.value,
+      detection_limit: settings_detection_limit_id.value,
+      detection_sensitivity: settings_detection_sensitivity_id.value,
+      file_directory: settings_file_directory_id.value,
+      detection_algorithm: settings_detection_algorithm_id.value,
+      scheduler_start_event: settings_scheduler_start_event_id.value,
+      scheduler_start_adjust: settings_scheduler_start_adjust_id.value,
+      scheduler_stop_event: settings_scheduler_stop_event_id.value,
+      scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
+    }
+    await fetch("/save_settings/",
+      {
+        method: "POST",
+        body: JSON.stringify(settings)
+      })
+  } catch (err) {
+    alert(`ERROR saveSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+async function getSettings() {
+  try {
+    let response = await fetch("/get_settings/?default=false");
+    let data = await response.json();
+    updateSettings(data);
+  } catch (err) {
+    alert(`ERROR getSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+async function getDefaultSettings() {
+  try {
+    let response = await fetch("/get_settings/?default=true");
+    let data = await response.json();
+    updateSettings(data);
+  } catch (err) {
+    alert(`ERROR getDefaultSettings: ${err}`);
+    console.log(err);
+  };
+};
+
 async function raspberryPiControl(command) {
   try {
     let url_string = `/rpi_control/?command=${command}`;
@@ -277,18 +268,55 @@ async function raspberryPiControl(command) {
   };
 };
 
+function updateStatus(status) {
+  rec_status_id.innerHTML = status.rec_status;
+  rec_info_id.innerHTML = status.device_name;
+  rec_detector_time_id.innerHTML = status.detector_time;
+}
+
+function updateLocation(location) {
+  geo_source_option_id.value = location.geo_source_option
+  latitude_dd_id.value = location.latitude_dd
+  longitude_dd_id.value = location.longitude_dd
+  // Check geolocation:
+  geoLocationSourceOnChange();
+}
+
+function updateSettings(settings) {
+  settings_rec_mode_id.value = settings.rec_mode
+  settings_filename_prefix_id.value = settings.filename_prefix
+  settings_detection_limit_id.value = settings.detection_limit
+  settings_detection_sensitivity_id.value = settings.detection_sensitivity
+  settings_file_directory_id.value = settings.file_directory
+  settings_detection_algorithm_id.value = settings.detection_algorithm
+  settings_scheduler_start_event_id.value = settings.scheduler_start_event
+  settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
+  settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
+  settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
+}
+
+function updateLogTable(log_rows) {
+  // document.getElementById("rec_log_table_id").innerHTML =
+  //   "<tr><td>23:45:47 TEST.</td>";
+}
+
 function startWebsocket(ws_url) {
   // let ws = new WebSocket("ws://localhost:8000/ws");
   let ws = new WebSocket(ws_url);
   ws.onmessage = function (event) {
     let data_json = JSON.parse(event.data);
-    document.getElementById("rec_status_id").innerHTML = data_json.rec_status;
-    document.getElementById("rec_info_id").innerHTML = data_json.device_name;
-    document.getElementById("rec_detector_time_id").innerHTML = data_json.detector_time;
-
-    // document.getElementById("rec_log_table_id").innerHTML =
-    //   "<tr><td>23:45:47 TEST.</td>";
-
+    if ("status" in data_json === true) {
+      updateStatus(data_json.status)
+    }
+    if ("location" in data_json === true) {
+      updateLocation(data_json.location)
+    }
+    if ("settings" in data_json === true) {
+      updateSettings(data_json.settings)
+    }
+    if ("log_rows" in data_json === true) {
+      updateLogTable(data_json.log_rows)
+    }
   }
   ws.onclose = function () {
     // Try to reconnect in 5th seconds. Will continue...

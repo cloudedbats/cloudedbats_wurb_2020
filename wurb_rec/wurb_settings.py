@@ -16,22 +16,23 @@ class WurbSettings(object):
     def __init__(self):
         """ """
         self.settings_file_path = "wurb_rec_settings.txt"
-        self.latitude_dd = None
-        self.longitude_dd = None
-        self.os_raspbian = None
         self.default_settings = None
         self.current_settings = None
+        self.default_location = None
+        self.current_location = None
+        self.settings_event = None
+        self.location_event = None
+        self.os_raspbian = None
         #
-        self.setup_default_settings()
+        self.define_default_settings()
         self.current_settings = self.default_settings.copy()
-        self.load_settings()
+        self.define_default_location()
+        self.current_location = self.default_location.copy()
+        self.load_settings_from_file()
 
-    def setup_default_settings(self):
+    def define_default_settings(self):
         """ """
         self.default_settings = {
-            "geo_source_option": "geo-not-used",
-            "latitude_dd": "0.0",
-            "longitude_dd": "0.0",
             "rec_mode": "rec-mode-manual",
             "file_directory": "recorded_files",
             "filename_prefix": "wurb",
@@ -43,6 +44,26 @@ class WurbSettings(object):
             "scheduler_stop_event": "off-sunset",
             "scheduler_stop_adjust": "15",
         }
+
+    def define_default_location(self):
+        """ """
+        self.default_location = {
+            "geo_source_option": "geo-not-used",
+            "latitude_dd": "0.0",
+            "longitude_dd": "0.0",
+        }
+
+    async def save_settings(self, settings_dict={}):
+        """ """
+        for key, value in settings_dict.items():
+            if value is not None:
+                self.current_settings[key] = value
+        self.save_settings_to_file()
+        # Create a new event and release all from the old event.
+        old_settings_event = self.settings_event
+        self.settings_event = asyncio.Event()
+        if old_settings_event:
+            old_settings_event.set()
 
     def get_setting(self, key=None):
         """ """
@@ -56,32 +77,21 @@ class WurbSettings(object):
             return self.default_settings
         return self.current_settings
 
-    def load_settings(self):
+    async def save_location(self, location_dict={}):
         """ """
-        settings_file_path = pathlib.Path(self.settings_file_path)
-        if settings_file_path.exists():
-            with settings_file_path.open("r") as settings_file:
-                for row in settings_file:
-                    if ":" in row:
-                        row_parts = row.split(":")
-                        key = row_parts[0].strip()
-                        value = row_parts[1].strip()
-                        if key in self.current_settings.keys():
-                            self.current_settings[key] = value
-
-    def save_settings(self):
-        """ """
-        settings_file_path = pathlib.Path(self.settings_file_path)
-        with settings_file_path.open("w") as settings_file:
-            for key, value in self.current_settings.items():
-                settings_file.write(key + ": " + str(value) + "\n")
-
-    async def update_settings(self, settings_dict={}):
-        """ """
-        for key, value in settings_dict.items():
+        for key, value in location_dict.items():
             if value is not None:
-                self.current_settings[key] = value
-        self.save_settings()
+                self.current_location[key] = value
+        self.save_settings_to_file()
+        # Create a new event and release all from the old event.
+        old_location_event = self.location_event
+        self.location_event = asyncio.Event()
+        if old_location_event:
+            old_location_event.set()
+
+    async def get_location(self):
+        """ """
+        return self.current_location
 
     async def set_detector_time(self, posix_time_s):
         """ Only valid for Raspbian and user pi. """
@@ -117,6 +127,48 @@ class WurbSettings(object):
                 print("DEBUG: Settings: rpi_control: Failed, command not valid:", command)
         else:
             print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
+
+    async def get_settings_event(self):
+        """ """
+        try:
+            if self.settings_event == None:
+                self.settings_event = asyncio.Event()
+            return self.settings_event
+        except Exception as e:
+            print("Exception: ", e)
+
+    async def get_location_event(self):
+        """ """
+        try:
+            if self.location_event == None:
+                self.location_event = asyncio.Event()
+            return self.location_event
+        except Exception as e:
+            print("Exception: ", e)
+
+    def load_settings_from_file(self):
+        """ Load from file. """
+        settings_file_path = pathlib.Path(self.settings_file_path)
+        if settings_file_path.exists():
+            with settings_file_path.open("r") as settings_file:
+                for row in settings_file:
+                    if ":" in row:
+                        row_parts = row.split(":")
+                        key = row_parts[0].strip()
+                        value = row_parts[1].strip()
+                        if key in self.current_settings.keys():
+                            self.current_settings[key] = value
+                        if key in self.current_location.keys():
+                            self.current_location[key] = value
+
+    def save_settings_to_file(self):
+        """ Save to file. """
+        settings_file_path = pathlib.Path(self.settings_file_path)
+        with settings_file_path.open("w") as settings_file:
+            for key, value in self.current_location.items():
+                settings_file.write(key + ": " + str(value) + "\n")
+            for key, value in self.current_settings.items():
+                settings_file.write(key + ": " + str(value) + "\n")
 
     def is_os_raspbian(self):
         """ Check OS version for Raspberry Pi. """

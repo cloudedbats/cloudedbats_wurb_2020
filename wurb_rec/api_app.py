@@ -28,16 +28,13 @@ templates = Jinja2Templates(directory="wurb_rec/templates")
 wurb_rec_manager = None
 
 # Schemas.
-class WurbLocation(BaseModel):
+class LocationSettings(BaseModel):
     geo_source_option: str = None
     latitude_dd: float = None
     longitude_dd: float = None
 
 
-class WurbSettings(BaseModel):
-    geo_source_option: str = None
-    latitude_dd: float = None
-    longitude_dd: float = None
+class DetectorSettings(BaseModel):
     rec_mode: str = None
     file_directory: str = None
     filename_prefix: str = None
@@ -93,21 +90,21 @@ async def webpage(request: fastapi.Request):
 @app.get("/start_rec")
 async def start_recording():
     try:
-        print("DEBUG: Called: start_recording.")
+        print("DEBUG: Called: start_rec.")
         global wurb_rec_manager
         await wurb_rec_manager.start_rec()
     except Exception as e:
-        print("EXCEPTION: Called: start_recording: ", e)
+        print("EXCEPTION: Called: start_rec: ", e)
 
 
 @app.get("/stop_rec")
 async def stop_recording():
     try:
-        print("DEBUG: Called: stop_recording.")
+        print("DEBUG: Called: stop_rec.")
         global wurb_rec_manager
         await wurb_rec_manager.stop_rec()
     except Exception as e:
-        print("EXCEPTION: Called: stop_recording: ", e)
+        print("EXCEPTION: Called: stop_rec: ", e)
 
 
 @app.get("/get_status")
@@ -125,6 +122,27 @@ async def get_status():
         print("EXCEPTION: Called: get_status: ", e)
 
 
+@app.post("/save_location/")
+async def save_location(settings: LocationSettings):
+    try:
+        print("DEBUG: Called: save_location: ", settings)
+        global wurb_rec_manager
+        await wurb_rec_manager.wurb_settings.save_location(settings.dict())
+    except Exception as e:
+        print("EXCEPTION: Called: save_location: ", e)
+
+
+@app.get("/get_location/")
+async def get_location(default: bool = False):
+    try:
+        print("DEBUG: Called: get_location.")
+        global wurb_rec_manager
+        current_location_dict = await wurb_rec_manager.wurb_settings.get_location()
+        return current_location_dict
+    except Exception as e:
+        print("EXCEPTION: Called: get_location: ", e)
+
+
 @app.get("/set_time/")
 async def set_time(posix_time_ms: str):
     try:
@@ -136,14 +154,14 @@ async def set_time(posix_time_ms: str):
         print("EXCEPTION: Called: set_time: ", e)
 
 
-@app.post("/update_settings/")
-async def update_settings(settings: WurbSettings):
+@app.post("/save_settings/")
+async def save_settings(settings: DetectorSettings):
     try:
-        print("DEBUG: Called: update_settings: ", settings)
+        print("DEBUG: Called: save_settings: ", settings)
         global wurb_rec_manager
-        await wurb_rec_manager.wurb_settings.update_settings(settings.dict())
+        await wurb_rec_manager.wurb_settings.save_settings(settings.dict())
     except Exception as e:
-        print("EXCEPTION: Called: update_settings: ", e)
+        print("EXCEPTION: Called: save_settings: ", e)
 
 
 @app.get("/get_settings/")
@@ -151,7 +169,9 @@ async def get_settings(default: bool = False):
     try:
         print("DEBUG: Called: get_settings.")
         global wurb_rec_manager
-        current_settings_dict = await wurb_rec_manager.wurb_settings.get_settings(default)
+        current_settings_dict = await wurb_rec_manager.wurb_settings.get_settings(
+            default
+        )
         return current_settings_dict
     except Exception as e:
         print("EXCEPTION: Called: get_settings: ", e)
@@ -174,28 +194,37 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         global wurb_rec_manager
         await websocket.accept()
         while True:
-            status_dict = await wurb_rec_manager.get_status_dict()
-            await websocket.send_json(
-                {
-                    "rec_status": status_dict.get("rec_status", ""),
-                    "device_name": status_dict.get("device_name", ""),
-                    "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
-                }
-            )
             # Wait for next event to happen.
-
-            timer_notification = asyncio.sleep(1)
-
             rec_manager_notification = await wurb_rec_manager.get_notification_event()
-            # device_notification = ultrasound_devices.get_notification_event()
-            # rec_notification = recorder.get_notification_event()
+            location_changed_notification = await wurb_rec_manager.wurb_settings.get_location_event()
+            settings_changed_notification = await wurb_rec_manager.wurb_settings.get_settings_event()
             events = [
-                timer_notification,
+                asyncio.sleep(1), # Update detector time field each second.
                 rec_manager_notification.wait(),
-                # device_notification.wait(),
-                # rec_notification.wait(),
+                location_changed_notification.wait(),
+                settings_changed_notification.wait(),
             ]
             await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
+
+            # Prepare message to client.
+            ws_json = {}
+            status_dict = await wurb_rec_manager.get_status_dict()
+            ws_json["status"] = {
+                "rec_status": status_dict.get("rec_status", ""),
+                "device_name": status_dict.get("device_name", ""),
+                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+            }
+            if location_changed_notification.is_set():
+                ws_json[
+                    "location"
+                ] = await wurb_rec_manager.wurb_settings.get_location()
+            if settings_changed_notification.is_set():
+                ws_json[
+                    "settings"
+                ] = await wurb_rec_manager.wurb_settings.get_settings()
+
+            # Send to client.
+            await websocket.send_json(ws_json)
 
     except Exception as e:
         print("EXCEPTION: Called: websocket_endpoint: ", e)
