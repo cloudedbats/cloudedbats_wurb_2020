@@ -451,7 +451,7 @@ class WaveFileWriter:
         file_directory = self.wurb_settings.get_setting("file_directory")
 
         target_dir_1st_path = "/mount/usb0/"  # For RPi USB.
-        target_dir_2nd_path = "/user/pi/"  # For RPi SD card with user 'pi'.
+        target_dir_2nd_path = "/home/pi/"  # For RPi SD card with user 'pi'.
 
         # Default for not Raspberry Pi.
         dir_path = pathlib.Path("wurb_files", file_directory)

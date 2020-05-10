@@ -181,7 +181,7 @@ class WurbSettings(object):
 
     def get_settings_dir_path(self):
         """ """
-        rpi_dir_path = "/user/pi/"  # For RPi SD card with user 'pi'.
+        rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
         # Default for not Raspberry Pi.
         dir_path = pathlib.Path("wurb_files")
         if pathlib.Path(rpi_dir_path).exists():
