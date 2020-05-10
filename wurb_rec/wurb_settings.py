@@ -16,7 +16,7 @@ class WurbSettings(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
-        self.settings_file_path = "wurb_rec_settings.txt"
+        self.settings_file_name = "wurb_rec_settings.txt"
         self.default_settings = None
         self.current_settings = None
         self.default_location = None
@@ -90,6 +90,10 @@ class WurbSettings(object):
         if old_location_event:
             old_location_event.set()
 
+    def get_location_dict(self):
+        """ """
+        return self.current_location
+
     async def get_location(self):
         """ """
         return self.current_location
@@ -125,7 +129,9 @@ class WurbSettings(object):
             elif command == "rpi_update_sw":
                 os.system("cd /home/pi/cloudedbats_wurb_2020 && git pull")
             else:
-                print("DEBUG: Settings: rpi_control: Failed, command not valid:", command)
+                print(
+                    "DEBUG: Settings: rpi_control: Failed, command not valid:", command
+                )
         else:
             print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
 
@@ -149,7 +155,8 @@ class WurbSettings(object):
 
     def load_settings_from_file(self):
         """ Load from file. """
-        settings_file_path = pathlib.Path(self.settings_file_path)
+        dir_path = self.get_settings_dir_path()
+        settings_file_path = pathlib.Path(dir_path, self.settings_file_name)
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
@@ -157,19 +164,32 @@ class WurbSettings(object):
                         row_parts = row.split(":")
                         key = row_parts[0].strip()
                         value = row_parts[1].strip()
-                        if key in self.current_settings.keys():
+                        if key in self.default_settings.keys():
                             self.current_settings[key] = value
-                        if key in self.current_location.keys():
+                        if key in self.default_location.keys():
                             self.current_location[key] = value
 
     def save_settings_to_file(self):
         """ Save to file. """
-        settings_file_path = pathlib.Path(self.settings_file_path)
+        dir_path = self.get_settings_dir_path()
+        settings_file_path = pathlib.Path(dir_path, self.settings_file_name)
         with settings_file_path.open("w") as settings_file:
             for key, value in self.current_location.items():
                 settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
                 settings_file.write(key + ": " + str(value) + "\n")
+
+    def get_settings_dir_path(self):
+        """ """
+        rpi_dir_path = "/user/pi/"  # For RPi SD card with user 'pi'.
+        # Default for not Raspberry Pi.
+        dir_path = pathlib.Path("wurb_files")
+        if pathlib.Path(rpi_dir_path).exists():
+            dir_path = pathlib.Path(rpi_dir_path, "wurb_files")
+        # Create directories.
+        if not dir_path.exists():
+            dir_path.mkdir(parents=True)
+        return dir_path
 
     def is_os_raspbian(self):
         """ Check OS version for Raspberry Pi. """
