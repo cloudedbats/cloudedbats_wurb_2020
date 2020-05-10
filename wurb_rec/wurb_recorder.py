@@ -6,13 +6,15 @@
 
 import asyncio
 import time
+import wave
+import pathlib
 from collections import deque
 import sounddevice
-import os
-import wave
+
 
 # CloudedBats.
 import wurb_rec
+
 
 class UltrasoundDevices(object):
     """ """
@@ -32,7 +34,6 @@ class UltrasoundDevices(object):
     async def check_devices(self):
         """ For asyncio events. """
         try:
-
             lock = asyncio.Lock()
             async with lock:
                 # Refresh device list.
@@ -187,7 +188,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 }
                 # Add to queue. Should be attached to the main async loop.
                 try:
-                    loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
+                    loop.call_soon_threadsafe(
+                        self.from_source_queue.put_nowait, send_dict
+                    )
                 except QueueFull:
                     print("EXCEPTION: from_source_queue: QueueFull.")
             except Exception as e:
@@ -358,7 +361,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                             if wave_file_writer:
                                 wave_file_writer.close()
 
-                            wave_file_writer = WaveFileWriter(self)
+                            wave_file_writer = WaveFileWriter(self.wurb_manager)
+                            wave_file_writer.create(item["time"])
 
                         if wave_file_writer:
                             wave_file_writer.write(item["data"])
@@ -385,98 +389,119 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
 
 class WaveFileWriter:
-    """ Each file is connected to a separate object to avoid concurrency problems. """
+    """ Each file is connected to a separate file writer object 
+        to avoid concurrency problems. """
 
-    def __init__(self, sound_target_obj):
+    def __init__(self, wurb_manager):
         """ """
-        self._wave_file = None
-        self._sound_target_obj = sound_target_obj
-        self._size_counter = 0
+        self.wurb_manager = wurb_manager
+        self.wurb_recorder = wurb_manager.wurb_recorder
+        self.wurb_settings = wurb_manager.wurb_settings
+        self.wurb_logging = wurb_manager.wurb_logging
+        self.wave_file = None
+        # self.size_counter = 0
 
-        import pathlib
+    def create(self, start_time):
+        """ Abstract. """
 
-        target_dir_1st_path = "/mount/usb0/" # For RPi USB.
-        target_dir_2nd_path = "/user/pi/" # For RPi SD card with user 'pi'.
-        target_dir_3rd_path = "./" # For other computers.
-
-        if pathlib.Path(target_dir_1st_path).exists():
-            print("DEBUG: exists: target_dir_1st_path")
-        if pathlib.Path(target_dir_2nd_path).exists():
-            print("DEBUG: exists: target_dir_2nd_path")
-        if pathlib.Path(target_dir_3rd_path).exists():
-            print("DEBUG: exists: target_dir_3rd_path")
-
-        if pathlib.Path(target_dir_1st_path).is_mount():
-            print("DEBUG: is_mount: target_dir_1st_path")
-        if pathlib.Path(target_dir_2nd_path).is_mount():
-            print("DEBUG: is_mount: target_dir_2nd_path")
-        if pathlib.Path(target_dir_3rd_path).is_mount():
-            print("DEBUG: is_mount: target_dir_3rd_path")
-
-
-
-        # Create file name.
-        # Default time and location.
-        datetimestring = time.strftime("%Y%m%dT%H%M%S%z")
-        latlongstring = ""  # Format: 'N56.78E12.34'
-        try:
-            if sound_target_obj._latitude >= 0:
-                latlongstring += "N"
-            else:
-                latlongstring += "S"
-            latlongstring += str(abs(sound_target_obj._latitude))
-            #
-            if sound_target_obj._longitude >= 0:
-                latlongstring += "E"
-            else:
-                latlongstring += "W"
-            latlongstring += str(abs(sound_target_obj._longitude))
-        except:
-            latlongstring = "N00.00E00.00"
-
-        # # Use GPS time if available.
-        # datetime_local_gps = wurb_core.WurbGpsReader().get_time_local_string()
-        # if datetime_local_gps:
-        #     datetimestring = datetime_local_gps
-        # # Use GPS location if available.
-        # latlong = wurb_core.WurbGpsReader().get_latlong_string()
-        # if latlong:
-        #     latlongstring = latlong
+        sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
+        rec_file_prefix = self.wurb_settings.get_setting("filename_prefix")
+        rec_target_dir_path = self.get_target_dir_path()
+        rec_datetime = self.get_datetime(start_time)
+        rec_location = self.get_location()
+        rec_type = self.get_type(sampling_freq_hz)
 
         # Filename example: "WURB1_20180420T205942+0200_N00.00E00.00_TE384.wav"
         filename = (
-            sound_target_obj._filename_prefix
+            rec_file_prefix
             + "_"
-            + datetimestring
+            + rec_datetime
             + "_"
-            + latlongstring
+            + rec_location
             + "_"
-            + sound_target_obj._filename_rec_type
+            + rec_type
             + ".wav"
         )
-        filenamepath = os.path.join(sound_target_obj._dir_path, filename)
-        #
-        if not os.path.exists(sound_target_obj._dir_path):
-            os.makedirs(sound_target_obj._dir_path)  # For data, full access.
+
+        # Create directories.
+        if not rec_target_dir_path.exists():
+            rec_target_dir_path.mkdir(parents=True)
         # Open wave file for writing.
-        self._wave_file = wave.open(filenamepath, "wb")
-        self._wave_file.setnchannels(1)  # 1=Mono.
-        self._wave_file.setsampwidth(2)  # 2=16 bits.
-        self._wave_file.setframerate(sound_target_obj.sampling_freq_hz)
+        filenamepath = pathlib.Path(rec_target_dir_path, filename)
+        self.wave_file = wave.open(str(filenamepath), "wb")
+        self.wave_file.setnchannels(1)  # 1=Mono.
+        self.wave_file.setsampwidth(2)  # 2=16 bits.
+        self.wave_file.setframerate(sampling_freq_hz)
         # #
         # sound_target_obj._logger.info('Recorder: New sound file: ' + filename)
 
     def write(self, buffer):
         """ """
-        self._wave_file.writeframes(buffer)
-        self._size_counter += len(buffer) / 2  # Count frames.
+        self.wave_file.writeframes(buffer)
+        # self.size_counter += len(buffer) / 2  # Count frames.
 
     def close(self):
         """ """
-        if self._wave_file is not None:
-            self._wave_file.close()
-            self._wave_file = None
+        if self.wave_file is not None:
+            self.wave_file.close()
+            self.wave_file = None
 
-            # length_in_sec = self._size_counter / self._sound_target_obj.sampling_freq_hz
-            # self._sound_target_obj._logger.info('Recorder: Sound file closed. Length:' + str(length_in_sec) + ' sec.')
+    def get_target_dir_path(self):
+        """ """
+        file_directory = self.wurb_settings.get_setting("file_directory")
 
+        target_dir_1st_path = "/mount/usb0/"  # For RPi USB.
+        target_dir_2nd_path = "/user/pi/"  # For RPi SD card with user 'pi'.
+
+        # Default for not Raspberry Pi.
+        dir_path = pathlib.Path("wurb_files", file_directory)
+
+        if pathlib.Path(target_dir_1st_path).exists():
+            dir_path = pathlib.Path(target_dir_1st_path, file_directory)
+        if pathlib.Path(target_dir_2nd_path).exists():
+            dir_path = pathlib.Path(target_dir_2nd_path, "wurb_files", file_directory)
+
+        # if pathlib.Path(target_dir_1st_path).is_mount():
+        #     print("DEBUG: is_mount: target_dir_1st_path")
+        # if pathlib.Path(target_dir_2nd_path).is_mount():
+        #     print("DEBUG: is_mount: target_dir_2nd_path")
+
+        return dir_path
+
+    def get_datetime(self, start_time):
+        """ """
+        datetime_str = time.strftime("%Y%m%dT%H%M%S%z", time.localtime(start_time))
+        return datetime_str
+
+    def get_location(self):
+        """ """
+        latlongstring = ""
+        try:
+            location_dict = self.wurb_settings.get_location_dict()
+            latitude_dd = float(location_dict.get("latitude_dd", "0.0"))
+            longitude_dd = float(location_dict.get("longitude_dd", "0.0"))
+            if latitude_dd >= 0:
+                latlongstring += "N"
+            else:
+                latlongstring += "S"
+            latlongstring += str(abs(latitude_dd))
+            #
+            if longitude_dd >= 0:
+                latlongstring += "E"
+            else:
+                latlongstring += "W"
+            latlongstring += str(abs(longitude_dd))
+        except:
+            latlongstring = "N00.00E00.00"
+
+        return latlongstring
+
+    def get_type(self, sampling_freq_hz):
+        """ """
+        try:
+            sampling_freq_khz = sampling_freq_hz / 1000.0
+            sampling_freq_khz = round(sampling_freq_khz, 0)
+        except:
+            sampling_freq_khz = "000"
+
+        return "FS" + str(sampling_freq_khz)
