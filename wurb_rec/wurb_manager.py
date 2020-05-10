@@ -29,6 +29,7 @@ class WurbRecManager(object):
 
             self.wurb_settings = None
             self.wurb_logging = None
+            self.wurb_recorder = None
 
         except Exception as e:
             print("Exception: ", e)
@@ -37,9 +38,9 @@ class WurbRecManager(object):
         """ """
         try:
             self.ultrasound_devices = wurb_rec.UltrasoundDevices()
-            self.wurb_recorder = wurb_rec.WurbRecorder()
-            self.wurb_settings = wurb_rec.WurbSettings()
-            self.wurb_logging = wurb_rec.WurbLogging()
+            self.wurb_recorder = wurb_rec.WurbRecorder(self)
+            self.wurb_settings = wurb_rec.WurbSettings(self)
+            self.wurb_logging = wurb_rec.WurbLogging(self)
             self.update_status_task = asyncio.create_task(self.update_status())
 
             # await self.ultrasound_devices.start_checking_devices()

@@ -16,6 +16,7 @@ import wurb_rec
 
 class UltrasoundDevices(object):
     """ """
+
     def __init__(self):
         """ """
         # Ultrasound microphones supported by default:
@@ -105,9 +106,10 @@ class UltrasoundDevices(object):
 class WurbRecorder(wurb_rec.SoundStreamManager):
     """ """
 
-    def __init__(self, queue_max_size=120):
+    def __init__(self, wurb_manager, queue_max_size=120):
         """ """
         super().__init__(queue_max_size)
+        self.wurb_manager = wurb_manager
         self.rec_status = ""
         self.device_name = ""
         self.sampling_freq_hz = 0
@@ -184,11 +186,13 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     "data": indata[:, 0],  # Transform list of lists to list.
                 }
                 # Add to queue. Should be attached to the main async loop.
-                loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
-
+                try:
+                    loop.call_soon_threadsafe(self.from_source_queue.put_nowait, send_dict)
+                except QueueFull:
+                    print("EXCEPTION: from_source_queue: QueueFull.")
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
-                loop.call_soon_threadsafe(sound_source_event.set)
+                loop.call_soon_threadsafe(sound_source_event.set())
 
             """ End of locally defined callback. """
 
@@ -240,7 +244,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
             sound_detected = False
             sound_detected_counter = 0
-            sound_detector = wurb_rec.SoundDetector().get_detector()
+            sound_detector = wurb_rec.SoundDetection(self.wurb_manager).get_detection()
 
             while True:
                 try:
@@ -391,9 +395,9 @@ class WaveFileWriter:
 
         import pathlib
 
-        target_dir_1st_path = "/mount/usb0/"
-        target_dir_2nd_path = "/user/pi/"
-        target_dir_3rd_path = "./"
+        target_dir_1st_path = "/mount/usb0/" # For RPi USB.
+        target_dir_2nd_path = "/user/pi/" # For RPi SD card with user 'pi'.
+        target_dir_3rd_path = "./" # For other computers.
 
         if pathlib.Path(target_dir_1st_path).exists():
             print("DEBUG: exists: target_dir_1st_path")

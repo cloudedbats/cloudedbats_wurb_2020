@@ -13,8 +13,9 @@ import pathlib
 class WurbSettings(object):
     """ """
 
-    def __init__(self):
+    def __init__(self, wurb_manager):
         """ """
+        self.wurb_manager = wurb_manager
         self.settings_file_path = "wurb_rec_settings.txt"
         self.default_settings = None
         self.current_settings = None

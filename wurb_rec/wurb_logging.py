@@ -9,5 +9,6 @@ import asyncio
 class WurbLogging(object):
     """ """
 
-    def __init__(self):
+    def __init__(self, wurb_manager):
         """ """
+        self.wurb_manager = wurb_manager
