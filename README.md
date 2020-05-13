@@ -31,9 +31,9 @@ Notes from a developers perspective:
 
 ## Hardware needed
 
-- Any Raspberry Pi model with WiFi. (RPi Zero W works but is not recommended.) 
+- Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
 - SD card. For example Toshiba Exceria Pro 16GB, or similar.
-- Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and UltraMic 192K.
+- Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and Dodotronic UltraMic 192K.
 
 Note: For some strange reason M500-384 has problems if connected directly to a 
 Raspberry Pi 4 at startup. Workarounds are to use an extra USB 2.0 Hub, or 
@@ -138,12 +138,10 @@ have to download and install a new version:
 
     python3 --version
 
-Install software:
+Install software (udevil contains devmon):
 
-    sudo apt install python3-venv
-    sudo apt install python3-dev
-    sudo apt install libportaudio2
-    sudo apt install libatlas-base-dev # Only needed if gunicorn is used.
+    sudo apt install python3-venv python3-dev udevil
+    sudo apt install libportaudio2 libatlas-base-dev 
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
     cd cloudedbats_wurb_2020/
@@ -153,7 +151,9 @@ Install software:
 
     sudo nano /etc/rc.local 
 
-    # Add this before the "exit" row: 
+    # Add this before the "exit" row in rc.local:
+
+    ( sleep 5 && sudo -u pi devmon ) &
     sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
 
 And finally restart the detector:
@@ -177,8 +177,7 @@ And finally restart the detector:
 If files are stored on the SD card then they can be downloaded by 
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
-
-(Path to files during development: /home/pi/cloudedbats_wurb_2020/recorded_files)
+Path to files on the SD card: "/home/pi/wurb_files".
 
 Note: Some mobile phones complains if the "wifi4bats" network not is 
 connected to internet. If that happens, then tell it to forget the network, 

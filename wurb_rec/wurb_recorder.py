@@ -8,6 +8,7 @@ import asyncio
 import time
 import wave
 import pathlib
+import psutil
 from collections import deque
 import sounddevice
 
@@ -411,6 +412,10 @@ class WaveFileWriter:
         rec_location = self.get_location()
         rec_type = self.get_type(sampling_freq_hz)
 
+        if rec_target_dir_path is None:
+            self.wave_file = None
+            return
+
         # Filename example: "WURB1_20180420T205942+0200_N00.00E00.00_TE384.wav"
         filename = (
             rec_file_prefix
@@ -437,8 +442,9 @@ class WaveFileWriter:
 
     def write(self, buffer):
         """ """
-        self.wave_file.writeframes(buffer)
-        # self.size_counter += len(buffer) / 2  # Count frames.
+        if self.wave_file is not None:
+            self.wave_file.writeframes(buffer)
+            # self.size_counter += len(buffer) / 2  # Count frames.
 
     def close(self):
         """ """
@@ -450,22 +456,44 @@ class WaveFileWriter:
         """ """
         file_directory = self.wurb_settings.get_setting("file_directory")
 
-        target_dir_1st_path = "/mount/usb0/"  # For RPi USB.
-        target_dir_2nd_path = "/home/pi/"  # For RPi SD card with user 'pi'.
+        target_rpi_media_path = "/media/pi/"  # For RPi USB.
+        target_rpi_internal_path = "/home/pi/"  # For RPi SD card with user 'pi'.
+
+        dir_path = None
+
+        # hdd = psutil.disk_usage(str(dir_path))
+        # total_disk = hdd.total / (2**20)
+        # used_disk = hdd.used / (2**20)
+        # free_disk = hdd.free / (2**20)
+        # percent_disk = hdd.percent
+        # print("Total disk: ", total_disk, "MB")
+        # print("Used disk: ", used_disk, "MB")
+        # print("Free disk: ", free_disk, "MB")
+        # print("Percent: ", percent_disk, "%")
+
+        # Check mounted USB memory sticks. At least 20 MB left.
+        rpi_media_path = pathlib.Path(target_rpi_media_path)
+        if rpi_media_path.exists():
+            for usb_stick_name in sorted(list(rpi_media_path.iterdir())):
+                usb_stick_path = pathlib.Path(rpi_media_path, usb_stick_name)
+                hdd = psutil.disk_usage(str(usb_stick_path))
+                free_disk = hdd.free / (2**20) # To MB.
+                if free_disk >= 20.0:
+                    return pathlib.Path(usb_stick_path, file_directory)
+
+        # Check internal SD card. At least 500 MB left.
+        rpi_internal_path = pathlib.Path(target_rpi_internal_path)
+        if rpi_internal_path.exists():
+            hdd = psutil.disk_usage(str(rpi_internal_path))
+            free_disk = hdd.free / (2**20) # To MB.
+            if free_disk >= 500.0:
+                return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
+            else:
+                print("ERROR: Not enough space left on RPi SD card.")
+                return None # Not enough space left on RPi SD card.
 
         # Default for not Raspberry Pi.
         dir_path = pathlib.Path("wurb_files", file_directory)
-
-        if pathlib.Path(target_dir_1st_path).exists():
-            dir_path = pathlib.Path(target_dir_1st_path, file_directory)
-        if pathlib.Path(target_dir_2nd_path).exists():
-            dir_path = pathlib.Path(target_dir_2nd_path, "wurb_files", file_directory)
-
-        # if pathlib.Path(target_dir_1st_path).is_mount():
-        #     print("DEBUG: is_mount: target_dir_1st_path")
-        # if pathlib.Path(target_dir_2nd_path).is_mount():
-        #     print("DEBUG: is_mount: target_dir_2nd_path")
-
         return dir_path
 
     def get_datetime(self, start_time):
@@ -500,7 +528,7 @@ class WaveFileWriter:
         """ """
         try:
             sampling_freq_khz = sampling_freq_hz / 1000.0
-            sampling_freq_khz = round(sampling_freq_khz, 0)
+            sampling_freq_khz = int(round(sampling_freq_khz, 0))
         except:
             sampling_freq_khz = "000"
 
