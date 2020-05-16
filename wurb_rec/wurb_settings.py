@@ -100,19 +100,16 @@ class WurbSettings(object):
 
     async def set_detector_time(self, posix_time_s):
         """ Only valid for Raspbian and user pi. """
-        time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-        print(time_string)
-
         try:
+            utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
+            local_datetime = utc_datetime.replace(tzinfo=datetime.timezone.utc).astimezone(
+                tz=None
+            )
+            time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            print(time_string)
             # First check: OS Raspbian.
             if self.is_os_raspbian():
-                time_string = datetime.datetime.utcfromtimestamp(posix_time_s).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-                print(time_string)
-                # Second check: User pi exists.
+                # Second check: User pi exists. Perform: "date --set".
                 os.system('cd /home/pi && sudo date --set "' + time_string + '"')
         except Exception as e:
             print("EXCEPTION: set_detector_time: ", e)
