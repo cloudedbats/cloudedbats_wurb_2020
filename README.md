@@ -167,16 +167,18 @@ And finally restart the detector:
 
 **Note: Again - work in progress - only a few parts have been implemented so far.**
 
-- Start the Raspberry Pi with an ultrasonic microphone attached. 
-(It is also possible to attach the mic. after startup, or replace it without shutdown.)
-- Connect a computer or mobile phone to the WiFi network called "wifi4bats".
+- Connect the ultrasonic microphone to the detector (can also be done after startup).
+- Connect USB memory stick(s) (optional, or can be done after startup).
+- Start the Raspberry Pi. It will start automatically when power is added.
+- Connect a computer or mobile phone to the WiFi network called "wifi4bats". Password: chiroptera.
 - Open a web browser and go to http://10.3.141.1:8000
+- Check "Geographic location" and "Settings". 
 - Press "Start recording".
 - Record some bats.
 - Press "Stop recording".
 
-There are different ways to turn off the Raspberry Pi detector. (Just power off is not
-recommended since there is a small risk of corrupted SD card or USB memory sticks.): 
+There are different ways to turn the Raspberry Pi detector off (power off only is not
+recommended since there is a small risk of corrupted SD card or USB memory sticks): 
 
 - Go to "Settings - More" and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
