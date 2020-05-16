@@ -33,16 +33,18 @@ Notes from a developers perspective:
 
 - Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
 - SD card. For example Toshiba Exceria Pro 16GB, or similar.
-- Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and Dodotronic UltraMic 192K.
+- Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and 
+Dodotronic UltraMic 192K, 259K.
 
 Note: For some strange reason M500-384 has problems if connected directly to a 
-Raspberry Pi 4 at startup. Workarounds are to use an extra USB 2.0 Hub, or 
-attach the M500-384 microphone after startup.
+Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
+or attach the M500-384 microphone after startup.
 
 Optional hardware:
 
-- USB memory to store recorded sound files. 
-- GPS USB dongle. (Support for this not implemented yet.)
+- USB memory sticks. This is optional since the SD card will be used for storage if 
+no USB sticks are available. More than one memory stick can be used.
+- (USB GPS dongle. NOT implemented in software yet.)
 - Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
 missing features: On/off button, real time clock, possibility to use other 
 power sources than 5V, and scripting capability for turning the unit on/off 
@@ -75,22 +77,22 @@ Default password is: raspberry
 
 Update the Raspberry Pi: 
 
-    sudo apt-get update
-    sudo apt-get dist-upgrade
+    sudo apt update
+    sudo apt upgrade
 
 Make some configurations:
 
     sudo raspi-config
 
-For example, if you live in Sweden:
+Change this (example for Swedish users):
 
 - Password: chiroptera
-- Network options - Hostname: wurb 
-- Localisation Options - Timezone: Europe - Stockholm
-- Localisation Options - WiFi-country: SE
-- Advanced Options - Expand Filesystem.
+- Network options-Hostname: wurb 
+- Localisation Options-Timezone: Europe - Stockholm
+- Localisation Options-WiFi-country: SE
+- Advanced Options-Expand Filesystem.
 
-Reboot and reconnect to:
+Reboot and reconnect. Remember to use the new password.:
 
     sudo reboot
     # Wait...
@@ -108,18 +110,18 @@ Start a web browser and go to: http://10.3.141.1. Username: admin, password: sec
 
 Change the defaults settings from:
 
-- SSID: raspi-webgui
-- Password: ChangeMe
-- Admin username: admin
-- Password: secret
+- Hotspot-Basic-SSID (wifi name): raspi-webgui
+- Hotspot-Security-PSK (wifi password): ChangeMe
+- Authentication-Username (admin username): admin
+- Authentication-Password (admin password): secret
 
-Change to:
+Change to (example for Swedish users):
 
-- SSID: wifi4bats
-- Password: chiroptera
-- Admin username: batman
-- Password: chiroptera
-- Country Code: SE
+- Hotspot-Basic-SSID (wifi name): wifi4bats
+- Hotspot-Security-PSK (wifi password): chiroptera 
+- Authentication-Username (admin username): batman
+- Authentication-Password (admin password): chiroptera
+- Hotspot-Advanced-Country Code: Sweden
 
 About Internet connection:
 
@@ -171,10 +173,19 @@ And finally restart the detector:
 - Press "Start recording".
 - Record some bats.
 - Press "Stop recording".
-- Go to the WiFi administration page at http://10.3.141.1
-- Select "System" and press "Shutdown" to turn off the detector.
 
-If files are stored on the SD card then they can be downloaded by 
+There are different ways to turn off the Raspberry Pi detector. (Just power off is not
+recommended since there is a small risk of corrupted SD card or USB memory sticks.): 
+
+- Go to Settings - More and press the "Shutdown" button.
+- Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
+- If you are using a "Witty Pi 3" board from UUGear.com, just press the power off button. 
+
+More than one USB memory stick can be used. They will be filled up with wave files 
+in alphabetic order. When the last USB memory stick is full, then it will continue 
+on the SD card. It will stop when there is less than 0.5 GB left on the SD card.
+
+If files are stored on the SD card then they can be downloaded and/or removed by 
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
 Path to files on the SD card: "/home/pi/wurb_files".
