@@ -34,7 +34,7 @@ Notes from a developers perspective:
 - Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
 - SD card. For example Toshiba Exceria Pro 16GB, or similar.
 - Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and 
-Dodotronic UltraMic 192K, 259K.
+Dodotronic UltraMic 192K, 250K.
 
 Note: For some strange reason M500-384 has problems if connected directly to a 
 Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
@@ -42,7 +42,7 @@ or attach the M500-384 microphone after startup.
 
 Optional hardware:
 
-- USB memory sticks. This is optional since the SD card will be used for storage if 
+- USB memory sticks. This is optional since the internal SD card will be used for storage if 
 no USB sticks are available. More than one memory stick can be used.
 - (USB GPS dongle. NOT implemented in software yet.)
 - Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
@@ -167,7 +167,8 @@ And finally restart the detector:
 
 **Note: Again - work in progress - only a few parts have been implemented so far.**
 
-- Start the Raspberry Pi with an ultrasonic microphone attached.
+- Start the Raspberry Pi with an ultrasonic microphone attached. 
+(It is also possible to attach the mic. after startup, or replace it without shutdown.)
 - Connect a computer or mobile phone to the WiFi network called "wifi4bats".
 - Open a web browser and go to http://10.3.141.1:8000
 - Press "Start recording".
@@ -177,7 +178,7 @@ And finally restart the detector:
 There are different ways to turn off the Raspberry Pi detector. (Just power off is not
 recommended since there is a small risk of corrupted SD card or USB memory sticks.): 
 
-- Go to Settings - More and press the "Shutdown" button.
+- Go to "Settings - More" and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
 - If you are using a "Witty Pi 3" board from UUGear.com, just press the power off button. 
 
