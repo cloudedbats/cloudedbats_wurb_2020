@@ -52,6 +52,8 @@ class WurbSettings(object):
             "geo_source_option": "geo-not-used",
             "latitude_dd": "0.0",
             "longitude_dd": "0.0",
+            "manual_latitude_dd": "0.0",
+            "manual_longitude_dd": "0.0",
         }
 
     async def save_settings(self, settings_dict={}):

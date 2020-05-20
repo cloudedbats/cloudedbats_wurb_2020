@@ -32,6 +32,8 @@ class LocationSettings(BaseModel):
     geo_source_option: str = None
     latitude_dd: float = None
     longitude_dd: float = None
+    manual_latitude_dd: float = None
+    manual_longitude_dd: float = None
 
 
 class DetectorSettings(BaseModel):

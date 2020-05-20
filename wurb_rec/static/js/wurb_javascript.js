@@ -101,6 +101,7 @@ function geoLocationSourceOnChange() {
     geo_set_time_button_id.disabled = false;
   }
   else if (selected_value == "geo-manual") {
+    getManualLocation();
     latitude_dd_id.disabled = false;
     longitude_dd_id.disabled = false;
     geo_set_pos_button_id.disabled = false;
@@ -177,6 +178,10 @@ async function saveLocation() {
       latitude_dd: latitude_dd_id.value,
       longitude_dd: longitude_dd_id.value,
     }
+    if (geo_source_option_id.value == "geo-manual") {
+      location["manual_latitude_dd"] = latitude_dd_id.value
+      location["manual_longitude_dd"] = longitude_dd_id.value
+    }
     await fetch("/save-location/",
       {
         method: "POST",
@@ -195,6 +200,18 @@ async function getLocation() {
     updateLocation(data);
   } catch (err) {
     alert(`ERROR getLocation: ${err}`);
+    console.log(err);
+  };
+};
+
+async function getManualLocation() {
+  try {
+    let response = await fetch("/get-location");
+    let location = await response.json();
+    latitude_dd_id.value = location.manual_latitude_dd
+    longitude_dd_id.value = location.manual_longitude_dd  
+  } catch (err) {
+    alert(`ERROR getManualLocation: ${err}`);
     console.log(err);
   };
 };
@@ -276,8 +293,13 @@ function updateStatus(status) {
 
 function updateLocation(location) {
   geo_source_option_id.value = location.geo_source_option
-  latitude_dd_id.value = location.latitude_dd
-  longitude_dd_id.value = location.longitude_dd
+  if (location.geo_source_option == "geo-manual") {
+    latitude_dd_id.value = location.manual_latitude_dd
+    longitude_dd_id.value = location.manual_longitude_dd  
+  } else {
+    latitude_dd_id.value = location.latitude_dd
+    longitude_dd_id.value = location.longitude_dd  
+  }
   // Check geolocation:
   geoLocationSourceOnChange();
 }
