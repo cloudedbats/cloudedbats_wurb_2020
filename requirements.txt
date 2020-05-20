@@ -8,5 +8,8 @@ sounddevice
 numpy
 scipy
 psutil
+# GPS
+gps3 
+pytz
 # For Visual Studio Code.
 pylint

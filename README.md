@@ -132,18 +132,38 @@ upgrade the Raspberry Pi, then you must connect an Ethernet cable to it to reach
 For advanced users there are a wide range of opportunities to set up networks with 
 multiple collaborating Raspberry Pi units.
 
-
-### CloudedBats software
+### Install packages
 
 Check that the Python version is 3.7 or later. If not you 
 have to download and install a new version:
 
     python3 --version
 
-Install software (udevil contains devmon):
+Install software:
 
-    sudo apt install python3-venv python3-dev udevil
-    sudo apt install libportaudio2 libatlas-base-dev 
+    sudo apt install python3-venv python3-dev udevil # udevil contains devmon.
+    sudo apt install libportaudio2 libatlas-base-dev # Used by sounddevice.
+
+Optional software:
+
+    sudo apt install exfat-fuse exfat-utils ntfs-3g # ExFAT and NTFS.
+    sudo apt install python3-rpi.gpio # Raspberry Pi.
+
+### Config GPS (optional)
+ 
+    sudo apt install gpsd gpsd-clients
+    sudo nano /etc/default/gpsd 
+ 
+Set these values:
+ 
+    START_DAEMON="true"
+    USBAUTO="true"
+    DEVICES="/dev/ttyUSB0" # For most GPS units, for example "Globalsat BU-353S4".
+    #DEVICES="/dev/ttyACM0" # For "GPS/Glonass Ublox-7 (Diymall Vk-172 vk 172)"
+    GPSD_OPTIONS="-n"
+    GPSD_SOCKET="/var/run/gpsd.sock"
+
+### CloudedBats software
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
     cd cloudedbats_wurb_2020/
