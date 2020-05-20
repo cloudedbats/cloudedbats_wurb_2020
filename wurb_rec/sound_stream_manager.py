@@ -70,9 +70,9 @@ class SoundStreamManager(object):
         try:
             if self.source_task and (not self.source_task.done()):
                 await self.source_task
-            if self.source_task and (not self.source_task.done()):
+            if self.process_task and (not self.process_task.done()):
                 await self.process_task
-            if self.source_task and (not self.source_task.done()):
+            if self.target_task and (not self.target_task.done()):
                 await self.target_task
         except Exception as e:
             print("Exception: ", e)

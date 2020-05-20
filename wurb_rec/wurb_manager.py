@@ -30,6 +30,7 @@ class WurbRecManager(object):
             self.wurb_settings = None
             self.wurb_logging = None
             self.wurb_recorder = None
+            self.wurb_scheduler = None
 
         except Exception as e:
             print("Exception: ", e)
@@ -41,8 +42,10 @@ class WurbRecManager(object):
             self.wurb_recorder = wurb_rec.WurbRecorder(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
             self.wurb_logging = wurb_rec.WurbLogging(self)
+            self.wurb_scheduler = wurb_rec.WurbScheduler(self)
             self.update_status_task = asyncio.create_task(self.update_status())
 
+            await self.wurb_scheduler.startup()
             # await self.ultrasound_devices.start_checking_devices()
 
         except Exception as e:
@@ -51,6 +54,9 @@ class WurbRecManager(object):
     async def shutdown(self):
         """ """
         try:
+            if self.wurb_scheduler:
+                await self.wurb_scheduler.shutdown()
+
             if self.update_status_task:
                 self.update_status_task.cancel()
 
@@ -63,6 +69,10 @@ class WurbRecManager(object):
     async def start_rec(self):
         """ """
         try:
+            rec_status = await self.wurb_recorder.get_rec_status()
+            if rec_status == "Recording.":
+                return # Already running.
+
             # await self.ultrasound_devices.stop_checking_devices()
             await self.ultrasound_devices.check_devices()
 
@@ -84,6 +94,9 @@ class WurbRecManager(object):
     async def stop_rec(self):
         """ """
         try:
+            # if self.wurb_recorder.get_rec_status() != "Recording.":
+            #     return # Not running.
+
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()
