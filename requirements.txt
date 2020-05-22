@@ -11,5 +11,6 @@ psutil
 # GPS
 gps3 
 pytz
+python-dateutil
 # For Visual Studio Code.
 pylint
