@@ -16,14 +16,16 @@ from gps3 import agps3
 class WurbGps(object):
     """ GPS reader for GPS USB dongle. """
 
-    def __init__(self):
+    def __init__(self, wurb_manager):
         """ """
+        self.wurb_manager = wurb_manager
         self.gps_datetime_utc = None
         self.gps_latitude = None
         self.gps_longitude = None
         self.gps_loop_task = None
         self.first_gps_time_received = False
-        self.first_gps_pos_received = False
+        self.last_used_lat_dd = 0.0
+        self.last_used_long_dd = 0.0
 
     async def start(self):
         """ """
@@ -65,18 +67,19 @@ class WurbGps(object):
 
     async def gps_loop(self):
         """ """
+        print("DEBUG: gps_loop started.")
         gps_socket = None
         try:
             gps_socket = agps3.GPSDSocket()
             gps_data_stream = agps3.DataStream()
             gps_socket.connect()
             gps_socket.watch(enable=True)
-            # for new_data in socket:
+            # For new_data in socket:
             while True:
                 new_data = gps_socket.next(timeout=0) # Timeout=0 is poll. 
                 if new_data:
                     gps_data_stream.unpack(new_data)
-
+                    # Time.
                     try:
                         gps_time = gps_data_stream.time
                         if gps_time != "n/a":
@@ -84,20 +87,30 @@ class WurbGps(object):
                             if not self.first_gps_time_received:
                                 if self.is_time_valid(gps_time):
                                     self.first_gps_time_received = True
-                        # print("DEBUG: GPS time: ", gps_time)
-                    except:
-                        print("DEBUG: +++ GPS time: ", gps_time)
-
+                                    # Set detector unit time.
+                                    gps_utc_posix = parser.parse(gps_time).timestamp()
+                                    await self.wurb_manager.wurb_settings.set_detector_time(gps_utc_posix)
+                    except Exception as e:
+                        print("Exception: GPS time: ", e)
+                    # Lat/long.
                     try:
                         if gps_data_stream.lat !=  "n/a":
                             gps_lat = float(gps_data_stream.lat)
                             gps_long = float(gps_data_stream.lon)
                             self.gps_latitude = gps_lat
                             self.gps_longitude = gps_long
-                            # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
-                    except:
-                        print("DEBUG: +++ GPS lat/long: ", gps_data_stream.lat, "  ", gps_data_stream.lon)
-                        pass
+                            # Check if changed.
+                            lat_dd = round(self.gps_latitude, 4)
+                            long_dd = round(self.gps_longitude, 4)
+                            if (self.last_used_lat_dd != lat_dd) or \
+                               (self.last_used_long_dd != long_dd):
+                                # Changed.
+                                self.last_used_lat_dd = lat_dd
+                                self.last_used_long_dd = long_dd
+                                await self.wurb_manager.wurb_settings.save_latlong(lat_dd, long_dd)
+                                # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
+                    except Exception as e:
+                        print("Exception: GPS lat/long: ", e)
                 #
                 await asyncio.sleep(1.0)
         #
