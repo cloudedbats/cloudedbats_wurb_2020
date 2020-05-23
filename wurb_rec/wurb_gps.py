@@ -78,7 +78,7 @@ class WurbGps(object):
             gps_socket.watch(enable=True)
             # For new_data in socket:
             while True:
-                new_data = gps_socket.next(timeout=0) # Timeout=0 is poll. 
+                new_data = gps_socket.next(timeout=2)
                 if new_data:
                     gps_data_stream.unpack(new_data)
                     # Time.
