@@ -476,17 +476,19 @@ class WaveFileWriter:
         if rpi_media_path.exists():
             for usb_stick_name in sorted(list(rpi_media_path.iterdir())):
                 usb_stick_path = pathlib.Path(rpi_media_path, usb_stick_name)
-                hdd = psutil.disk_usage(str(usb_stick_path))
-                free_disk = hdd.free / (2**20) # To MB.
-                if free_disk >= 20.0:
-                    return pathlib.Path(usb_stick_path, file_directory)
+                # Directory may exist even when no USB attached.
+                if usb_stick_path.is_mount():
+                    hdd = psutil.disk_usage(str(usb_stick_path))
+                    free_disk = hdd.free / (2**20) # To MB.
+                    if free_disk >= 20.0: # 20 MB.
+                        return pathlib.Path(usb_stick_path, file_directory)
 
         # Check internal SD card. At least 500 MB left.
         rpi_internal_path = pathlib.Path(target_rpi_internal_path)
         if rpi_internal_path.exists():
             hdd = psutil.disk_usage(str(rpi_internal_path))
             free_disk = hdd.free / (2**20) # To MB.
-            if free_disk >= 500.0:
+            if free_disk >= 500.0: # 500 MB.
                 return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
             else:
                 print("ERROR: Not enough space left on RPi SD card.")
