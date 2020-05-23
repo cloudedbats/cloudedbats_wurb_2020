@@ -30,6 +30,7 @@ class WurbRecManager(object):
             self.wurb_settings = None
             self.wurb_logging = None
             self.wurb_recorder = None
+            self.wurb_gps = None
             self.wurb_scheduler = None
 
         except Exception as e:
@@ -42,12 +43,11 @@ class WurbRecManager(object):
             self.wurb_recorder = wurb_rec.WurbRecorder(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
             self.wurb_logging = wurb_rec.WurbLogging(self)
+            self.wurb_gps = wurb_rec.WurbGps(self)
             self.wurb_scheduler = wurb_rec.WurbScheduler(self)
             self.update_status_task = asyncio.create_task(self.update_status())
 
             await self.wurb_scheduler.startup()
-            # await self.ultrasound_devices.start_checking_devices()
-
         except Exception as e:
             print("Exception: ", e)
 
@@ -59,8 +59,6 @@ class WurbRecManager(object):
 
             if self.update_status_task:
                 self.update_status_task.cancel()
-
-            # await self.ultrasound_devices.stop_checking_devices()
 
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
         except Exception as e:

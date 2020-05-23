@@ -117,9 +117,8 @@ function geoLocationSourceOnChange() {
   else if (selected_value == "geo-usb-gps") {
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
-    geo_set_pos_button_id.disabled = true;
-    geo_set_time_button_id.disabled = true;
-    alert(`Sorry, USB-GPS not implemented yet.`);
+    geo_set_pos_button_id.disabled = false;
+    geo_set_time_button_id.disabled = false;
   }
   else {
     latitude_dd_id.disabled = true;
@@ -304,6 +303,11 @@ function updateLocation(location) {
   geoLocationSourceOnChange();
 }
 
+function updateLatLong(latlong) {
+  latitude_dd_id.value = latlong.latitude_dd
+  longitude_dd_id.value = latlong.longitude_dd  
+}
+
 function updateSettings(settings) {
   settings_rec_mode_id.value = settings.rec_mode
   settings_filename_prefix_id.value = settings.filename_prefix
@@ -332,6 +336,9 @@ function startWebsocket(ws_url) {
     }
     if ("location" in data_json === true) {
       updateLocation(data_json.location)
+    }
+    if ("latlong" in data_json === true) {
+      updateLatLong(data_json.latlong)
     }
     if ("settings" in data_json === true) {
       updateSettings(data_json.settings)

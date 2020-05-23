@@ -23,6 +23,7 @@ class WurbSettings(object):
         self.current_location = None
         self.settings_event = None
         self.location_event = None
+        self.latlong_event = None
         self.os_raspbian = None
         #
         self.define_default_settings()
@@ -85,12 +86,35 @@ class WurbSettings(object):
         for key, value in location_dict.items():
             if value is not None:
                 self.current_location[key] = value
+                
+        # GPS.
+        if self.current_location["geo_source_option"] == "geo-usb-gps":
+            self.current_location["latitude_dd"] = 0.0
+            self.current_location["longitude_dd"] = 0.0
+
         self.save_settings_to_file()
         # Create a new event and release all from the old event.
         old_location_event = self.location_event
         self.location_event = asyncio.Event()
         if old_location_event:
             old_location_event.set()
+
+        # GPS.
+        if self.current_location["geo_source_option"] == "geo-usb-gps":
+            await self.wurb_manager.wurb_gps.start()
+        else:
+            await self.wurb_manager.wurb_gps.stop()
+
+    async def save_latlong(self, latitude_dd, longitude_dd):
+        """ """
+        self.current_location["latitude_dd"] = latitude_dd
+        self.current_location["longitude_dd"] = longitude_dd
+        self.save_settings_to_file()
+        # Create a new event and release all from the old event.
+        old_latlong_event = self.latlong_event
+        self.latlong_event = asyncio.Event()
+        if old_latlong_event:
+            old_latlong_event.set()
 
     def get_location_dict(self):
         """ """
@@ -104,9 +128,9 @@ class WurbSettings(object):
         """ Only valid for Raspbian and user pi. """
         try:
             utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
-            local_datetime = utc_datetime.replace(tzinfo=datetime.timezone.utc).astimezone(
-                tz=None
-            )
+            local_datetime = utc_datetime.replace(
+                tzinfo=datetime.timezone.utc
+            ).astimezone(tz=None)
             time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
             print(time_string)
             # First check: OS Raspbian.
@@ -126,7 +150,11 @@ class WurbSettings(object):
             elif command == "rpi_reboot":
                 os.system("cd /home/pi && sudo reboot")
             elif command == "rpi_update_sw":
-                os.system("cd /home/pi/cloudedbats_wurb_2020 && git pull")
+                command_string = "cd /home/pi/cloudedbats_wurb_2020"
+                command_string += " && git pull"
+                command_string += " && source venv/bin/activate"
+                command_string += " && pip install -r requirements.txt "
+                os.system(command_string)
             else:
                 print(
                     "DEBUG: Settings: rpi_control: Failed, command not valid:", command
@@ -149,6 +177,15 @@ class WurbSettings(object):
             if self.location_event == None:
                 self.location_event = asyncio.Event()
             return self.location_event
+        except Exception as e:
+            print("Exception: ", e)
+
+    async def get_latlong_event(self):
+        """ """
+        try:
+            if self.latlong_event == None:
+                self.latlong_event = asyncio.Event()
+            return self.latlong_event
         except Exception as e:
             print("Exception: ", e)
 

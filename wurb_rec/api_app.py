@@ -199,11 +199,13 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
             # Wait for next event to happen.
             rec_manager_notification = await wurb_rec_manager.get_notification_event()
             location_changed_notification = await wurb_rec_manager.wurb_settings.get_location_event()
+            latlong_changed_notification = await wurb_rec_manager.wurb_settings.get_latlong_event()
             settings_changed_notification = await wurb_rec_manager.wurb_settings.get_settings_event()
             events = [
                 asyncio.sleep(1), # Update detector time field each second.
                 rec_manager_notification.wait(),
                 location_changed_notification.wait(),
+                latlong_changed_notification.wait(),
                 settings_changed_notification.wait(),
             ]
             await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
@@ -219,6 +221,10 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
             if location_changed_notification.is_set():
                 ws_json[
                     "location"
+                ] = await wurb_rec_manager.wurb_settings.get_location()
+            if latlong_changed_notification.is_set():
+                ws_json[
+                    "latlong"
                 ] = await wurb_rec_manager.wurb_settings.get_location()
             if settings_changed_notification.is_set():
                 ws_json[
