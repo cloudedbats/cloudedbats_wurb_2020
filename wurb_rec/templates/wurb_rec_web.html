@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=1') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=2') }}"></script>
 </head>
 
 <body>
@@ -89,7 +89,7 @@
                                             <div class="control">
                                                 <div class="select">
                                                     <select id="geo_source_option_id"
-                                                        onchange="geoLocationSourceOnChange()">
+                                                        onchange="geoLocationSourceOnChange(update_detector=true)">
                                                         <option value="geo-not-used">Not used</option>
                                                         <option value="geo-manual">Manually entered location</option>
                                                         <option value="geo-client-gps">Location from mobile unit
@@ -131,7 +131,7 @@
                                 <div class="buttons is-centered">
                                     <button id="geo_set_pos_button_id" class="button is-info is-rounded"
                                         onclick="saveLocation()">
-                                        Set location
+                                        <span id="save_location_button_text_id">Save</span>
                                     </button>
                                     <button id="geo_set_time_button_id" class="button is-info is-rounded"
                                         onclick="setDetectorTime()">

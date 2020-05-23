@@ -47,6 +47,7 @@ class WurbRecManager(object):
             self.wurb_scheduler = wurb_rec.WurbScheduler(self)
             self.update_status_task = asyncio.create_task(self.update_status())
 
+            await self.wurb_settings.startup()
             await self.wurb_scheduler.startup()
         except Exception as e:
             print("Exception: ", e)
@@ -56,7 +57,8 @@ class WurbRecManager(object):
         try:
             if self.wurb_scheduler:
                 await self.wurb_scheduler.shutdown()
-
+            if self.wurb_settings:
+                await self.wurb_settings.shutdown()
             if self.update_status_task:
                 self.update_status_task.cancel()
 

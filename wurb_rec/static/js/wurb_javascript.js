@@ -15,6 +15,7 @@ window.onload = function () {
   const latitude_dd_id = document.getElementById("latitude_dd_id");
   const longitude_dd_id = document.getElementById("longitude_dd_id");
   const geo_set_pos_button_id = document.getElementById("geo_set_pos_button_id");
+  const save_location_button_text_id = document.getElementById("save_location_button_text_id");
   const geo_set_time_button_id = document.getElementById("geo_set_time_button_id");
 
   // Settings tile. Tab hide/show.
@@ -43,7 +44,7 @@ window.onload = function () {
   getLocation()
   getSettings()
   // Check geolocation:
-  geoLocationSourceOnChange();
+  geoLocationSourceOnChange(update_detector=false);
 
   // Start websocket.
   var ws_url = (window.location.protocol === "https:") ? "wss://" : "ws://"
@@ -90,22 +91,30 @@ function hideShowSettingsTabs(tab_name) {
   };
 };
 
-function geoLocationSourceOnChange() {
+function geoLocationSourceOnChange(update_detector=false) {
   let selected_value = geo_source_option_id.options[geo_source_option_id.selectedIndex].value
+  save_location_button_text_id.innerHTML = "Save"
   if (selected_value == "geo-not-used") {
     latitude_dd_id.value = "0.0";
     longitude_dd_id.value = "0.0";
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
-    geo_set_pos_button_id.disabled = false;
+    geo_set_pos_button_id.disabled = true;
     geo_set_time_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
   }
   else if (selected_value == "geo-manual") {
     getManualLocation();
+    save_location_button_text_id.innerHTML = "Save lat/long"
     latitude_dd_id.disabled = false;
     longitude_dd_id.disabled = false;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
   }
   else if (selected_value == "geo-client-gps") {
     activateGeoLocation()
@@ -113,12 +122,19 @@ function geoLocationSourceOnChange() {
     longitude_dd_id.disabled = true;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
   }
   else if (selected_value == "geo-usb-gps") {
+    save_location_button_text_id.innerHTML = "Use as manual"
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
     geo_set_pos_button_id.disabled = false;
     geo_set_time_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
   }
   else {
     latitude_dd_id.disabled = true;
@@ -150,8 +166,7 @@ function errorCallback(error) {
 async function startRecording() {
   try {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
-    // Save location and settings before recording starts.
-    saveLocation()
+    // Save settings before recording starts.
     saveSettings()
     await fetch('/start-rec');
   } catch (err) {
@@ -170,6 +185,24 @@ async function stopRecording(action) {
   };
 };
 
+async function saveLocationSource() {
+  try {
+    let location = {
+      geo_source_option: geo_source_option_id.value,
+      latitude_dd: latitude_dd_id.value,
+      longitude_dd: longitude_dd_id.value,
+    }
+    await fetch("/save-location/",
+      {
+        method: "POST",
+        body: JSON.stringify(location)
+      })
+  } catch (err) {
+    alert(`ERROR saveLocation: ${err}`);
+    console.log(err);
+  };
+};
+
 async function saveLocation() {
   try {
     let location = {
@@ -178,6 +211,11 @@ async function saveLocation() {
       longitude_dd: longitude_dd_id.value,
     }
     if (geo_source_option_id.value == "geo-manual") {
+      location["manual_latitude_dd"] = latitude_dd_id.value
+      location["manual_longitude_dd"] = longitude_dd_id.value
+    }
+    if (geo_source_option_id.value == "geo-usb-gps") {
+      location["geo_source_option"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
@@ -300,7 +338,7 @@ function updateLocation(location) {
     longitude_dd_id.value = location.longitude_dd  
   }
   // Check geolocation:
-  geoLocationSourceOnChange();
+  geoLocationSourceOnChange(update_detector=false);
 }
 
 function updateLatLong(latlong) {

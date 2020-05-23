@@ -57,6 +57,20 @@ class WurbSettings(object):
             "manual_longitude_dd": "0.0",
         }
 
+    async def startup(self):
+        """ """
+        # GPS.
+        if self.current_location["geo_source_option"] == "geo-usb-gps":
+            self.save_latlong(0.0, 0.0)
+            await self.wurb_manager.wurb_gps.start()
+        else:
+            await self.wurb_manager.wurb_gps.stop()
+
+    async def shutdown(self):
+        """ """
+        # GPS.
+        await self.wurb_manager.wurb_gps.stop()
+
     async def save_settings(self, settings_dict={}):
         """ """
         for key, value in settings_dict.items():

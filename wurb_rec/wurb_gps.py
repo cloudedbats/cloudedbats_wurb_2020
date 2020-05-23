@@ -29,6 +29,8 @@ class WurbGps(object):
 
     async def start(self):
         """ """
+        self.last_used_lat_dd = 0.0
+        self.last_used_long_dd = 0.0
         if self.gps_loop_task is None:
             self.gps_loop_task = asyncio.create_task(self.gps_loop())
 
