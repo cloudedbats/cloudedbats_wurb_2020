@@ -101,6 +101,10 @@ class WurbSettings(object):
             if value is not None:
                 self.current_location[key] = value
                 
+        # Manual.
+        if self.current_location["geo_source_option"] == "geo-manual":
+            self.current_location["latitude_dd"] = self.current_location["manual_latitude_dd"]
+            self.current_location["longitude_dd"] = self.current_location["manual_longitude_dd"]
         # GPS.
         if self.current_location["geo_source_option"] == "geo-usb-gps":
             self.current_location["latitude_dd"] = 0.0
