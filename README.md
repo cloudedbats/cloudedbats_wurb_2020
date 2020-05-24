@@ -89,7 +89,7 @@ Change this (example for Swedish users):
 - Password: chiroptera
 - Network options-Hostname: wurb 
 - Localisation Options-Timezone: Europe - Stockholm
-- Localisation Options-WiFi-country: SE
+- Localisation Options-WLAN Country: SE
 - Advanced Options-Expand Filesystem.
 
 Reboot and reconnect. Remember to use the new password.:
@@ -141,27 +141,41 @@ have to download and install a new version:
 
 Install software:
 
-    sudo apt install python3-venv python3-dev udevil # udevil contains devmon.
-    sudo apt install libportaudio2 libatlas-base-dev # Used by sounddevice.
+    sudo apt install git python3-venv python3-dev
+    sudo apt install libportaudio2 libatlas-base-dev
+    sudo apt install gpsd gpsd-clients udevil
+    sudo apt install python3-rpi.gpio
 
-Optional software:
+### Config USB GPS Receiver (optional)
 
-    sudo apt install exfat-fuse exfat-utils ntfs-3g # ExFAT and NTFS.
-    sudo apt install python3-rpi.gpio # Raspberry Pi.
+This configuration is needed if you want to use 
+GPS for latitude/longitude and time. 
+Tested with "Navilock NL-602U" and "G-Star IV BU-353S4".
 
-### Config GPS (optional)
- 
-    sudo apt install gpsd gpsd-clients
+    # Connect the USB GPS Receiver and check where it is available.
+    ls /dev/ttyUSB*
+    ls /dev/ttyACM*
+
+    # Edit the config file.
     sudo nano /etc/default/gpsd 
  
-Set these values:
+Set these values ("ttyUSB0" or "ttyACM0" depends on the check above):
  
     START_DAEMON="true"
     USBAUTO="true"
-    DEVICES="/dev/ttyUSB0" # For most GPS units, for example "Globalsat BU-353S4".
-    #DEVICES="/dev/ttyACM0" # For "GPS/Glonass Ublox-7 (Diymall Vk-172 vk 172)"
-    GPSD_OPTIONS="-n"
-    GPSD_SOCKET="/var/run/gpsd.sock"
+    DEVICES="/dev/ttyUSB0"
+    # DEVICES="/dev/ttyACM0"
+    GPSD_OPTIONS=""
+
+Restart and test. It can take some time before the GPS receiver has found the 
+satellites, and it doesn't work indoors.
+
+Some commands that can be useful if it doesn't work directly:
+
+    gpsmon
+    gpsmon /dev/ttyUSB0
+    gpsmon /dev/ttyACM0
+    cgps -s
 
 ### CloudedBats software
 

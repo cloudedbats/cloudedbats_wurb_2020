@@ -7,14 +7,11 @@
 import asyncio
 import datetime
 from dateutil import parser
-from gps3 import agps3
+import gpsd
 
-# HOST = '127.0.0.1'  # gpsd
-# GPSD_PORT = 2947  # gpsd
-# PROTOCOL = 'json'  # gpsd
 
 class WurbGps(object):
-    """ GPS reader for GPS USB dongle. """
+    """ GPS reader for USB GPS Receiver. """
 
     def __init__(self, wurb_manager):
         """ """
@@ -55,9 +52,9 @@ class WurbGps(object):
         if self.gps_datetime_utc:
             if self.gps_datetime_utc != "n/a":
                 utc_datetime = parser.parse(self.gps_datetime_utc)
-                local_datetime = utc_datetime.replace(tzinfo=datetime.timezone.utc).astimezone(
-                    tz=None
-                )
+                local_datetime = utc_datetime.replace(
+                    tzinfo=datetime.timezone.utc
+                ).astimezone(tz=None)
                 # time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
                 return local_datetime
         #
@@ -70,49 +67,56 @@ class WurbGps(object):
     async def gps_loop(self):
         """ """
         print("DEBUG: gps_loop started.")
-        gps_socket = None
         try:
-            gps_socket = agps3.GPSDSocket()
-            gps_data_stream = agps3.DataStream()
-            gps_socket.connect()
-            gps_socket.watch(enable=True)
+            self.last_used_lat_dd = 0.0
+            self.last_used_long_dd = 0.0
+            gpsd.connect()
             # For new_data in socket:
             while True:
-                new_data = gps_socket.next(timeout=5)
-                if new_data:
-                    gps_data_stream.unpack(new_data)
+                try:
+                    packet = gpsd.get_current()
                     # Time.
                     try:
-                        gps_time = gps_data_stream.time
-                        if gps_time != "n/a":
-                            self.gps_datetime_utc = gps_time
-                            if not self.first_gps_time_received:
-                                if self.is_time_valid(gps_time):
-                                    self.first_gps_time_received = True
-                                    # Set detector unit time.
-                                    gps_utc_posix = parser.parse(gps_time).timestamp()
-                                    await self.wurb_manager.wurb_settings.set_detector_time(gps_utc_posix)
+                        gps_time = packet.get_time(local_time=False)
+                        self.gps_datetime_utc = gps_time
+                        if not self.first_gps_time_received:
+                            if self.is_time_valid(gps_time):
+                                self.first_gps_time_received = True
+                                # Set detector unit time.
+                                gps_local_time = gps_time.replace(
+                                    tzinfo=datetime.timezone.utc
+                                ).astimezone()
+                                gps_local_timestamp = gps_local_time.timestamp()
+                                await self.wurb_manager.wurb_settings.set_detector_time(
+                                    gps_local_timestamp
+                                )
                     except Exception as e:
                         print("Exception: GPS time: ", e)
                     # Lat/long.
                     try:
-                        if gps_data_stream.lat !=  "n/a":
-                            gps_lat = float(gps_data_stream.lat)
-                            gps_long = float(gps_data_stream.lon)
-                            self.gps_latitude = gps_lat
-                            self.gps_longitude = gps_long
-                            # Check if changed.
-                            lat_dd = round(self.gps_latitude, 4)
-                            long_dd = round(self.gps_longitude, 4)
-                            if (self.last_used_lat_dd != lat_dd) or \
-                               (self.last_used_long_dd != long_dd):
-                                # Changed.
-                                self.last_used_lat_dd = lat_dd
-                                self.last_used_long_dd = long_dd
-                                await self.wurb_manager.wurb_settings.save_latlong(lat_dd, long_dd)
-                                # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
+                        gps_lat, gps_long = packet.position()
+                        #     gps_lat = float(gps_data_stream.lat)
+                        #     gps_long = float(gps_data_stream.lon)
+                        self.gps_latitude = gps_lat
+                        self.gps_longitude = gps_long
+                        # Check if changed.
+                        lat_dd = round(self.gps_latitude, 4)
+                        long_dd = round(self.gps_longitude, 4)
+                        if (self.last_used_lat_dd != lat_dd) or (
+                            self.last_used_long_dd != long_dd
+                        ):
+                            # Changed.
+                            self.last_used_lat_dd = lat_dd
+                            self.last_used_long_dd = long_dd
+                            await self.wurb_manager.wurb_settings.save_latlong(
+                                lat_dd, long_dd
+                            )
+                            # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
                     except Exception as e:
                         print("Exception: GPS lat/long: ", e)
+                except:
+                    pass
+                    print("DEBUG: No GPSD data.")
                 #
                 await asyncio.sleep(1.0)
         #
@@ -123,13 +127,12 @@ class WurbGps(object):
             self.gps_loop_task = None
         finally:
             print("DEBUG: gps_loop terminated.")
-            if gps_socket:
-                gps_socket.watch(enable=False)
 
     def is_time_valid(self, gps_time):
         """ To avoid strange datetime (like 1970-01-01 or 2038-01-19) from some GPS units. """
         try:
-            gps_utc = parser.parse(gps_time)
+            gps_utc = gps_time.astimezone(tz=datetime.timezone.utc)
+            # gps_utc = parser.parse(gps_time)
             datetime_now = datetime.datetime.now(datetime.timezone.utc)
             if gps_utc < (datetime_now - datetime.timedelta(days=2)):
                 return False
@@ -166,4 +169,3 @@ class WurbGps(object):
 # if __name__ == "__main__":
 #     """ """
 #     asyncio.run(main(), debug=True)
-

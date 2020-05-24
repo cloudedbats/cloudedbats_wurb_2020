@@ -145,10 +145,11 @@ class WurbSettings(object):
     async def set_detector_time(self, posix_time_s):
         """ Only valid for Raspbian and user pi. """
         try:
-            utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
-            local_datetime = utc_datetime.replace(
-                tzinfo=datetime.timezone.utc
-            ).astimezone(tz=None)
+            local_datetime = datetime.datetime.fromtimestamp(posix_time_s)
+            # utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
+            # local_datetime = utc_datetime.replace(
+            #     tzinfo=datetime.timezone.utc
+            # ).astimezone(tz=None)
             time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
             print(time_string)
             # First check: OS Raspbian.
