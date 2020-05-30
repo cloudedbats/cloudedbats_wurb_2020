@@ -61,7 +61,7 @@ class WurbSettings(object):
         """ """
         # GPS.
         if self.current_location["geo_source_option"] == "geo-usb-gps":
-            self.save_latlong(0.0, 0.0)
+            await self.save_latlong(0.0, 0.0)
             await self.wurb_manager.wurb_gps.start()
         else:
             await self.wurb_manager.wurb_gps.stop()

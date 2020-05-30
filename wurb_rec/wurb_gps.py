@@ -5,6 +5,7 @@
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import asyncio
+import concurrent.futures
 import datetime
 from dateutil import parser
 import gpsd
@@ -64,17 +65,45 @@ class WurbGps(object):
         """ """
         return (self.gps_latitude, self.gps_longitude)
 
+    def gpsd_connect(self):
+        """ """
+        return gpsd.connect()
+
+    def gpsd_get_current(self):
+        """ """
+        return gpsd.get_current()
+
     async def gps_loop(self):
         """ """
         print("DEBUG: gps_loop started.")
         try:
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
-            gpsd.connect()
+            await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
+            # Create a thread executor.
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            # Connect to default GPSD host and port.
+            # gpsd.connect()
+            future = executor.submit(self.gpsd_connect)
+            try:
+                packet = future.result(timeout=2.0)
+            except concurrent.futures.TimeoutError:
+                print("DEBUG: GPSD connect timeout.")
+                return
+
             # For new_data in socket:
             while True:
                 try:
-                    packet = gpsd.get_current()
+                    # Use thread in executor to avoid locking the main loop.
+                    # packet = gpsd.get_current()
+                    future = executor.submit(self.gpsd_get_current)
+                    try:
+                        packet = future.result(timeout=2.0)
+                    except concurrent.futures.TimeoutError:
+                        print("DEBUG: GPSD get_current timeout.")
+                        await asyncio.sleep(0.1)
+                        continue
+
                     # Time.
                     try:
                         gps_time = packet.get_time(local_time=False)
@@ -90,6 +119,11 @@ class WurbGps(object):
                                 await self.wurb_manager.wurb_settings.set_detector_time(
                                     gps_local_timestamp
                                 )
+                    except gpsd.NoFixError as e:
+                        if self.last_used_lat_dd != 0.0:
+                            self.last_used_lat_dd = 0.0
+                            self.last_used_long_dd = 0.0
+                            await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
                     except Exception as e:
                         print("Exception: GPS time: ", e)
                     # Lat/long.
@@ -112,11 +146,16 @@ class WurbGps(object):
                                 lat_dd, long_dd
                             )
                             # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
+                    except gpsd.NoFixError as e:
+                        if self.last_used_lat_dd != 0.0:
+                            self.last_used_lat_dd = 0.0
+                            self.last_used_long_dd = 0.0
+                            await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
                     except Exception as e:
                         print("Exception: GPS lat/long: ", e)
-                except:
+                except Exception as e:
                     pass
-                    print("DEBUG: No GPSD data.")
+                    print("DEBUG: No GPSD data:", e)
                 #
                 await asyncio.sleep(1.0)
         #
