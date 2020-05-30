@@ -9,8 +9,7 @@ numpy
 scipy
 psutil
 # GPS
-# gps3 
-gpsd_py3
+gps3 
 pytz
 python-dateutil
 # For Visual Studio Code.

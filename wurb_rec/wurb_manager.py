@@ -49,12 +49,15 @@ class WurbRecManager(object):
 
             await self.wurb_settings.startup()
             await self.wurb_scheduler.startup()
+            await self.wurb_gps.startup()
         except Exception as e:
             print("Exception: ", e)
 
     async def shutdown(self):
         """ """
         try:
+            if self.wurb_gps:
+                await self.wurb_gps.shutdown()
             if self.wurb_scheduler:
                 await self.wurb_scheduler.shutdown()
             if self.wurb_settings:

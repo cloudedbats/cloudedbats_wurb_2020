@@ -6,9 +6,10 @@
 
 import asyncio
 import concurrent.futures
+import time
 import datetime
 from dateutil import parser
-import gpsd
+from gps3 import gps3
 
 
 class WurbGps(object):
@@ -24,11 +25,38 @@ class WurbGps(object):
         self.first_gps_time_received = False
         self.last_used_lat_dd = 0.0
         self.last_used_long_dd = 0.0
+        self.gpsd_reader_executor = None
+        self.gpsd_reader_future = None
+        self.gpsd_reader_active = False
+        self.gpsd_time = None
+        self.gpsd_latitude = None
+        self.gpsd_longitude = None
+
+    async def startup(self):
+        """ """
+
+    async def shutdown(self):
+        """ """
+        if self.gpsd_reader_future:
+            print("DEBUG: Shutdown GPSD Reader.")
+            self.gpsd_reader_active = False
+            is_done = self.gpsd_reader_future.result(timeout=7.0)
+            if is_done:
+                self.gpsd_reader_executor = None
+                self.gpsd_reader_future = None
 
     async def start(self):
         """ """
         self.last_used_lat_dd = 0.0
         self.last_used_long_dd = 0.0
+        if self.gpsd_reader_executor == None:
+            print("DEBUG: Start GPSD Reader.")
+            self.gpsd_reader_executor = concurrent.futures.ThreadPoolExecutor(
+                max_workers=1
+            )
+            self.gpsd_reader_future = self.gpsd_reader_executor.submit(
+                self.gpsd_thread_loop
+            )
         if self.gps_loop_task is None:
             self.gps_loop_task = asyncio.create_task(self.gps_loop())
 
@@ -41,23 +69,18 @@ class WurbGps(object):
     async def get_datetime_utc(self):
         """ """
         if self.gps_datetime_utc:
-            if self.gps_datetime_utc != "n/a":
-                utc_datetime = parser.parse(self.gps_datetime_utc)
-                utc_datetime = utc_datetime.replace(tzinfo=datetime.timezone.utc)
-                return utc_datetime
+            utc_datetime = self.gps_datetime_utc.replace(tzinfo=datetime.timezone.utc)
+            return utc_datetime
         #
         return None
 
     async def get_datetime_local(self):
         """ """
         if self.gps_datetime_utc:
-            if self.gps_datetime_utc != "n/a":
-                utc_datetime = parser.parse(self.gps_datetime_utc)
-                local_datetime = utc_datetime.replace(
-                    tzinfo=datetime.timezone.utc
-                ).astimezone(tz=None)
-                # time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                return local_datetime
+            local_datetime = self.gps_datetime_utc.replace(
+                tzinfo=datetime.timezone.utc
+            ).astimezone(tz=None)
+            return local_datetime
         #
         return None
 
@@ -67,11 +90,14 @@ class WurbGps(object):
 
     def gpsd_connect(self):
         """ """
-        return gpsd.connect()
+        try:
+            return gpsd.connect()
+        except Exception as e:
+            print("DEBUG: Exception: ", e)
 
     def gpsd_get_current(self):
         """ """
-        return gpsd.get_current()
+        return gpsd_copy.get_current()
 
     async def gps_loop(self):
         """ """
@@ -80,59 +106,34 @@ class WurbGps(object):
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
-            # Create a thread executor.
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-            # Connect to default GPSD host and port.
-            # gpsd.connect()
-            future = executor.submit(self.gpsd_connect)
-            try:
-                packet = future.result(timeout=2.0)
-            except concurrent.futures.TimeoutError:
-                print("DEBUG: GPSD connect timeout.")
-                return
 
-            # For new_data in socket:
             while True:
                 try:
-                    # Use thread in executor to avoid locking the main loop.
-                    # packet = gpsd.get_current()
-                    future = executor.submit(self.gpsd_get_current)
-                    try:
-                        packet = future.result(timeout=2.0)
-                    except concurrent.futures.TimeoutError:
-                        print("DEBUG: GPSD get_current timeout.")
-                        await asyncio.sleep(0.1)
-                        continue
-
                     # Time.
                     try:
-                        gps_time = packet.get_time(local_time=False)
-                        self.gps_datetime_utc = gps_time
                         if not self.first_gps_time_received:
-                            if self.is_time_valid(gps_time):
-                                self.first_gps_time_received = True
-                                # Set detector unit time.
-                                gps_local_time = gps_time.replace(
-                                    tzinfo=datetime.timezone.utc
-                                ).astimezone()
-                                gps_local_timestamp = gps_local_time.timestamp()
-                                await self.wurb_manager.wurb_settings.set_detector_time(
-                                    gps_local_timestamp
-                                )
-                    except gpsd.NoFixError as e:
-                        if self.last_used_lat_dd != 0.0:
-                            self.last_used_lat_dd = 0.0
-                            self.last_used_long_dd = 0.0
-                            await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
+                            if self.gpsd_time:
+                                self.gps_datetime_utc = self.gpsd_time
+                                if self.is_time_valid(self.gpsd_time):
+                                    self.first_gps_time_received = True
+                                    # Set detector unit time.
+                                    gps_local_time = self.gpsd_time.replace(
+                                        tzinfo=datetime.timezone.utc
+                                    ).astimezone()
+                                    gps_local_timestamp = gps_local_time.timestamp()
+                                    await self.wurb_manager.wurb_settings.set_detector_time(
+                                        gps_local_timestamp
+                                    )
                     except Exception as e:
                         print("Exception: GPS time: ", e)
                     # Lat/long.
                     try:
-                        gps_lat, gps_long = packet.position()
-                        #     gps_lat = float(gps_data_stream.lat)
-                        #     gps_long = float(gps_data_stream.lon)
-                        self.gps_latitude = gps_lat
-                        self.gps_longitude = gps_long
+                        if self.gpsd_latitude and self.gpsd_longitude:
+                            self.gps_latitude = float(self.gpsd_latitude)
+                            self.gps_longitude = float(self.gpsd_longitude)
+                        else:
+                            self.gps_latitude = 0.0
+                            self.gps_longitude = 0.0
                         # Check if changed.
                         lat_dd = round(self.gps_latitude, 4)
                         long_dd = round(self.gps_longitude, 4)
@@ -146,11 +147,6 @@ class WurbGps(object):
                                 lat_dd, long_dd
                             )
                             # print("DEBUG: GPS lat/long: ", gps_lat, "  ", gps_long)
-                    except gpsd.NoFixError as e:
-                        if self.last_used_lat_dd != 0.0:
-                            self.last_used_lat_dd = 0.0
-                            self.last_used_long_dd = 0.0
-                            await self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0)
                     except Exception as e:
                         print("Exception: GPS lat/long: ", e)
                 except Exception as e:
@@ -183,28 +179,66 @@ class WurbGps(object):
             print("Exception: GPS is_time_valid: ", e)
             return False
 
+    def gpsd_thread_loop(self):
+        """ Thread not in asyncio main loop. 
+            Executed by "concurrent.futures.Executor". """
+        gpsd_socket = None
+        self.gpsd_reader_active = True
+        try:
+            print("DEBUG: GPSD-thread: Started.")
+            gpsd_socket = gps3.GPSDSocket()
+            data_stream = gps3.DataStream()
+            gpsd_socket.connect()
+            gpsd_socket.watch(True)
+            while self.gpsd_reader_active:
+                time.sleep(1.0)
+                new_data = gpsd_socket.next(timeout=5)
+                if new_data:
+                    data_stream.unpack(new_data)
+                    gpsd_time = data_stream.TPV["time"]
+                    gpsd_latitude = data_stream.TPV["lat"]
+                    gpsd_longitude = data_stream.TPV["lon"]
 
-##### MAIN - for test #####
-# async def main():
-#     """ """
-#     try:
-#         gps_reader = WurbGps()
-#         await gps_reader.start()
-#         for _index in range(50):
-#             await asyncio.sleep(1)
-#             time_utc = await gps_reader.get_datetime_utc()
-#             time_local = await gps_reader.get_datetime_local()
-#             lat, long = await gps_reader.get_latitude_longitude()
-#             print("")
-#             print("TIME UTC: ", str(time_utc))
-#             print("TIME Local: ", str(time_local))
-#             print("LATLONG-STRING: ", lat, "   ", long)
-#             print("")
-#     except Exception as e:
-#         print("Exception: ", e)
-#     finally:
-#         await gps_reader.stop()
+                    print(
+                        "DEBUG: GPSD-thread: ",
+                        gpsd_time,
+                        "   ",
+                        gpsd_latitude,
+                        "   ",
+                        gpsd_longitude,
+                    )
 
-# if __name__ == "__main__":
-#     """ """
-#     asyncio.run(main(), debug=True)
+                    # Time.
+                    if gpsd_time and (gpsd_time != "n/a"):
+                        self.gpsd_time = parser.parse(gpsd_time)
+                    else:
+                        self.gpsd_time = None
+                    # Lat/long.
+                    if (
+                        gpsd_latitude
+                        and (gpsd_latitude != "n/a")
+                        and gpsd_longitude
+                        and (gpsd_longitude != "n/a")
+                    ):
+                        self.gpsd_latitude = gpsd_latitude
+                        self.gpsd_longitude = gpsd_longitude
+                    else:
+                        self.gpsd_latitude = None
+                        self.gpsd_longitude = None
+                else:
+
+                    print("DEBUG: GPSD-thread: No data.")
+
+                    self.gpsd_time = None
+                    self.gpsd_latitude = None
+                    self.gpsd_longitude = None
+        #
+        except Exception as e:
+            print("Exception: GPS gpsd_thread_loop: ", e)
+        finally:
+            print("DEBUG: GPSD-thread: Ended.")
+            if gpsd_socket:
+                gpsd_socket.watch(False)
+        #
+        return True  # Done.
+
