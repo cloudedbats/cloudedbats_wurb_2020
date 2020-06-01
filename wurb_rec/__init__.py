@@ -1,4 +1,5 @@
 
+from .lib.solartime import SolarTime
 from .sound_stream_manager import SoundStreamManager
 from .wurb_logging import WurbLogging
 from .wurb_settings import WurbSettings
