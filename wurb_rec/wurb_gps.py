@@ -34,9 +34,19 @@ class WurbGps(object):
 
     async def startup(self):
         """ """
+        # # GPSD thread executor.
+        # if self.gpsd_reader_executor == None:
+        #     print("DEBUG: Start GPSD Reader.")
+        #     self.gpsd_reader_executor = concurrent.futures.ThreadPoolExecutor(
+        #         max_workers=1
+        #     )
+        #     self.gpsd_reader_future = self.gpsd_reader_executor.submit(
+        #         self.gpsd_thread_loop
+        #     )
 
     async def shutdown(self):
         """ """
+        # GPSD thread executor.
         if self.gpsd_reader_future:
             print("DEBUG: Shutdown GPSD Reader.")
             self.gpsd_reader_active = False
@@ -49,6 +59,9 @@ class WurbGps(object):
         """ """
         self.last_used_lat_dd = 0.0
         self.last_used_long_dd = 0.0
+        if self.gps_loop_task is None:
+            self.gps_loop_task = asyncio.create_task(self.gps_loop())
+        # GPSD thread executor.
         if self.gpsd_reader_executor == None:
             print("DEBUG: Start GPSD Reader.")
             self.gpsd_reader_executor = concurrent.futures.ThreadPoolExecutor(
@@ -57,8 +70,6 @@ class WurbGps(object):
             self.gpsd_reader_future = self.gpsd_reader_executor.submit(
                 self.gpsd_thread_loop
             )
-        if self.gps_loop_task is None:
-            self.gps_loop_task = asyncio.create_task(self.gps_loop())
 
     async def stop(self):
         """ """
@@ -184,12 +195,13 @@ class WurbGps(object):
             Executed by "concurrent.futures.Executor". """
         gpsd_socket = None
         self.gpsd_reader_active = True
+        first_gps_time_counter = 10
         try:
             print("DEBUG: GPSD-thread: Started.")
             gpsd_socket = gps3.GPSDSocket()
             data_stream = gps3.DataStream()
             gpsd_socket.connect()
-            gpsd_socket.watch(True)
+            gpsd_socket.watch(enable=True)
             while self.gpsd_reader_active:
                 time.sleep(1.0)
                 new_data = gpsd_socket.next(timeout=5)
@@ -210,8 +222,11 @@ class WurbGps(object):
 
                     # Time.
                     if gpsd_time and (gpsd_time != "n/a"):
-                        self.gpsd_time = parser.parse(gpsd_time)
+                        first_gps_time_counter -= 1
+                        if first_gps_time_counter <= 0:
+                            self.gpsd_time = parser.parse(gpsd_time)
                     else:
+                        first_gps_time_counter = 10
                         self.gpsd_time = None
                     # Lat/long.
                     if (
@@ -223,12 +238,12 @@ class WurbGps(object):
                         self.gpsd_latitude = gpsd_latitude
                         self.gpsd_longitude = gpsd_longitude
                     else:
+                        first_gps_time_counter = 10
                         self.gpsd_latitude = None
                         self.gpsd_longitude = None
                 else:
-
                     print("DEBUG: GPSD-thread: No data.")
-
+                    first_gps_time_counter = 10
                     self.gpsd_time = None
                     self.gpsd_latitude = None
                     self.gpsd_longitude = None
@@ -238,7 +253,7 @@ class WurbGps(object):
         finally:
             print("DEBUG: GPSD-thread: Ended.")
             if gpsd_socket:
-                gpsd_socket.watch(False)
+                gpsd_socket.watch(enable=False)
+                gpsd_socket.close()
         #
         return True  # Done.
-
