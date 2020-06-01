@@ -92,9 +92,9 @@
                                                         onchange="geoLocationSourceOnChange(update_detector=true)">
                                                         <option value="geo-not-used">Not used</option>
                                                         <option value="geo-manual">Manually entered location</option>
-                                                        <option value="geo-client-gps">Location from mobile unit
+                                                        <option value="geo-client-gps">Location from client unit
                                                         </option>
-                                                        <option value="geo-usb-gps">Use USB-GPS on recording unit
+                                                        <option value="geo-usb-gps">USB GPS receiver
                                                         </option>
                                                     </select>
                                                 </div>
@@ -151,6 +151,27 @@
                                 <!-- Content. -->
                                 <p class="title">Settings</p>
                                 <p class="subtitle">Settings for the recording unit.</p>
+
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Rec.&nbsp;mode</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <div class="select">
+                                                    <select id="settings_rec_mode_id">
+                                                        <option value="rec-mode-manual">Manually controlled</option>
+                                                        <option value="rec-mode-on">Rec. always on</option>
+                                                        <option value="rec-mode-off">Rec. always off</option>
+                                                        <option value="rec-mode-scheduler">Based on scheduler</option>
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="tabs is-fullwidth is-medium">
                                     <ul>
                                         <li id="tab_settings_basic_id" class="is-active"
@@ -176,7 +197,7 @@
                                 <!-- Settings: Basic. -->
                                 <div id="div_settings_basic_id">
                                     <!-- style="visibility:hidden; overflow:hidden; height:0; width:0;" class=""> -->
-                                    <div class="field is-horizontal">
+                                    <!-- <div class="field is-horizontal">
                                         <div class="field-label is-normal">
                                             <label class="label">Rec.&nbsp;mode</label>
                                         </div>
@@ -187,7 +208,8 @@
                                                         <select id="settings_rec_mode_id">
                                                             <option value="rec-mode-manual">Manually controlled</option>
                                                             <option value="rec-mode-on">Rec. always on</option>
-                                                            <option value="rec-mode-scheduler">Based on scheduler
+                                                            <option value="rec-mode-off">Rec. always off</option>
+                                                            <option value="rec-mode-scheduler">Based on scheduler</option>
                                                             </option>
                                                         </select>
                                                     </div>
@@ -195,6 +217,9 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <hr> -->
+
                                     <div class="field">
                                         <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
                                         <div class="control">

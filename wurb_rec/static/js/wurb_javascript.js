@@ -168,7 +168,7 @@ async function startRecording() {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
     // Save settings before recording starts.
     saveSettings()
-    await fetch('/start-rec');
+    await fetch('/start-rec/');
   } catch (err) {
     alert(`ERROR startRecording: ${err}`);
     console.log(err);
@@ -178,7 +178,7 @@ async function startRecording() {
 async function stopRecording(action) {
   try {
     document.getElementById("rec_status_id").innerHTML = "Waiting...";
-    await fetch('/stop-rec');
+    await fetch('/stop-rec/');
   } catch (err) {
     alert(`ERROR stopRecording: ${err}`);
     console.log(err);
@@ -232,7 +232,7 @@ async function saveLocation() {
 
 async function getLocation() {
   try {
-    let response = await fetch("/get-location");
+    let response = await fetch("/get-location/");
     let data = await response.json();
     updateLocation(data);
   } catch (err) {
@@ -243,7 +243,7 @@ async function getLocation() {
 
 async function getManualLocation() {
   try {
-    let response = await fetch("/get-location");
+    let response = await fetch("/get-location/");
     let location = await response.json();
     latitude_dd_id.value = location.manual_latitude_dd
     longitude_dd_id.value = location.manual_longitude_dd  
