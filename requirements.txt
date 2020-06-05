@@ -9,8 +9,9 @@ numpy
 scipy
 psutil
 # GPS
-gps3 
+pyserial
+pyserial-asyncio
 pytz
 python-dateutil
-# For Visual Studio Code.
+# Visual Studio Code.
 pylint

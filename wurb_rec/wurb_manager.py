@@ -47,7 +47,7 @@ class WurbRecManager(object):
             self.wurb_scheduler = wurb_rec.WurbScheduler(self)
             self.update_status_task = asyncio.create_task(self.update_status())
 
-            await self.wurb_gps.startup()
+            # await self.wurb_gps.startup()
             await self.wurb_settings.startup()
             await self.wurb_scheduler.startup()
         except Exception as e:

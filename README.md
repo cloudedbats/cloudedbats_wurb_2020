@@ -10,7 +10,8 @@ Some differences from a user perspective:
 
 - The detector acts as a WiFi Hotspot/AccessPoint and contains a web server. 
 - Web pages are used for configuration and control.
-- Automatic detection of connected ultrasonic microphones.
+- Automatic detection of connected Ultrasonic microphones.
+- Automatic detection of connected USB GPS Receiver.
 - etc.
 
 ## Software
@@ -19,7 +20,7 @@ Notes from a developers perspective:
 
 - Software completely rewritten. Python 3.7+ needed.
 - Raspbian Buster Lite used for Raspberry Pi 4 support.
-- RaspAP (https://raspap.com/) used to run the detector as a WiFi Hot Spot.
+- RaspAP (https://raspap.com/) used to run the detector as a WiFi Hotspot/AccessPoint.
 - More modular software design by use of micro services.
 - API:s are specified as OpenAPI 3.0.
 - Asynchronous (async/await) programming both in frontend and backend.
@@ -34,9 +35,9 @@ Notes from a developers perspective:
 - Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
 - SD card. For example Toshiba Exceria Pro 16GB, or similar.
 - Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and 
-Dodotronic UltraMic 192K, 250K.
+Dodotronic UltraMic 192K, 250K, 384K BLE.
 
-Note: For some strange reason M500-384 has problems if connected directly to a 
+**Note:** For some strange reason M500-384 has problems if connected directly to a 
 Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
 or attach the M500-384 microphone after startup.
 
@@ -44,7 +45,7 @@ Optional hardware:
 
 - USB memory sticks. This is optional since the internal SD card will be used for storage if 
 no USB sticks are available. More than one memory stick can be used.
-- (USB GPS dongle. NOT implemented in software yet.)
+- USB GPS Receiver using the NMEA format. Tested with "Navilock NL-602U" and "GPS/GLONASS U-blox7".
 - Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
 missing features: On/off button, real time clock, possibility to use other 
 power sources than 5V, and scripting capability for turning the unit on/off 
@@ -146,36 +147,18 @@ Install software:
     sudo apt install gpsd gpsd-clients udevil
     sudo apt install python3-rpi.gpio
 
-### Config USB GPS Receiver (optional)
+### USB GPS Receiver (optional)
 
-This configuration is needed if you want to use 
-GPS for latitude/longitude and time. 
-Tested with "Navilock NL-602U" and "G-Star IV BU-353S4".
+The detector is listening to GPS units that are connected to  
+"/dev/ttyACM0" or "/dev/ttyUSB0". Only NMEA format is supported. 
+I there are problems this may help:
 
-    # Connect the USB GPS Receiver and check where it is available.
+    # Connect the USB GPS Receiver and check if it is available.
     ls /dev/ttyUSB*
     ls /dev/ttyACM*
 
-    # Edit the config file.
-    sudo nano /etc/default/gpsd 
- 
-Set these values ("ttyUSB0" or "ttyACM0" depends on the check above):
- 
-    START_DAEMON="true"
-    USBAUTO="true"
-    DEVICES="/dev/ttyUSB0"
-    # DEVICES="/dev/ttyACM0"
-    GPSD_OPTIONS=""
-
-Restart and test. It can take some time before the GPS receiver has found the 
-satellites, and it doesn't work indoors.
-
-Some commands that can be useful if it doesn't work directly:
-
-    gpsmon
-    gpsmon /dev/ttyUSB0
-    gpsmon /dev/ttyACM0
-    cgps -s
+**Note:** This will not work if GPSD is installed. 
+Please uninstall it if that's the case.
 
 ### CloudedBats software
 

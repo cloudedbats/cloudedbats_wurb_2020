@@ -62,14 +62,14 @@ class WurbSettings(object):
         # GPS.
         if self.current_location["geo_source_option"] == "geo-usb-gps":
             await self.save_latlong(0.0, 0.0)
-            await self.wurb_manager.wurb_gps.start()
+            await self.wurb_manager.wurb_gps.startup()
         else:
-            await self.wurb_manager.wurb_gps.stop()
+            await self.wurb_manager.wurb_gps.shutdown()
 
     async def shutdown(self):
         """ """
         # GPS.
-        await self.wurb_manager.wurb_gps.stop()
+        await self.wurb_manager.wurb_gps.shutdown()
 
     async def save_settings(self, settings_dict={}):
         """ """
@@ -119,9 +119,9 @@ class WurbSettings(object):
 
         # GPS.
         if self.current_location["geo_source_option"] == "geo-usb-gps":
-            await self.wurb_manager.wurb_gps.start()
+            await self.wurb_manager.wurb_gps.startup()
         else:
-            await self.wurb_manager.wurb_gps.stop()
+            await self.wurb_manager.wurb_gps.shutdown()
 
     async def save_latlong(self, latitude_dd, longitude_dd):
         """ """
