@@ -143,15 +143,14 @@ have to download and install a new version:
 Install software:
 
     sudo apt install git python3-venv python3-dev
-    sudo apt install libportaudio2 libatlas-base-dev
-    sudo apt install gpsd gpsd-clients udevil
+    sudo apt install libportaudio2 libatlas-base-dev udevil
     sudo apt install python3-rpi.gpio
 
 ### USB GPS Receiver (optional)
 
 The detector is listening to GPS units that are connected to  
 "/dev/ttyACM0" or "/dev/ttyUSB0". Only NMEA format is supported. 
-I there are problems this may help:
+If there are problems this may help:
 
     # Connect the USB GPS Receiver and check if it is available.
     ls /dev/ttyUSB*
