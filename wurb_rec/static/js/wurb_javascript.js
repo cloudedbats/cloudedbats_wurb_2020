@@ -91,7 +91,7 @@ function hideShowSettingsTabs(tab_name) {
   };
 };
 
-function geoLocationSourceOnChange(update_detector=false) {
+function geoLocationSourceOnChange(update_detector) {
   let selected_value = geo_source_option_id.options[geo_source_option_id.selectedIndex].value
   save_location_button_text_id.innerHTML = "Save"
   if (selected_value == "geo-not-used") {
