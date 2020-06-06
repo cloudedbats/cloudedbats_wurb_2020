@@ -225,6 +225,9 @@ class WurbSettings(object):
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
+                    if len(row) > 0:
+                        if row[0] == "#":
+                            continue
                     if ":" in row:
                         row_parts = row.split(":")
                         key = row_parts[0].strip()
@@ -239,6 +242,11 @@ class WurbSettings(object):
         dir_path = self.get_settings_dir_path()
         settings_file_path = pathlib.Path(dir_path, self.settings_file_name)
         with settings_file_path.open("w") as settings_file:
+            settings_file.write("# CloudedBats, http://cloudedbats.org" + "\n")
+            settings_file.write("# Settings for the CloudedBats WURB bat detector." + "\n")
+            settings_file.write("# Saved: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
+            settings_file.write("# "  + "\n")
+            #
             for key, value in self.current_location.items():
                 settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
