@@ -185,6 +185,17 @@ async function stopRecording(action) {
   };
 };
 
+async function recModeOnChange() {
+  try {
+      let recmode = settings_rec_mode_id.value;
+      let url_string = `/save-rec-mode/?recmode=${recmode}`;
+      await fetch(url_string);
+  } catch (err) {
+    alert(`ERROR recModeOnChange: ${err}`);
+    console.log(err);
+  };
+};
+
 async function saveLocationSource() {
   try {
     let location = {

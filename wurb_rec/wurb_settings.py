@@ -71,6 +71,16 @@ class WurbSettings(object):
         # GPS.
         await self.wurb_manager.wurb_gps.shutdown()
 
+    async def save_rec_mode(self, rec_mode):
+        """ """
+        self.current_settings["rec_mode"] = rec_mode
+        self.save_settings_to_file()
+        # Create a new event and release all from the old event.
+        old_settings_event = self.settings_event
+        self.settings_event = asyncio.Event()
+        if old_settings_event:
+            old_settings_event.set()
+
     async def save_settings(self, settings_dict={}):
         """ """
         for key, value in settings_dict.items():

@@ -156,6 +156,16 @@ async def set_time(posixtime: str):
         print("EXCEPTION: Called: set_time: ", e)
 
 
+@app.get("/save-rec-mode/")
+async def save_rec_mode(recmode: str):
+    try:
+        print("DEBUG: Called: save_rec_mode: ", recmode)
+        global wurb_rec_manager
+        await wurb_rec_manager.wurb_settings.save_rec_mode(recmode)
+    except Exception as e:
+        print("EXCEPTION: Called: save_rec_mode: ", e)
+
+
 @app.post("/save-settings/")
 async def save_settings(settings: DetectorSettings):
     try:

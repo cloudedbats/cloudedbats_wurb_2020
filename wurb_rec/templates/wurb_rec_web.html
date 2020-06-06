@@ -160,7 +160,8 @@
                                         <div class="field is-narrow">
                                             <div class="control">
                                                 <div class="select">
-                                                    <select id="settings_rec_mode_id">
+                                                    <select id="settings_rec_mode_id"
+                                                        onchange="recModeOnChange()">
                                                         <option value="rec-mode-manual">Manually controlled</option>
                                                         <option value="rec-mode-on">Rec. always on</option>
                                                         <option value="rec-mode-off">Rec. always off</option>
@@ -196,30 +197,6 @@
 
                                 <!-- Settings: Basic. -->
                                 <div id="div_settings_basic_id">
-                                    <!-- style="visibility:hidden; overflow:hidden; height:0; width:0;" class=""> -->
-                                    <!-- <div class="field is-horizontal">
-                                        <div class="field-label is-normal">
-                                            <label class="label">Rec.&nbsp;mode</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field is-narrow">
-                                                <div class="control">
-                                                    <div class="select">
-                                                        <select id="settings_rec_mode_id">
-                                                            <option value="rec-mode-manual">Manually controlled</option>
-                                                            <option value="rec-mode-on">Rec. always on</option>
-                                                            <option value="rec-mode-off">Rec. always off</option>
-                                                            <option value="rec-mode-scheduler">Based on scheduler</option>
-                                                            </option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <hr> -->
-
                                     <div class="field">
                                         <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
                                         <div class="control">
