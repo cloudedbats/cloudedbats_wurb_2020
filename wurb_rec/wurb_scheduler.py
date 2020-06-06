@@ -22,12 +22,6 @@ class WurbScheduler(object):
         """ """
         self.main_loop_task = asyncio.create_task(self.main_loop())
 
-
-
-        await self.check_scheduler()
-
-
-
     async def shutdown(self):
         """ """
         if self.main_loop_task:
@@ -73,8 +67,8 @@ class WurbScheduler(object):
         print("Sunrise: ", sunrise_local)
 
         now_local = datetime.datetime.now().astimezone()
-        start_local = sunset_local - datetime.timedelta(minutes=10)
-        stop_local = sunrise_local + datetime.timedelta(minutes=10)
+        start_local = sunset_local - datetime.timedelta(minutes=15)
+        stop_local = sunrise_local + datetime.timedelta(minutes=15)
 
         print("Time now: ", now_local)
         print("Start time: ", start_local)
@@ -92,12 +86,15 @@ class WurbScheduler(object):
                 await self.wurb_manager.stop_rec()
         else:
             # Different days.
+            start_local_new = start_local
             stop_local_new = stop_local
-            if now_local < start_local:
-                stop_local_new = stop_local - datetime.timedelta(days=1)
+            # Prepare.
+            if now_local < stop_local:
+                start_local_new = start_local - datetime.timedelta(days=1)
             if now_local > stop_local:
                 stop_local_new = stop_local + datetime.timedelta(days=1)
-            if (start_local < now_local) and (now_local < stop_local_new):
+            # Check.
+            if (start_local_new < now_local) and (now_local < stop_local_new):
                 await self.wurb_manager.start_rec()
             else:
                 await self.wurb_manager.stop_rec()
