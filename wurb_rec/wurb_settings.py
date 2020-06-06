@@ -16,7 +16,6 @@ class WurbSettings(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
-        self.settings_file_name = "wurb_rec_settings.txt"
         self.default_settings = None
         self.current_settings = None
         self.default_location = None
@@ -25,6 +24,9 @@ class WurbSettings(object):
         self.location_event = None
         self.latlong_event = None
         self.os_raspbian = None
+        #
+        self.settings_file_name = "wurb_rec_settings.txt"
+        self.settings_dir_path = self.get_settings_dir_path()
         #
         self.define_default_settings()
         self.current_settings = self.default_settings.copy()
@@ -220,8 +222,7 @@ class WurbSettings(object):
 
     def load_settings_from_file(self):
         """ Load from file. """
-        dir_path = self.get_settings_dir_path()
-        settings_file_path = pathlib.Path(dir_path, self.settings_file_name)
+        settings_file_path = pathlib.Path(self.settings_dir_path, self.settings_file_name)
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
@@ -239,11 +240,10 @@ class WurbSettings(object):
 
     def save_settings_to_file(self):
         """ Save to file. """
-        dir_path = self.get_settings_dir_path()
-        settings_file_path = pathlib.Path(dir_path, self.settings_file_name)
+        settings_file_path = pathlib.Path(self.settings_dir_path, self.settings_file_name)
         with settings_file_path.open("w") as settings_file:
             settings_file.write("# CloudedBats, http://cloudedbats.org" + "\n")
-            settings_file.write("# Settings for the CloudedBats WURB bat detector." + "\n")
+            settings_file.write("# Settings for the WURB bat detector." + "\n")
             settings_file.write("# Saved: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
             settings_file.write("# "  + "\n")
             #

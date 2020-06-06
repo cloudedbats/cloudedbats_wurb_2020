@@ -399,6 +399,7 @@ class WaveFileWriter:
         self.wurb_recorder = wurb_manager.wurb_recorder
         self.wurb_settings = wurb_manager.wurb_settings
         self.wurb_logging = wurb_manager.wurb_logging
+        self.rec_target_dir_path = None
         self.wave_file = None
         # self.size_counter = 0
 
@@ -407,12 +408,12 @@ class WaveFileWriter:
 
         sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
         rec_file_prefix = self.wurb_settings.get_setting("filename_prefix")
-        rec_target_dir_path = self.get_target_dir_path()
+        self.rec_target_dir_path = self.get_target_dir_path()
         rec_datetime = self.get_datetime(start_time)
         rec_location = self.get_location()
         rec_type = self.get_type(sampling_freq_hz)
 
-        if rec_target_dir_path is None:
+        if self.rec_target_dir_path is None:
             self.wave_file = None
             return
 
@@ -429,10 +430,10 @@ class WaveFileWriter:
         )
 
         # Create directories.
-        if not rec_target_dir_path.exists():
-            rec_target_dir_path.mkdir(parents=True)
+        if not self.rec_target_dir_path.exists():
+            self.rec_target_dir_path.mkdir(parents=True)
         # Open wave file for writing.
-        filenamepath = pathlib.Path(rec_target_dir_path, filename)
+        filenamepath = pathlib.Path(self.rec_target_dir_path, filename)
         self.wave_file = wave.open(str(filenamepath), "wb")
         self.wave_file.setnchannels(1)  # 1=Mono.
         self.wave_file.setsampwidth(2)  # 2=16 bits.
@@ -451,6 +452,16 @@ class WaveFileWriter:
         if self.wave_file is not None:
             self.wave_file.close()
             self.wave_file = None
+        # Copy settings to target directory.
+        try:
+            if self.rec_target_dir_path is not None:
+                from_dir = self.wurb_settings.settings_dir_path
+                log_file_name = self.wurb_settings.settings_file_name
+                from_file_path = pathlib.Path(from_dir, log_file_name)
+                to_file_path = pathlib.Path(self.rec_target_dir_path, log_file_name)
+                to_file_path.write_text(from_file_path.read_text())
+        except Exception as e:
+            print("Exception: Copy settings to wave file directory: ", e)
 
     def get_target_dir_path(self):
         """ """
