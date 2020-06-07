@@ -371,8 +371,13 @@ function updateSettings(settings) {
 }
 
 function updateLogTable(log_rows) {
-  // document.getElementById("rec_log_table_id").innerHTML =
-  //   "<tr><td>23:45:47 TEST.</td>";
+  html_table_rows = ""
+  for (row_index in log_rows) {
+    html_table_rows += "<tr><td>"
+    html_table_rows += log_rows[row_index]
+    html_table_rows += "</tr></td>"
+  } 
+  document.getElementById("rec_log_table_id").innerHTML = html_table_rows
 }
 
 function startWebsocket(ws_url) {

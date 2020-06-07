@@ -204,19 +204,41 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
         print("DEBUG: Called:  websocket_endpoint.")
         global wurb_rec_manager
+        wurb_settings = wurb_rec_manager.wurb_settings
+        wurb_logging = wurb_rec_manager.wurb_logging
+        #
         await websocket.accept()
+        #
+        # Get event notification objects.
+        rec_manager_notification = await wurb_rec_manager.get_notification_event()
+        location_changed_notification = await wurb_settings.get_location_event()
+        latlong_changed_notification = await wurb_settings.get_latlong_event()
+        settings_changed_notification = await wurb_settings.get_settings_event()
+        logging_changed_notification = await wurb_logging.get_logging_event()
+        # Update client.
+        ws_json = {}
+        status_dict = await wurb_rec_manager.get_status_dict()
+        ws_json["status"] = {
+            "rec_status": status_dict.get("rec_status", ""),
+            "device_name": status_dict.get("device_name", ""),
+            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+        }
+        ws_json["location"] = await wurb_settings.get_location()
+        ws_json["latlong"] = await wurb_settings.get_location()
+        ws_json["settings"] = await wurb_settings.get_settings()
+        ws_json["log_rows"] = await wurb_logging.get_client_messages()
+        # Send update to client.
+        await websocket.send_json(ws_json)
+        # Loop.
         while True:
             # Wait for next event to happen.
-            rec_manager_notification = await wurb_rec_manager.get_notification_event()
-            location_changed_notification = await wurb_rec_manager.wurb_settings.get_location_event()
-            latlong_changed_notification = await wurb_rec_manager.wurb_settings.get_latlong_event()
-            settings_changed_notification = await wurb_rec_manager.wurb_settings.get_settings_event()
             events = [
-                asyncio.sleep(1), # Update detector time field each second.
+                asyncio.sleep(1.0),  # Update detector time field each second.
                 rec_manager_notification.wait(),
                 location_changed_notification.wait(),
                 latlong_changed_notification.wait(),
                 settings_changed_notification.wait(),
+                logging_changed_notification.wait(),
             ]
             await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
 
@@ -228,19 +250,19 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
                 "device_name": status_dict.get("device_name", ""),
                 "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
             }
+            rec_manager_notification = await wurb_rec_manager.get_notification_event()
             if location_changed_notification.is_set():
-                ws_json[
-                    "location"
-                ] = await wurb_rec_manager.wurb_settings.get_location()
+                location_changed_notification = await wurb_settings.get_location_event()
+                ws_json["location"] = await wurb_settings.get_location()
             if latlong_changed_notification.is_set():
-                ws_json[
-                    "latlong"
-                ] = await wurb_rec_manager.wurb_settings.get_location()
+                latlong_changed_notification = await wurb_settings.get_latlong_event()
+                ws_json["latlong"] = await wurb_settings.get_location()
             if settings_changed_notification.is_set():
-                ws_json[
-                    "settings"
-                ] = await wurb_rec_manager.wurb_settings.get_settings()
-
+                settings_changed_notification = await wurb_settings.get_settings_event()
+                ws_json["settings"] = await wurb_settings.get_settings()
+            if logging_changed_notification.is_set():
+                logging_changed_notification = await wurb_logging.get_logging_event()
+                ws_json["log_rows"] = await wurb_logging.get_client_messages()
             # Send to client.
             await websocket.send_json(ws_json)
 
@@ -248,6 +270,7 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         print("EXCEPTION: Called: websocket_endpoint: ", e)
 
 
+# Example:
 # @app.get("/items/{item-id}")
 # async def read_item(item-id: int, q: str = None, q2: int = None):
 #    return {"item-id": item_id, "q": q, "q2": q2}
