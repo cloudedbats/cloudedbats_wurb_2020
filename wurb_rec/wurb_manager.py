@@ -15,6 +15,7 @@ import wave
 # CloudedBats.
 import wurb_rec
 
+
 class WurbRecManager(object):
     """ """
 
@@ -50,7 +51,9 @@ class WurbRecManager(object):
             await self.wurb_settings.startup()
             await self.wurb_scheduler.startup()
             # Logging.
-            await self.wurb_logging.info("Detector started.", client_message="Detector started.")
+            await self.wurb_logging.info(
+                "Detector started.", client_message="Detector started."
+            )
 
         except Exception as e:
             print("Exception: ", e)
@@ -59,7 +62,7 @@ class WurbRecManager(object):
         """ """
         try:
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
-            
+
             if self.wurb_gps:
                 await self.wurb_gps.shutdown()
             if self.wurb_scheduler:
@@ -78,7 +81,7 @@ class WurbRecManager(object):
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
             if rec_status == "Recording.":
-                return # Already running.
+                return  # Already running.
 
             # await self.ultrasound_devices.stop_checking_devices()
             await self.ultrasound_devices.check_devices()
@@ -89,10 +92,15 @@ class WurbRecManager(object):
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
-                await self.wurb_logging.info("Rec. started.", client_message="Rec. started.")
+                await self.wurb_logging.info(
+                    "Rec. started.", client_message="Rec. started."
+                )
             else:
-                await self.wurb_recorder.set_rec_status(
-                    "Failed: No valid microphone."
+                await self.wurb_recorder.set_rec_status("Failed: No valid microphone.")
+                # Logging.
+                await self.wurb_logging.info(
+                    "Failed: No valid microphone.",
+                    client_message="Failed: No valid microphone.",
                 )
 
                 # await self.ultrasound_devices.start_checking_devices()
@@ -103,17 +111,18 @@ class WurbRecManager(object):
     async def stop_rec(self):
         """ """
         try:
-            # if self.wurb_recorder.get_rec_status() != "Recording.":
-            #     return # Not running.
+            rec_status = await self.wurb_recorder.get_rec_status()
+            if rec_status == "Recording.":
+                # Logging.
+                await self.wurb_logging.info(
+                    "Rec. stopped.", client_message="Rec. stopped."
+                )
 
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()
 
             # await self.ultrasound_devices.start_checking_devices()
-
-            # Logging.
-            await self.wurb_logging.info("Rec. stopped.", client_message="Rec. stopped.")
 
         except Exception as e:
             print("Exception: ", e)

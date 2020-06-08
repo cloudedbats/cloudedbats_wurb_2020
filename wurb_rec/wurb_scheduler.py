@@ -14,6 +14,8 @@ class WurbScheduler(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
+        self.wurb_settings = wurb_manager.wurb_settings
+        self.wurb_logging = wurb_manager.wurb_logging
         self.main_loop_task = None
         self.solartime = wurb_rec.SolarTime()
         self.solartime_lookup_dict = {}
@@ -32,7 +34,7 @@ class WurbScheduler(object):
         try:
             while True:
                 await asyncio.sleep(10)
-                rec_mode = self.wurb_manager.wurb_settings.get_setting("rec_mode")
+                rec_mode = self.wurb_settings.get_setting("rec_mode")
                 if rec_mode == "rec-mode-on":
                     await self.wurb_manager.start_rec()
                 if rec_mode == "rec-mode-off":
@@ -47,7 +49,7 @@ class WurbScheduler(object):
 
     async def check_scheduler(self):
         """ """
-        location_dict = self.wurb_manager.wurb_settings.get_location_dict()
+        location_dict = self.wurb_settings.get_location_dict()
         latitude = float(location_dict.get("latitude_dd", "0.0"))
         longitude = float(location_dict.get("longitude_dd", "0.0"))
         if (latitude == 0.0) or (longitude == 0.0):

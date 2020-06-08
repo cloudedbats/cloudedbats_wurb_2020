@@ -45,13 +45,16 @@ class WurbLogging(object):
         time_local = datetime.datetime.now()
         if client_message:
             time_str = time_local.strftime("%H:%M:%S")
-            self.client_messages.append(time_str + "  " + client_message)
+            self.client_messages.append(time_str + " - " + client_message)
 
         # Create a new event and release all from the old event.
         old_logging_event = self.logging_event
         self.logging_event = asyncio.Event()
         if old_logging_event:
             old_logging_event.set()
+        # Log list too large.
+        if len(self.client_messages) > 60:
+            self.client_messages = self.client_messages[40:]
 
     async def get_logging_event(self):
         """ """

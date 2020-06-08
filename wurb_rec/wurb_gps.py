@@ -16,7 +16,9 @@ class WurbGps(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
-        self.asyncio_loop = wurb_manager
+        self.wurb_settings = wurb_manager.wurb_settings
+        self.wurb_logging = wurb_manager.wurb_logging
+        self.asyncio_loop = None
         #
         self.gps_datetime_utc = None
         self.gps_latitude = 0.0
@@ -107,7 +109,7 @@ class WurbGps(object):
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             asyncio.run_coroutine_threadsafe(
-                self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0),
+                self.wurb_settings.save_latlong(0.0, 0.0),
                 self.asyncio_loop,
             )
 
@@ -158,7 +160,7 @@ class WurbGps(object):
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             asyncio.run_coroutine_threadsafe(
-                self.wurb_manager.wurb_settings.save_latlong(0.0, 0.0),
+                self.wurb_settings.save_latlong(0.0, 0.0),
                 self.asyncio_loop,
             )
             return
@@ -205,7 +207,7 @@ class WurbGps(object):
 
                             # Connect to main loop.
                             asyncio.run_coroutine_threadsafe(
-                                self.wurb_manager.wurb_settings.set_detector_time(
+                                self.wurb_settings.set_detector_time(
                                     gps_local_timestamp
                                 ),
                                 self.asyncio_loop,
@@ -222,7 +224,7 @@ class WurbGps(object):
             self.last_used_long_dd = long_dd
             # Connect to main loop.
             asyncio.run_coroutine_threadsafe(
-                self.wurb_manager.wurb_settings.save_latlong(lat_dd, long_dd),
+                self.wurb_settings.save_latlong(lat_dd, long_dd),
                 self.asyncio_loop,
             )
 

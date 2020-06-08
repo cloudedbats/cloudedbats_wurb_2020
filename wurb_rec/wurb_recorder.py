@@ -112,6 +112,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         """ """
         super().__init__(queue_max_size)
         self.wurb_manager = wurb_manager
+        self.wurb_settings = wurb_manager.wurb_settings
+        self.wurb_logging = wurb_manager.wurb_logging
         self.rec_status = ""
         self.device_name = ""
         self.sampling_freq_hz = 0

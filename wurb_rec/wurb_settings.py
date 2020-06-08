@@ -16,6 +16,7 @@ class WurbSettings(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
+        self.wurb_logging = wurb_manager.wurb_logging
         self.default_settings = None
         self.current_settings = None
         self.default_location = None
@@ -82,6 +83,10 @@ class WurbSettings(object):
         self.settings_event = asyncio.Event()
         if old_settings_event:
             old_settings_event.set()
+        # Logging.
+        rec_mode_str = rec_mode.replace("rec-mode-", "").capitalize()
+        await self.wurb_logging.info("Rec. mode: " +  rec_mode_str,
+                        client_message="Rec. mode: " +  rec_mode_str)
 
     async def save_settings(self, settings_dict={}):
         """ """
@@ -94,6 +99,9 @@ class WurbSettings(object):
         self.settings_event = asyncio.Event()
         if old_settings_event:
             old_settings_event.set()
+
+        # Logging.
+        await self.wurb_logging.info("Settings saved.", client_message="Settings saved.")
 
     def get_setting(self, key=None):
         """ """
@@ -164,10 +172,18 @@ class WurbSettings(object):
             # ).astimezone(tz=None)
             time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
             print(time_string)
+            # Logging.
+            await self.wurb_logging.info("Detector time update: " +  time_string,
+                            client_message="Detector time update: " +  time_string)
             # First check: OS Raspbian.
             if self.is_os_raspbian():
                 # Second check: User pi exists. Perform: "date --set".
                 os.system('cd /home/pi && sudo date --set "' + time_string + '"')
+            else:
+                # Logging.
+                await self.wurb_logging.info("ERROR: Detector time update failed, not Raspbian OS.",
+                            client_message="ERROR: Detector time update failed, not Raspbian OS.")
+
         except Exception as e:
             print("EXCEPTION: set_detector_time: ", e)
 
