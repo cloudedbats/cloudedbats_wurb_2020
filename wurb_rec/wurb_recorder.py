@@ -157,6 +157,36 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         except Exception as e:
             print("Exception: ", e)
 
+    async def put_on_from_source_queue(self, send_dict):
+        """ """
+        # s = self.from_source_queue.qsize()
+        # f = self.from_source_queue.full()
+        # print("SiZE: ", s, f)
+        # lock = asyncio.Lock()
+        # async with lock:
+        try:
+            # item_status = send_dict["status"]
+            # item_time = send_dict["time"]
+            # item_data = send_dict["data"].copy()
+            # new_item = {}
+            # new_item["status"] = item_status
+            # new_item["time"] = item_time
+            # new_item["data"] = item_data
+
+            # print("=== SOURCE: ", new_item["time"], new_item["data"][:5])
+
+            if not self.from_source_queue.full():
+                # await self.from_source_queue.put_nowait(new_item)
+                await self.from_source_queue.put_nowait(send_dict)
+            else:
+                await self.remove_items_from_queue(self.from_source_queue)
+                await self.from_source_queue.put(False)  # Flush.
+                print("DEBUG: from_source_queue id FULL. Queues are flushed.")
+        except QueueFull:
+            print("EXCEPTION: put_on_queue_from_source: QueueFull.")
+        except Exception as e:
+            print("EXCEPTION: put_on_queue_from_source: ", e)
+
     async def sound_source_worker(self):
         """ Abstract worker method for sound sources. Mainly files or streams.
             Test implementation to be used as template.
@@ -170,7 +200,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 This is called (from a separate thread) for each audio block. """
             try:
                 if status:
-                    print("DEBUG: audio_callback Status:", status)  # , file=sys.stderr)
+                    print("DEBUG: audio_callback Status:", status)
 
                 input_buffer_adc_time = cffi_time.inputBufferAdcTime
                 if self.rec_start_time == None:
@@ -181,18 +211,26 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 buffer_dac_time = (
                     int((self.rec_start_time + input_buffer_adc_time) * 2) / 2
                 )
-                # print("DEBUG: buffer_dac_time: ", buffer_dac_time, "   ",
-                #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_dac_time)))
+                # print(
+                #     "DEBUG: buffer_dac_time: ",
+                #     buffer_dac_time,
+                #     "   ",
+                #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_dac_time)),
+                # )
+
+                indata_raw = indata[:, 0]  # Transform list of lists to list.
+                indata_copy = indata_raw.copy()
+                # print("=== CALLBACK: ", indata_copy[:5])
 
                 send_dict = {
                     "status": "data",
                     "time": buffer_dac_time,
-                    "data": indata[:, 0],  # Transform list of lists to list.
+                    "data": indata_copy,
                 }
                 # Add to queue. Should be attached to the main async loop.
                 try:
-                    loop.call_soon_threadsafe(
-                        self.from_source_queue.put_nowait, send_dict
+                    asyncio.run_coroutine_threadsafe(
+                        self.put_on_from_source_queue(send_dict), loop,
                     )
                 except QueueFull:
                     print("EXCEPTION: from_source_queue: QueueFull.")
@@ -255,63 +293,77 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             while True:
                 try:
                     try:
-                        item = await self.from_source_queue.get()
-                        self.from_source_queue.task_done()
-                        if item == None:
-                            await self.to_target_queue.put(None)  # Terminate.
-                            print("DEBUG-2: Terminated by source.")
-                            break
-                        elif item == False:
-                            print("DEBUG-2: Flush.")
-                            await self.remove_items_from_queue(self.to_target_queue)
-                            await self.to_target_queue.put(False)  # Flush.
-                        else:
-                            # Store in 6 sec. long list
-                            new_item = {}
-                            new_item["status"] = "data-Counter-" + str(
-                                sound_detected_counter
-                            )
-                            new_item["time"] = item["time"]
-                            new_item["data"] = item["data"].copy()
-
-                            self.process_deque.append(new_item)
-                            # Remove oldest item if the list is too long.
-                            if len(self.process_deque) > 12:
-                                self.process_deque.popleft()
-
-                            if sound_detected == False:
+                        # lock = asyncio.Lock()
+                        # async with lock:
+                        try:
+                            item = await self.from_source_queue.get()
+                            # print("=== PROCESS: ", item["time"], item["data"][:5])
+                            if item == None:
+                                sound_detected == False
                                 sound_detected_counter = 0
-                                # Check for sound.
-                                sound_detected = sound_detector.check_for_sound(
-                                    (item["time"], item["data"])
+                                self.process_deque.clear()
+                                await self.to_target_queue.put(None)  # Terminate.
+                                print("DEBUG-2: Terminated by source.")
+                                break
+                            elif item == False:
+                                print("DEBUG-2: Flush.")
+                                sound_detected == False
+                                sound_detected_counter = 0
+                                self.process_deque.clear()
+                                await self.remove_items_from_queue(self.to_target_queue)
+                                await self.to_target_queue.put(False)  # Flush.
+                            else:
+                                # Store in 6 sec. long list
+                                new_item = {}
+                                new_item["status"] = "data-Counter-" + str(
+                                    sound_detected_counter
                                 )
-                                # sound_detected = True
+                                new_item["time"] = item["time"]
+                                new_item["data"] =  item["data"]
 
-                            if sound_detected == True:
-                                sound_detected_counter += 1
-                                # print("DEBUG-2: counter: ", sound_detected_counter,
-                                #       "   deque length: ", len(self.process_deque))
-                                if (sound_detected_counter >= 9) and (
-                                    len(self.process_deque) >= 12
-                                ):
-                                    sound_detected = False
+                                self.process_deque.append(new_item)
+                                # Remove oldest item if the list is too long.
+                                if len(self.process_deque) > 12:
+                                    self.process_deque.popleft()
+
+                                if sound_detected == False:
                                     sound_detected_counter = 0
-                                    # Send to target.
-                                    for index in range(0, 12):
-                                        to_file_item = self.process_deque.popleft()
-                                        if index == 0:
-                                            to_file_item["status"] = "new_file"
-                                        if index == 11:
-                                            to_file_item["status"] = "close_file"
-                                        await self.to_target_queue.put(to_file_item)
-                                        await asyncio.sleep(0)
+                                    # Check for sound.
+                                    sound_detected = sound_detector.check_for_sound(
+                                        (item["time"], item["data"])
+                                    )
+                                    # sound_detected = True
 
-                            await asyncio.sleep(0)
+                                if sound_detected == True:
+                                    sound_detected_counter += 1
+                                    if (sound_detected_counter >= 9) and (
+                                        len(self.process_deque) >= 12
+                                    ):
+                                        sound_detected = False
+                                        sound_detected_counter = 0
+                                        # Send to target.
+                                        for index in range(0, 12):
+                                            to_file_item = self.process_deque.popleft()
+                                            #
+                                            if index == 0:
+                                                to_file_item["status"] = "new_file"
+                                            if index == 11:
+                                                to_file_item["status"] = "close_file"
+                                            #
+                                            if not self.to_target_queue.full():
+                                                await self.to_target_queue.put(
+                                                    to_file_item
+                                                )
+
+                                            # await asyncio.sleep(0)
 
                             # status = item.get('status', '')
                             # buffer_dac_time = item.get('time', '')
                             # data = item.get('data', '')
                             # print("DEBUG: Process status:", status, " time:", buffer_dac_time, " data: ", len(data))
+                        finally:
+                            self.from_source_queue.task_done()
+                            await asyncio.sleep(0)
 
                     except asyncio.QueueFull:
                         await self.remove_items_from_queue(self.to_target_queue)
@@ -322,73 +374,62 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     break
                 except Exception as e:
                     print("DEBUG: soundProcessWorker exception: ", e)
+            # While end.
+
         except Exception as e:
             print("Exception: ", e)
         finally:
             print("DEBUG: ", "soundProcessWorker terminated.")
 
     async def sound_target_worker(self):
-        """ Abstract worker for sound targets. Mainly files or streams.
-            Test implementation to be used as template.
-        """
-
-        self._latitude = 0
-        self._longitude = 0
-        self._filename_prefix = "ASYNC"
-        # self._out_sampling_rate_hz = 384000
-        self._filename_rec_type = "FS384"
-        self._dir_path = "recorded_files"
-
+        """ Worker for sound targets. Mainly files or streams.
+         """
         wave_file_writer = None
-
         try:
             while True:
                 try:
-                    item = await self.to_target_queue.get()
-                    self.to_target_queue.task_done()
-                    if item == None:
-                        print("DEBUG-3: Terminated by process.")
-                        break
-                    elif item == False:
-                        print("DEBUG-3: Flush.")
-                        await self.remove_items_from_queue(self.to_target_queue)
-                        if wave_file_writer:
-                            wave_file_writer.close()
-                        pass  # TODO.
-                    else:
+                    # lock = asyncio.Lock()
+                    # async with lock:
+                    try:
+                        item = await self.to_target_queue.get()
 
-                        print("DEBUG-3: Item: ", item["status"])
-
-                        if item["status"] == "new_file":
-                            #
+                        if item == None:
+                            # Terminated by process.
+                            break
+                        elif item == False:
+                            await self.remove_items_from_queue(self.to_target_queue)
                             if wave_file_writer:
                                 wave_file_writer.close()
+                        else:
+                            # New.
+                            if item["status"] == "new_file":
+                                if wave_file_writer:
+                                    wave_file_writer.close()
 
-                            wave_file_writer = WaveFileWriter(self.wurb_manager)
-                            wave_file_writer.create(item["time"])
-
-                        if wave_file_writer:
-                            wave_file_writer.write(item["data"])
-
-                            print("DEBUG-3 Time: ", item["time"])
-                            print("DEBUG-3 Max: ", max(item["data"]))
-
-                        if item["status"] == "close_file":
+                                wave_file_writer = WaveFileWriter(self.wurb_manager)
+                                wave_file_writer.create(item["time"])
+                            # Data.
                             if wave_file_writer:
-                                wave_file_writer.close()
-                                wave_file_writer = None
-
-                    await asyncio.sleep(0)
+                                data_array = item["data"]
+                                wave_file_writer.write(data_array)
+                            # File.
+                            if item["status"] == "close_file":
+                                if wave_file_writer:
+                                    wave_file_writer.close()
+                                    wave_file_writer = None
+                    finally:
+                        self.to_target_queue.task_done()
+                        await asyncio.sleep(0)
 
                 except asyncio.CancelledError:
-                    print("DEBUG: ", "soundTargetWorker cancelled.")
+                    print("DEBUG: ", "SoundTargetWorker cancelled.")
                     break
                 except Exception as e:
-                    print("DEBUG: soundTargetWorker exception: ", e)
+                    print("DEBUG: SoundTargetWorker exception: ", e)
         except Exception as e:
             print("Exception: ", e)
         finally:
-            print("DEBUG: soundTargetWorker terminated.")
+            print("DEBUG: SoundTargetWorker terminated.")
 
 
 class WaveFileWriter:
@@ -464,6 +505,9 @@ class WaveFileWriter:
                 to_file_path.write_text(from_file_path.read_text())
         except Exception as e:
             print("Exception: Copy settings to wave file directory: ", e)
+        # # Logging.
+        # msg_text = "File: " + self.wave_file.file
+        # await self.wurb_logging.info(msg_text, client_message=msg_text)
 
     def get_target_dir_path(self):
         """ """
@@ -492,20 +536,20 @@ class WaveFileWriter:
                 # Directory may exist even when no USB attached.
                 if usb_stick_path.is_mount():
                     hdd = psutil.disk_usage(str(usb_stick_path))
-                    free_disk = hdd.free / (2**20) # To MB.
-                    if free_disk >= 20.0: # 20 MB.
+                    free_disk = hdd.free / (2 ** 20)  # To MB.
+                    if free_disk >= 20.0:  # 20 MB.
                         return pathlib.Path(usb_stick_path, file_directory)
 
         # Check internal SD card. At least 500 MB left.
         rpi_internal_path = pathlib.Path(target_rpi_internal_path)
         if rpi_internal_path.exists():
             hdd = psutil.disk_usage(str(rpi_internal_path))
-            free_disk = hdd.free / (2**20) # To MB.
-            if free_disk >= 500.0: # 500 MB.
+            free_disk = hdd.free / (2 ** 20)  # To MB.
+            if free_disk >= 500.0:  # 500 MB.
                 return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
             else:
                 print("ERROR: Not enough space left on RPi SD card.")
-                return None # Not enough space left on RPi SD card.
+                return None  # Not enough space left on RPi SD card.
 
         # Default for not Raspberry Pi.
         dir_path = pathlib.Path("wurb_files", file_directory)
