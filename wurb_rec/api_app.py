@@ -89,7 +89,7 @@ async def webpage(request: fastapi.Request):
         print("EXCEPTION: Called: webpage: ", e)
 
 
-@app.get("/start-rec")
+@app.get("/start-rec/")
 async def start_recording():
     try:
         print("DEBUG: Called: start_rec.")
@@ -99,7 +99,7 @@ async def start_recording():
         print("EXCEPTION: Called: start_rec: ", e)
 
 
-@app.get("/stop-rec")
+@app.get("/stop-rec/")
 async def stop_recording():
     try:
         print("DEBUG: Called: stop_rec.")
@@ -109,7 +109,7 @@ async def stop_recording():
         print("EXCEPTION: Called: stop_rec: ", e)
 
 
-@app.get("/get-status")
+@app.get("/get-status/")
 async def get_status():
     try:
         print("DEBUG: Called: get_status.")
