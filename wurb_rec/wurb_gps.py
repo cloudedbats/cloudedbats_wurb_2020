@@ -32,9 +32,12 @@ class WurbGps(object):
         self.serial_coro = None
         self.serial_transport = None
         self.serial_protocol = None
+        # Config.
+        self.max_time_diff_s = 60 # Unit: sec.
 
     async def startup(self):
         """ """
+        self.first_gps_time_received = False
         self.first_gps_time_counter = 30
         self.last_used_lat_dd = 0.0
         self.last_used_long_dd = 0.0
@@ -76,7 +79,7 @@ class WurbGps(object):
                 await self.start()
                 await asyncio.sleep(6)
                 await self.stop()
-                print("CONTROL LOOP")
+                # print("CONTROL LOOP")
         except Exception as e:
             print("EXCEPTION: gps_control_loop: ", e)
 
@@ -85,14 +88,14 @@ class WurbGps(object):
         # Check if USB GPS is connected.
         gps_device_path_found = None
         for gps_device_path in ["/dev/ttyACM0", "/dev/ttyUSB0"]:
-            print("Check :", gps_device_path)
+            # print("Check :", gps_device_path)
             gps_device = pathlib.Path(gps_device_path)
             if gps_device.exists():
                 gps_device_path_found = gps_device_path
                 break
         # Read serial, if connected.
         if gps_device_path_found:
-            print("GPS found: ", gps_device_path_found)
+            # print("GPS found: ", gps_device_path_found)
             # connection_lost_event = asyncio.Event()
             self.serial_coro = serial_asyncio.create_serial_connection(
                 self.asyncio_loop,
@@ -145,7 +148,7 @@ class WurbGps(object):
         latitude_dd = 0.0
         longitude_dd = 0.0
 
-        print("\nGPS data: ", data)
+        print("GPS data: ", data)
         parts = data.split(",")
         
         if (len(data) >= 50) and (len(parts) >= 8):
@@ -212,6 +215,24 @@ class WurbGps(object):
                                 ),
                                 self.asyncio_loop,
                             )
+            else:
+                # Compare detector time and GPS time.
+                datetime_utc = datetime.datetime.utcnow()
+                diff = self.gps_datetime_utc - datetime_utc
+                diff_in_s = diff.total_seconds()
+                if abs(diff_in_s) > self.max_time_diff_s:
+                    # Set detector unit time.
+                    gps_local_time = self.gps_datetime_utc.replace(
+                        tzinfo=datetime.timezone.utc
+                    ).astimezone()
+                    gps_local_timestamp = gps_local_time.timestamp()
+                    # Connect to main loop.
+                    asyncio.run_coroutine_threadsafe(
+                        self.wurb_settings.set_detector_time(
+                            gps_local_timestamp
+                        ),
+                        self.asyncio_loop,
+                    )
         except Exception as e:
             print("Exception: GPS time: ", e)
 
@@ -228,9 +249,9 @@ class WurbGps(object):
                 self.asyncio_loop,
             )
 
-        print("GPS datetime: ", datetime_utc)
-        print("GPS latitude: ", latitude_dd)
-        print("GPS longitude: ", longitude_dd)
+        # print("GPS datetime: ", datetime_utc)
+        # print("GPS latitude: ", latitude_dd)
+        # print("GPS longitude: ", longitude_dd)
 
     def is_time_valid(self, gps_time):
         """ To avoid strange datetime (like 1970-01-01 or 2038-01-19) from some GPS units. """
@@ -255,7 +276,7 @@ class ReadGpsSerialNmea(asyncio.Protocol):
     def connection_made(self, transport):
         transport.serial.rts = False
         # self.gps_manager: GPS manager for callbacks will be set externally.
-        print("GPS: Connection made.")
+        # print("GPS: Connection made.")
 
     def data_received(self, data):
         try:
