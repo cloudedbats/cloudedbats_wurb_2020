@@ -7,6 +7,7 @@
 import asyncio
 import datetime
 
+
 class WurbLogging(object):
     """ """
 
@@ -17,6 +18,8 @@ class WurbLogging(object):
         self.wurb_logging = wurb_manager.wurb_logging
         self.logging_event = None
         self.client_messages = []
+        # Config.
+        self.max_client_messages = 50
 
     async def startup(self):
         """ """
@@ -24,37 +27,45 @@ class WurbLogging(object):
     async def shutdown(self):
         """ """
 
-    async def info(self, message, client_message=None):
+    def info(self, message, short_message=None):
         """ """
-        await self.write_log("info", message, client_message)
+        self.write_log("info", message, short_message)
 
-    async def warning(self, message, client_message=None):
+    def warning(self, message, short_message=None):
         """ """
-        await self.write_log("warning", message, client_message)
+        self.write_log("warning", message, short_message)
 
-    async def error(self, message, client_message=None):
+    def error(self, message, short_message=None):
         """ """
-        await self.write_log("error", message, client_message)
+        self.write_log("error", message, short_message)
 
-    async def debug(self, message, client_message=None):
+    def debug(self, message, short_message=None):
         """ """
-        await self.write_log("debug", message, client_message)
+        self.write_log("debug", message, short_message)
 
-    async def write_log(self, type, message, client_message=None):
+    def write_log(self, msg_type, message, short_message=None):
         """ """
-        time_local = datetime.datetime.now()
-        if client_message:
-            time_str = time_local.strftime("%H:%M:%S")
-            self.client_messages.append(time_str + " - " + client_message)
+        # Run the rest in main loop.
+        datetime_local = datetime.datetime.now()
+        asyncio.run_coroutine_threadsafe(
+            self.write_log_async(msg_type, datetime_local, message, short_message),
+            asyncio.get_event_loop(),
+        )
 
+    async def write_log_async(self, type, datetime_local, message, short_message=None):
+        """ """
+        time_str = datetime_local.strftime("%H:%M:%S")
+        datetime_str = datetime_local.strftime("%Y-%m-%d %H:%M:%S%z")
+        if short_message:
+            self.client_messages.append(time_str + " - " + short_message)
+        # Log list too large. Remove oldest item.
+        if len(self.client_messages) > self.max_client_messages:
+            del self.client_messages[0]
         # Create a new event and release all from the old event.
         old_logging_event = self.logging_event
         self.logging_event = asyncio.Event()
         if old_logging_event:
             old_logging_event.set()
-        # Log list too large.
-        if len(self.client_messages) > 60:
-            self.client_messages = self.client_messages[40:]
 
     async def get_logging_event(self):
         """ """
