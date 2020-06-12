@@ -107,13 +107,17 @@ class SoundDetectionSimple(SoundDetectionBase):
         )
 
     def check_for_sound(self, time_and_data):
-        """ This is the old algorithm used during 2017. """
+        """ """
         _rec_time, raw_data = time_and_data
         # data_int16 = np.fromstring(raw_data, dtype=np.int16) # To ndarray.
         data_int16 = raw_data
         # self.work_buffer = np.concatenate([self._work_buffer, data_int16])
         self.work_buffer = data_int16
         #
+        sound_detected = False
+        sound_detected_counter = 0
+        peak_frequency_hz = 0.0
+        peak_db_at_max = -200.0
         while len(self.work_buffer) >= self.window_size:
             # Get frame of window size.
             data_frame = self.work_buffer[: self.window_size]
@@ -135,20 +139,28 @@ class SoundDetectionSimple(SoundDetectionBase):
             peak_db = dbfs_spectrum[bin_peak_index]
             # Treshold.
             if peak_db > self.threshold_dbfs:
-                if True:
-                    peak_frequency_hz = (
-                        bin_peak_index * self.sampling_freq / self.window_size
-                    )
-                    print(
-                        "DEBUG: Peak freq hz: "
-                        + str(peak_frequency_hz)
-                        + "   dBFS: "
-                        + str(peak_db)
-                    )
-                #
-                return True
+                sound_detected_counter += 1
+                if sound_detected_counter >= 3:
+                    sound_detected = True
+                    if peak_db > peak_db_at_max:
+                        peak_db_at_max = peak_db
+                        peak_frequency_hz = (
+                            bin_peak_index * self.sampling_freq / self.window_size
+                        )
+                        print(
+                            "DEBUG: Peak freq hz: "
+                            + str(peak_frequency_hz)
+                            + "   dBFS: "
+                            + str(peak_db)
+                        )
+        # Log if sound was detected.
+        if sound_detected:
+            # Logging.
+            message = "Sound peak: " + \
+                str(round(peak_frequency_hz / 1000.0, 1)) + \
+                " kHz / " + \
+                str(round(peak_db_at_max, 1)) + \
+                " dBFS."
+            self.wurb_logging.info(message, short_message=message)
         #
-        if True:
-            print("DEBUG: Silent.")
-        #
-        return False
+        return sound_detected
