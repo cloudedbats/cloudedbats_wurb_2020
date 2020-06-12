@@ -51,10 +51,8 @@ class WurbRecManager(object):
             await self.wurb_settings.startup()
             await self.wurb_scheduler.startup()
             # Logging.
-            await self.wurb_logging.info(
-                "Detector started.", client_message="Detector started."
-            )
-
+            message = "Detector started."
+            self.wurb_logging.info(message, short_message=message)
         except Exception as e:
             print("Exception: ", e)
 
@@ -72,7 +70,7 @@ class WurbRecManager(object):
             if self.update_status_task:
                 self.update_status_task.cancel()
             if self.wurb_logging:
-                self.wurb_logging.shutdown()
+                await self.wurb_logging.shutdown()
         except Exception as e:
             print("Exception: ", e)
 
@@ -92,19 +90,13 @@ class WurbRecManager(object):
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
-                await self.wurb_logging.info(
-                    "Rec. started.", client_message="Rec. started."
-                )
+                message = "Rec. started."
+                self.wurb_logging.info(message, short_message=message)
             else:
                 await self.wurb_recorder.set_rec_status("Failed: No valid microphone.")
                 # Logging.
-                await self.wurb_logging.info(
-                    "Failed: No valid microphone.",
-                    client_message="Failed: No valid microphone.",
-                )
-
-                # await self.ultrasound_devices.start_checking_devices()
-
+                message = "Failed: No valid microphone."
+                self.wurb_logging.info(message, short_message=message)
         except Exception as e:
             print("Exception: ", e)
 
@@ -114,16 +106,26 @@ class WurbRecManager(object):
             rec_status = await self.wurb_recorder.get_rec_status()
             if rec_status == "Recording.":
                 # Logging.
-                await self.wurb_logging.info(
-                    "Rec. stopped.", client_message="Rec. stopped."
-                )
+                message = "Rec. stopped."
+                self.wurb_logging.info(message, short_message=message)
 
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()
+        except Exception as e:
+            print("Exception: ", e)
 
-            # await self.ultrasound_devices.start_checking_devices()
-
+    async def restart_rec(self):
+        """ """
+        try:
+            rec_status = await self.wurb_recorder.get_rec_status()
+            if rec_status == "Recording.":
+                # Logging.
+                message = "Rec. restarted."
+                self.wurb_logging.info(message, short_message=message)
+                await self.stop_rec()
+                await asyncio.sleep(1.0)
+                await self.start_rec()
         except Exception as e:
             print("Exception: ", e)
 
