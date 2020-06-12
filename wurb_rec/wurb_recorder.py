@@ -30,7 +30,6 @@ class UltrasoundDevices(object):
         self.sampling_freq_hz = 0
         self.check_interval_s = 5.0
         self.notification_event = None
-        # self.device_checker_task = None
 
     async def check_devices(self):
         """ For asyncio events. """
@@ -119,6 +118,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.sampling_freq_hz = 0
         self.notification_event = None
         self.rec_start_time = None
+        # Config.
+        self.max_adc_time_diff_s = 10 # Unit: sec.
 
     async def get_notification_event(self):
         """ """
@@ -157,26 +158,27 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         except Exception as e:
             print("Exception: ", e)
 
-    async def put_on_from_source_queue(self, send_dict):
+    async def put_on_fromsourcequeue(self, send_dict):
         """ """
-        # s = self.from_source_queue.qsize()
-        # f = self.from_source_queue.full()
-        # print("SiZE: ", s, f)
-        # lock = asyncio.Lock()
-        # async with lock:
+        # Compare real time and stream time.
+        adc_time = send_dict["time"]
+        time_now = time.time()
+        # Restart if it differ too much.
+        if abs(adc_time - time_now) > self.max_adc_time_diff_s:
+            # Logging.
+            message = "Warning: Time diff. detected. Rec. will be restarted."
+            self.wurb_logging.info(message, short_message=message)
+            # Restart recording.
+            loop = asyncio.get_event_loop()
+            asyncio.run_coroutine_threadsafe(
+                self.wurb_manager.restart_rec(), loop,
+            )
+            await self.remove_items_from_queue(self.from_source_queue)
+            await self.from_source_queue.put(False)  # Flush.
+            return
+        # Put buffer on queue.
         try:
-            # item_status = send_dict["status"]
-            # item_time = send_dict["time"]
-            # item_data = send_dict["data"].copy()
-            # new_item = {}
-            # new_item["status"] = item_status
-            # new_item["time"] = item_time
-            # new_item["data"] = item_data
-
-            # print("=== SOURCE: ", new_item["time"], new_item["data"][:5])
-
             if not self.from_source_queue.full():
-                # await self.from_source_queue.put_nowait(new_item)
                 await self.from_source_queue.put_nowait(send_dict)
             else:
                 await self.remove_items_from_queue(self.from_source_queue)
@@ -220,20 +222,16 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
                 indata_raw = indata[:, 0]  # Transform list of lists to list.
                 indata_copy = indata_raw.copy()
-                # print("=== CALLBACK: ", indata_copy[:5])
-
+ 
                 send_dict = {
                     "status": "data",
                     "time": buffer_dac_time,
                     "data": indata_copy,
                 }
                 # Add to queue. Should be attached to the main async loop.
-                try:
-                    asyncio.run_coroutine_threadsafe(
-                        self.put_on_from_source_queue(send_dict), loop,
-                    )
-                except QueueFull:
-                    print("EXCEPTION: from_source_queue: QueueFull.")
+                asyncio.run_coroutine_threadsafe(
+                    self.put_on_fromsourcequeue(send_dict), loop,
+                )
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
                 loop.call_soon_threadsafe(sound_source_event.set())
@@ -293,10 +291,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             while True:
                 try:
                     try:
-                        # lock = asyncio.Lock()
-                        # async with lock:
+                        item = await self.from_source_queue.get()
                         try:
-                            item = await self.from_source_queue.get()
                             # print("=== PROCESS: ", item["time"], item["data"][:5])
                             if item == None:
                                 sound_detected == False
@@ -319,11 +315,11 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     sound_detected_counter
                                 )
                                 new_item["time"] = item["time"]
-                                new_item["data"] =  item["data"]
+                                new_item["data"] = item["data"]
 
                                 self.process_deque.append(new_item)
-                                # Remove oldest item if the list is too long.
-                                if len(self.process_deque) > 12:
+                                # Remove oldest items if the list is too long.
+                                while len(self.process_deque) > 12:
                                     self.process_deque.popleft()
 
                                 if sound_detected == False:
@@ -388,11 +384,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         try:
             while True:
                 try:
-                    # lock = asyncio.Lock()
-                    # async with lock:
+                    item = await self.to_target_queue.get()
                     try:
-                        item = await self.to_target_queue.get()
-
                         if item == None:
                             # Terminated by process.
                             break
@@ -481,8 +474,13 @@ class WaveFileWriter:
         self.wave_file.setnchannels(1)  # 1=Mono.
         self.wave_file.setsampwidth(2)  # 2=16 bits.
         self.wave_file.setframerate(sampling_freq_hz)
-        # #
-        # sound_target_obj._logger.info('Recorder: New sound file: ' + filename)
+        # Logging.
+        target_path_str = str(self.rec_target_dir_path)
+        target_path_str = target_path_str.replace("/media/pi/", "USB:")
+        target_path_str = target_path_str.replace("/home/pi/", "SD-card:/home/pi/")
+        message = "Sound file to: " + target_path_str
+        # message = "Sound file to: " + filename
+        self.wurb_logging.info(message, short_message=message)
 
     def write(self, buffer):
         """ """
@@ -505,9 +503,6 @@ class WaveFileWriter:
                 to_file_path.write_text(from_file_path.read_text())
         except Exception as e:
             print("Exception: Copy settings to wave file directory: ", e)
-        # # Logging.
-        # msg_text = "File: " + self.wave_file.file
-        # await self.wurb_logging.info(msg_text, client_message=msg_text)
 
     def get_target_dir_path(self):
         """ """
