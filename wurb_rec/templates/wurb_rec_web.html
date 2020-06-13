@@ -249,6 +249,37 @@
                                         </div>
                                     </div>
                                     <div class="field">
+                                        <label class="label">Length of the recordings</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="settings_rec_length_id">
+                                                    <option value="4">4 seconds</option>
+                                                    <option value="5">5 seconds</option>
+                                                    <option value="6">6 seconds</option>
+                                                    <option value="7">7 seconds</option>
+                                                    <option value="8">8 seconds</option>
+                                                    <option value="9">9 seconds</option>
+                                                    <option value="10">10 seconds</option>
+                                                    <option value="11">11 seconds</option>
+                                                    <option value="12">12 seconds</option>
+                                                 </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Wave file type, FS or TE</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="settings_rec_type_id">
+                                                    <option value="FS">FS, Full Spectrum
+                                                    </option>
+                                                    <option value="TE">TE, Time Expansion 10x
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
                                         <label class="label">RaspberryPi control</label>
                                         <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
@@ -267,13 +298,31 @@
                                             </button>
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_clear_sd')">
-                                                Clear SD card
+                                                Clear SD card...
                                             </button>
+                                        </div>
+                                        <div style="visibility:hidden; overflow:hidden; height:0; width:0;">
+                                            <div style="border:1px solid white; margin: 0px; padding: 0px;">
+                                                <div class="control">
+                                                    <label class="label">&nbsp;&nbsp;&nbsp;Do you want to remove sound
+                                                        files from SD card?</label>
+                                                    <button style="margin:5px;"
+                                                        class="button is-info is-rounded is-small"
+                                                        onclick="raspberryPiControl('rpi_clear_sd_cancel')">
+                                                        Cancel
+                                                    </button>
+                                                    <button style="margin:5px;"
+                                                        class="button is-info is-rounded is-small"
+                                                        onclick="raspberryPiControl('rpi_clear_sd_ok')">
+                                                        Remove sound files
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_status')">
-                                                Wave file status
+                                                Detector status
                                             </button>
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_update_sw')">
