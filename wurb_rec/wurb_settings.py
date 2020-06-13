@@ -78,6 +78,11 @@ class WurbSettings(object):
         """ """
         self.current_settings["rec_mode"] = rec_mode
         self.save_settings_to_file()
+        # Activate directly if on or off.
+        if rec_mode == "rec-mode-on":
+            await self.wurb_manager.start_rec()
+        if rec_mode == "rec-mode-off":
+            await self.wurb_manager.stop_rec()
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
         self.settings_event = asyncio.Event()
@@ -92,6 +97,10 @@ class WurbSettings(object):
         """ """
         for key, value in settings_dict.items():
             if value is not None:
+                # Clean up filename_prefix.
+                if key == "filename_prefix":
+                    value = value.replace(" ", "-")
+                    value = value.replace("_", "-")
                 self.current_settings[key] = value
         self.save_settings_to_file()
         # Create a new event and release all from the old event.
