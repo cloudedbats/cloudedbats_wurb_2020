@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=4') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=5') }}"></script>
 </head>
 
 <body>
@@ -30,13 +30,13 @@
                                 <p class="title">Ultrasonic recorder</p>
                                 <p class="subtitle">Recording unit for bats.</p>
                                 <div class="buttons is-centered">
-                                    <button id="rec_start_button_id" class="button is-info is-rounded is-medium"
-                                        onclick="startRecording()">
+                                    <button style="margin:5px;" id="rec_start_button_id"
+                                        class="button is-info is-rounded is-medium" onclick="startRecording()">
                                         <!-- Start recording -->
                                         Start rec.
                                     </button>
-                                    <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
-                                        onclick="stopRecording()">
+                                    <button style="margin:5px;" id="rec_stop_button_id"
+                                        class="button is-info is-rounded is-medium" onclick="stopRecording()">
                                         <!-- Stop recording -->
                                         Stop rec.
                                     </button>
@@ -129,18 +129,14 @@
                                     </div>
                                 </div>
                                 <div class="buttons is-centered">
-                                    <button id="geo_set_pos_button_id" class="button is-info is-rounded"
-                                        onclick="saveLocation()">
+                                    <button style="margin:5px;" id="geo_set_pos_button_id"
+                                        class="button is-info is-rounded" onclick="saveLocation()">
                                         <span id="save_location_button_text_id">Save</span>
                                     </button>
-                                    <button id="geo_set_time_button_id" class="button is-info is-rounded"
-                                        onclick="setDetectorTime()">
+                                    <button style="margin:5px;" id="geo_set_time_button_id"
+                                        class="button is-info is-rounded" onclick="setDetectorTime()">
                                         Set time
                                     </button>
-                                    <!-- <button id="rec_stop_button_id" class="button is-info is-rounded is-medium"
-                                        onclick="callRecordingUnit('/stop_rec')">
-                                        Stop recording
-                                    </button> -->
                                 </div>
                             </article>
                         </div>
@@ -160,8 +156,7 @@
                                         <div class="field is-narrow">
                                             <div class="control">
                                                 <div class="select">
-                                                    <select id="settings_rec_mode_id"
-                                                        onchange="recModeOnChange()">
+                                                    <select id="settings_rec_mode_id" onchange="recModeOnChange()">
                                                         <option value="rec-mode-manual">Manually controlled</option>
                                                         <option value="rec-mode-on">Rec. always on</option>
                                                         <option value="rec-mode-off">Rec. always off</option>
@@ -204,7 +199,7 @@
                                                 placeholder="recorded_files" value="recorded_files">
                                         </div>
                                         <p class="help is-info">
-                                            On USB memory if available, otherwise internally.
+                                            On USB memory if available, otherwise internally on SD card.
                                         </p>
                                     </div>
                                     <div class="field">
@@ -256,15 +251,31 @@
                                     <div class="field">
                                         <label class="label">RaspberryPi control</label>
                                         <div class="control">
-                                            <button class="button is-info is-rounded is-small"
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_shutdown')">
                                                 Shutdown
                                             </button>
-                                            <button class="button is-info is-rounded is-small"
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_reboot')">
                                                 Reboot
                                             </button>
-                                            <button class="button is-info is-rounded is-small"
+                                        </div>
+                                        <div class="control">
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_sd_to_usb')">
+                                                Copy SD to USB
+                                            </button>
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_clear_sd')">
+                                                Clear SD card
+                                            </button>
+                                        </div>
+                                        <div class="control">
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                onclick="raspberryPiControl('rpi_status')">
+                                                Wave file status
+                                            </button>
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_update_sw')">
                                                 Software update
                                             </button>
@@ -363,9 +374,25 @@
                                                 placeholder="15" value="15">
                                         </div>
                                     </div>
+                                    <div class="field">
+                                        <label class="label">Post&nbsp;action</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="settings_scheduler_post_action_id">
+                                                    <option value="off-sunset">No action</option>
+                                                    <option value="off-dusk">Detector shutdown</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">Post&nbsp;action&nbsp;delay&nbsp;(minutes)</label>
+                                        <div class="control">
+                                            <input id="settings_scheduler_post_action_delay_id" class="input"
+                                                type="number" placeholder="5" value="5">
+                                        </div>
+                                    </div>
                                 </div>
-
-
 
                                 <hr>
                                 <div class="field is-horizontal">
@@ -374,32 +401,21 @@
                                     </div> -->
                                     <div class="field-body">
                                         <div class="control">
-                                            <button id="settings_save_button_id" class="button is-info is-rounded"
-                                                onclick="saveSettings()">
+                                            <button style="margin:5px;" id="settings_save_button_id"
+                                                class="button is-info is-rounded" onclick="saveSettings()">
                                                 Save
                                             </button>
-                                            <button id="settings_reset_button_id" class="button is-info is-rounded"
-                                                onclick="getSettings()">
+                                            <button style="margin:5px;" id="settings_reset_button_id"
+                                                class="button is-info is-rounded" onclick="getSettings()">
                                                 Last saved
                                             </button>
-                                            <button id="settings_default_button_id" class="button is-info is-rounded"
-                                                onclick="getDefaultSettings()">
+                                            <button style="margin:5px;" id="settings_default_button_id"
+                                                class="button is-info is-rounded" onclick="getDefaultSettings()">
                                                 Default
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- <div class="buttons is-centered">
-                                    <button class="button is-info is-rounded">
-                                        Save
-                                    </button>
-                                    <button class="button is-info is-rounded">
-                                            Save as...
-                                        </button>
-                                        <button class="button is-info is-rounded">
-                                            Delete
-                                        </button>
-                                </div> -->
 
                             </article>
                         </div>
