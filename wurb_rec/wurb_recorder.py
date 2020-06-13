@@ -118,6 +118,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.sampling_freq_hz = 0
         self.notification_event = None
         self.rec_start_time = None
+        self.restart_activated = False
         # Config.
         self.max_adc_time_diff_s = 10 # Unit: sec.
 
@@ -165,10 +166,14 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         time_now = time.time()
         # Restart if it differ too much.
         if abs(adc_time - time_now) > self.max_adc_time_diff_s:
+            # Check if restart already is requested.
+            if self.restart_activated:
+                return
             # Logging.
             message = "Warning: Time diff. detected. Rec. will be restarted."
             self.wurb_logging.info(message, short_message=message)
             # Restart recording.
+            self.restart_activated = True
             loop = asyncio.get_event_loop()
             asyncio.run_coroutine_threadsafe(
                 self.wurb_manager.restart_rec(), loop,
@@ -196,6 +201,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.rec_start_time = None
         loop = asyncio.get_event_loop()
         sound_source_event = asyncio.Event()
+        self.restart_activated = False
 
         def audio_callback(indata, frames, cffi_time, status):
             """ Locally defined callback.
