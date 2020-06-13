@@ -3,7 +3,7 @@ fastapi
 uvicorn
 jinja2
 aiofiles
-# Sound.
+# Sound, etc.
 sounddevice
 numpy
 scipy

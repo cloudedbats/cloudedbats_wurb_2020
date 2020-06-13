@@ -76,6 +76,8 @@ class SoundDetectionSimple(SoundDetectionBase):
     def __init__(self, wurb_manager):
         """ """
         super(SoundDetectionSimple, self).__init__(wurb_manager)
+        # Config.
+        self.sound_detected_counter_min = 3
 
     def config(self):
         """ """
@@ -140,7 +142,7 @@ class SoundDetectionSimple(SoundDetectionBase):
             # Treshold.
             if peak_db > self.threshold_dbfs:
                 sound_detected_counter += 1
-                if sound_detected_counter >= 3:
+                if sound_detected_counter >= self.sound_detected_counter_min:
                     sound_detected = True
                     if peak_db > peak_db_at_max:
                         peak_db_at_max = peak_db
@@ -156,11 +158,13 @@ class SoundDetectionSimple(SoundDetectionBase):
         # Log if sound was detected.
         if sound_detected:
             # Logging.
-            message = "Sound peak: " + \
-                str(round(peak_frequency_hz / 1000.0, 1)) + \
-                " kHz / " + \
-                str(round(peak_db_at_max, 1)) + \
-                " dBFS."
+            message = (
+                "Sound peak: "
+                + str(round(peak_frequency_hz / 1000.0, 1))
+                + " kHz / "
+                + str(round(peak_db_at_max, 1))
+                + " dBFS."
+            )
             self.wurb_logging.info(message, short_message=message)
         #
         return sound_detected
