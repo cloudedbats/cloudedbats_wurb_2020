@@ -10,6 +10,7 @@ import datetime
 import pathlib
 import psutil
 
+
 class WurbRaspberryPi(object):
     """ """
 
@@ -35,14 +36,14 @@ class WurbRaspberryPi(object):
             elif command == "rpi_status":
                 await self.rpi_status()
             elif command == "rpi_update_sw":
-                await self.rpi_update_sw
+                await self.rpi_update_sw()
             else:
                 # Logging.
-                message = "Detector command failed. Not  valid command."
+                message = "Raspberry Pi command failed. Not a valid command: " + command
                 self.wurb_manager.wurb_logging.error(message, short_message=message)
         else:
             # Logging.
-            message = "Detector command failed, not Raspbian OS."
+            message = "Raspberry Pi command failed (" + command + "), not Raspbian OS."
             self.wurb_manager.wurb_logging.warning(message, short_message=message)
 
     async def set_detector_time(self, posix_time_s, cmd_source=""):
@@ -184,7 +185,7 @@ class WurbRaspberryPi(object):
         # Logging.
         message = "Raspberry Pi command 'Detector status' is not implemented."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
- 
+
     async def rpi_update_sw(self):
         """ """
         # Logging.
