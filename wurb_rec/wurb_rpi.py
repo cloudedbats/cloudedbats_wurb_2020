@@ -8,7 +8,7 @@ import asyncio
 import os
 import datetime
 import pathlib
-
+import psutil
 
 class WurbRaspberryPi(object):
     """ """
