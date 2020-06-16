@@ -280,6 +280,11 @@ class WurbGps(object):
 class ReadGpsSerialNmea(asyncio.Protocol):
     """ Serial connection for serial_asyncio. """
 
+    def __init__(self):
+        """ """
+        super().__init__()
+        self.gps_manager = None
+
     def connection_made(self, transport):
         transport.serial.rts = False
         # self.gps_manager: GPS manager for callbacks will be set externally.
@@ -295,9 +300,6 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                         self.gps_manager.parse_nmea_gprmc(data_gprmc)
         except Exception as e:
             print("EXCEPTION: data_received: ", e)
-            # Logging error.
-            message = "GPS data_received: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def connection_lost(self, exc):
         print("GPS: Connection closed.")
