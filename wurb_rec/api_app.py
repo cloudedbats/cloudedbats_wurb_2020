@@ -43,10 +43,14 @@ class DetectorSettings(BaseModel):
     detection_limit: float = None
     detection_sensitivity: float = None
     detection_algorithm: str = None
+    rec_length_s: float = None
+    rec_type: str = None
     scheduler_start_event: str = None
     scheduler_start_adjust: float = None
     scheduler_stop_event: str = None
     scheduler_stop_adjust: float = None
+    scheduler_post_action: str = None
+    scheduler_post_action_delay: float = None
 
 
 @app.on_event("startup")

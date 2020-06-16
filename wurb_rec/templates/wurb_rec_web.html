@@ -265,6 +265,9 @@
                                                  </select>
                                             </div>
                                         </div>
+                                        <p class="help is-info">
+                                            Up to 2 sec. before the detected sound is recorded.
+                                        </p>
                                     </div>
                                     <div class="field">
                                         <label class="label">Wave file type, FS or TE</label>
@@ -280,7 +283,7 @@
                                         </div>
                                     </div>
                                     <div class="field">
-                                        <label class="label">RaspberryPi control</label>
+                                        <label class="label">Raspberry Pi control</label>
                                         <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_shutdown')">
@@ -301,11 +304,12 @@
                                                 Clear SD card...
                                             </button>
                                         </div>
-                                        <div style="visibility:hidden; overflow:hidden; height:0; width:0;">
-                                            <div style="border:1px solid white; margin: 0px; padding: 0px;">
+                                        <div  id="div_settings_clear_sd_confirm_id" 
+                                            style="visibility:hidden; overflow:hidden; height:0; width:0;">
+                                            <div style="border:1px solid white; margin: 0px; padding: 25px;">
                                                 <div class="control">
-                                                    <label class="label">&nbsp;&nbsp;&nbsp;Do you want to remove sound
-                                                        files from SD card?</label>
+                                                    <label class="label">Do you want to remove sound
+                                                        files from the internal SD card?</label>
                                                     <button style="margin:5px;"
                                                         class="button is-info is-rounded is-small"
                                                         onclick="raspberryPiControl('rpi_clear_sd_cancel')">
@@ -428,8 +432,8 @@
                                         <div class="control">
                                             <div class="select">
                                                 <select id="settings_scheduler_post_action_id">
-                                                    <option value="off-sunset">No action</option>
-                                                    <option value="off-dusk">Detector shutdown</option>
+                                                    <option value="post-none">No action</option>
+                                                    <!-- <option value="post-shutdown">Detector shutdown</option> -->
                                                 </select>
                                             </div>
                                         </div>

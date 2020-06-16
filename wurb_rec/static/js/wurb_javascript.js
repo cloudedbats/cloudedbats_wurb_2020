@@ -25,6 +25,8 @@ window.onload = function () {
   const div_settings_basic_id = document.getElementById("div_settings_basic_id");
   const div_settings_more_id = document.getElementById("div_settings_more_id");
   const div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
+  const div_settings_clear_sd_confirm_id = document.getElementById("div_settings_clear_sd_confirm_id");
+
   // Fields and buttons.
   const settings_rec_mode_id = document.getElementById("settings_rec_mode_id");
   const settings_filename_prefix_id = document.getElementById("settings_filename_prefix_id");
@@ -32,10 +34,14 @@ window.onload = function () {
   const settings_detection_sensitivity_id = document.getElementById("settings_detection_sensitivity_id");
   const settings_file_directory_id = document.getElementById("settings_file_directory_id");
   const settings_detection_algorithm_id = document.getElementById("settings_detection_algorithm_id");
+  const settings_rec_length_id = document.getElementById("settings_rec_length_id");
+  const settings_rec_type_id = document.getElementById("settings_rec_type_id");
   const settings_scheduler_start_event_id = document.getElementById("settings_scheduler_start_event_id");
   const settings_scheduler_start_adjust_id = document.getElementById("settings_scheduler_start_adjust_id");
   const settings_scheduler_stop_event_id = document.getElementById("settings_scheduler_stop_event_id");
   const settings_scheduler_stop_adjust_id = document.getElementById("settings_scheduler_stop_adjust_id");
+  const settings_scheduler_post_action_id = document.getElementById("settings_scheduler_post_action_id");
+  const settings_scheduler_post_action_delay_id = document.getElementById("settings_scheduler_post_action_delay_id");
   const settings_save_button_id = document.getElementById("settings_save_button_id");
   const settings_reset_button_id = document.getElementById("settings_reset_button_id");
   const settings_default_button_id = document.getElementById("settings_default_button_id");
@@ -44,7 +50,7 @@ window.onload = function () {
   getLocation()
   getSettings()
   // Check geolocation:
-  geoLocationSourceOnChange(update_detector=false);
+  geoLocationSourceOnChange(update_detector = false);
 
   // Start websocket.
   var ws_url = (window.location.protocol === "https:") ? "wss://" : "ws://"
@@ -187,9 +193,9 @@ async function stopRecording(action) {
 
 async function recModeOnChange() {
   try {
-      let recmode = settings_rec_mode_id.value;
-      let url_string = `/save-rec-mode/?recmode=${recmode}`;
-      await fetch(url_string);
+    let recmode = settings_rec_mode_id.value;
+    let url_string = `/save-rec-mode/?recmode=${recmode}`;
+    await fetch(url_string);
   } catch (err) {
     alert(`ERROR recModeOnChange: ${err}`);
     console.log(err);
@@ -257,7 +263,7 @@ async function getManualLocation() {
     let response = await fetch("/get-location/");
     let location = await response.json();
     latitude_dd_id.value = location.manual_latitude_dd
-    longitude_dd_id.value = location.manual_longitude_dd  
+    longitude_dd_id.value = location.manual_longitude_dd
   } catch (err) {
     alert(`ERROR getManualLocation: ${err}`);
     console.log(err);
@@ -285,10 +291,14 @@ async function saveSettings() {
       detection_sensitivity: settings_detection_sensitivity_id.value,
       file_directory: settings_file_directory_id.value,
       detection_algorithm: settings_detection_algorithm_id.value,
+      rec_length_s: settings_rec_length_id.value,
+      rec_type: settings_rec_type_id.value,
       scheduler_start_event: settings_scheduler_start_event_id.value,
       scheduler_start_adjust: settings_scheduler_start_adjust_id.value,
       scheduler_stop_event: settings_scheduler_stop_event_id.value,
       scheduler_stop_adjust: settings_scheduler_stop_adjust_id.value,
+      scheduler_post_action: settings_scheduler_post_action_id.value,
+      scheduler_post_action_delay: settings_scheduler_post_action_delay_id.value,
     }
     await fetch("/save-settings/",
       {
@@ -325,8 +335,15 @@ async function getDefaultSettings() {
 
 async function raspberryPiControl(command) {
   try {
-    let url_string = `/rpi-control/?command=${command}`;
-    await fetch(url_string);
+    if (command == "rpi_clear_sd") {
+      showDivision(div_settings_clear_sd_confirm_id)
+    } else {
+      hideDivision(div_settings_clear_sd_confirm_id)
+      if (command != "rpi_clear_sd_cancel") { // 
+        let url_string = `/rpi-control/?command=${command}`;
+        await fetch(url_string);
+      }
+    }
   } catch (err) {
     alert(`ERROR raspberryPiControl: ${err}`);
     console.log(err);
@@ -343,18 +360,18 @@ function updateLocation(location) {
   geo_source_option_id.value = location.geo_source_option
   if (location.geo_source_option == "geo-manual") {
     latitude_dd_id.value = location.manual_latitude_dd
-    longitude_dd_id.value = location.manual_longitude_dd  
+    longitude_dd_id.value = location.manual_longitude_dd
   } else {
     latitude_dd_id.value = location.latitude_dd
-    longitude_dd_id.value = location.longitude_dd  
+    longitude_dd_id.value = location.longitude_dd
   }
   // Check geolocation:
-  geoLocationSourceOnChange(update_detector=false);
+  geoLocationSourceOnChange(update_detector = false);
 }
 
 function updateLatLong(latlong) {
   latitude_dd_id.value = latlong.latitude_dd
-  longitude_dd_id.value = latlong.longitude_dd  
+  longitude_dd_id.value = latlong.longitude_dd
 }
 
 function updateSettings(settings) {
@@ -364,10 +381,14 @@ function updateSettings(settings) {
   settings_detection_sensitivity_id.value = settings.detection_sensitivity
   settings_file_directory_id.value = settings.file_directory
   settings_detection_algorithm_id.value = settings.detection_algorithm
+  settings_rec_length_id.value = settings.rec_length_s
+  settings_rec_type_id.value = settings.rec_type
   settings_scheduler_start_event_id.value = settings.scheduler_start_event
   settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
   settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
   settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
+  settings_scheduler_post_action_id.value = settings.scheduler_post_action
+  settings_scheduler_post_action_delay_id.value = settings.scheduler_post_action_delay
 }
 
 function updateLogTable(log_rows) {
@@ -376,7 +397,7 @@ function updateLogTable(log_rows) {
     html_table_rows += "<tr><td>"
     html_table_rows += log_rows[row_index]
     html_table_rows += "</tr></td>"
-  } 
+  }
   document.getElementById("rec_log_table_id").innerHTML = html_table_rows
 }
 

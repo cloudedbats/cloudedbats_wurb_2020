@@ -45,10 +45,14 @@ class WurbSettings(object):
             "detection_limit": "17.0",
             "detection_sensitivity": "-50",
             "detection_algorithm": "detection-simple",
+            "rec_length_s": "6",
+            "rec_type": "FS",
             "scheduler_start_event": "on-sunset",
             "scheduler_start_adjust": "-15",
             "scheduler_stop_event": "off-sunrise",
             "scheduler_stop_adjust": "15",
+            "scheduler_post_action": "post-none",
+            "scheduler_post_action_delay": "5",
         }
 
     def define_default_location(self):
