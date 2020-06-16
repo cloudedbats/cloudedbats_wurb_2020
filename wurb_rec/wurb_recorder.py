@@ -63,7 +63,10 @@ class UltrasoundDevices(object):
             await self.set_connected_device(device_name, sampling_freq_hz)
 
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: Rec. check_devices: ", e)
+            # Logging error.
+            message = "Rec. check_devices: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def reset_devices(self):
         """ For asyncio events. """
@@ -72,6 +75,9 @@ class UltrasoundDevices(object):
 
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: reset_devices: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_notification_event(self):
         """ """
@@ -81,6 +87,9 @@ class UltrasoundDevices(object):
             return self.notification_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: get_notification_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_connected_device(self):
         """ """
@@ -88,6 +97,9 @@ class UltrasoundDevices(object):
             return self.device_name, self.sampling_freq_hz
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: get_connected_device: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def set_connected_device(self, device_name, sampling_freq_hz):
         """ """
@@ -102,6 +114,9 @@ class UltrasoundDevices(object):
                 old_notification_event.set()
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: set_connected_device: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
 
 class WurbRecorder(wurb_rec.SoundStreamManager):
@@ -131,6 +146,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             return self.notification_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: get_notification_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_rec_status(self):
         """ """
@@ -138,6 +156,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             return self.rec_status
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: get_rec_status: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def set_rec_status(self, rec_status):
         """ """
@@ -151,6 +172,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 old_notification_event.set()
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: set_rec_status: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def set_device(self, device_name, sampling_freq_hz):
         """ """
@@ -159,6 +183,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             self.sampling_freq_hz = sampling_freq_hz
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Recorder: set_device: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     # async def put_on_fromsourcequeue(self, send_dict):
     #     """ """
@@ -255,6 +282,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
+                # Logging error.
+                message = "Recorder: audio_callback: " + str(e)
+                self.wurb_manager.wurb_logging.error(message, short_message=message)
                 # Exit recording loop.
                 loop.call_soon_threadsafe(sound_source_event.set())
 
@@ -303,7 +333,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         """
 
         try:
-            self.process_deque = deque()  # Double ended queue. TODO: Move this.
+            self.process_deque = deque()  # Double ended queue.
             self.process_deque.clear()
             self.process_deque_length = self.rec_length_s * 2
             self.detection_counter_max = self.process_deque_length - 3  # 1.5 s before.
@@ -424,7 +454,10 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             # While end.
 
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: Recorder: sound_process_worker: ", e)
+            # Logging error.
+            message = "Recorder: sound_process_worker: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
             print("DEBUG: ", "soundProcessWorker terminated.")
 
@@ -470,8 +503,14 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     break
                 except Exception as e:
                     print("DEBUG: SoundTargetWorker exception: ", e)
+                    # Logging error.
+                    message = "Recorder: sound_target_worker: " + str(e)
+                    self.wurb_manager.wurb_logging.error(message, short_message=message)
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: Recorder: sound_target_worker: ", e)
+            # Logging error.
+            message = "Recorder: sound_target_worker: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
             print("DEBUG: SoundTargetWorker terminated.")
 

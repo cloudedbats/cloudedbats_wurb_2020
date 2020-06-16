@@ -52,20 +52,31 @@ class WurbLogging(object):
             asyncio.get_event_loop(),
         )
 
-    async def write_log_async(self, type, datetime_local, message, short_message=None):
+    async def write_log_async(
+        self, msg_type, datetime_local, message, short_message=None
+    ):
         """ """
-        time_str = datetime_local.strftime("%H:%M:%S")
-        datetime_str = datetime_local.strftime("%Y-%m-%d %H:%M:%S%z")
-        if short_message:
-            self.client_messages.append(time_str + " - " + short_message)
-        # Log list too large. Remove oldest item.
-        if len(self.client_messages) > self.max_client_messages:
-            del self.client_messages[0]
-        # Create a new event and release all from the old event.
-        old_logging_event = self.logging_event
-        self.logging_event = asyncio.Event()
-        if old_logging_event:
-            old_logging_event.set()
+        try:
+            time_str = datetime_local.strftime("%H:%M:%S")
+            datetime_str = datetime_local.strftime("%Y-%m-%d %H:%M:%S%z")
+            if short_message:
+                if msg_type in ["info", "warning", "error"]:
+                    if msg_type in ["warning", "error"]:
+                        self.client_messages.append(
+                            time_str + " - " + msg_type.capitalize() + ": " + short_message
+                        )
+                    else:
+                        self.client_messages.append(time_str + " - " + short_message)
+                    # Log list too large. Remove oldest item.
+                    if len(self.client_messages) > self.max_client_messages:
+                        del self.client_messages[0]
+                    # Create a new event and release all from the old event.
+                    old_logging_event = self.logging_event
+                    self.logging_event = asyncio.Event()
+                    if old_logging_event:
+                        old_logging_event.set()
+        except Exception as e:
+            print("Exception: Logging: write_log_async: ", e)
 
     async def get_logging_event(self):
         """ """
@@ -74,7 +85,10 @@ class WurbLogging(object):
                 self.logging_event = asyncio.Event()
             return self.logging_event
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: Logging: get_logging_event: ", e)
+            # Logging error.
+            message = "get_logging_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_client_messages(self):
         """ """

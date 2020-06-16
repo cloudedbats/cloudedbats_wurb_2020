@@ -57,6 +57,9 @@ class WurbRecManager(object):
             self.wurb_logging.info(message, short_message=message)
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: startup: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def shutdown(self):
         """ """
@@ -75,6 +78,9 @@ class WurbRecManager(object):
                 await self.wurb_logging.shutdown()
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: shutdown:" + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def start_rec(self):
         """ """
@@ -101,6 +107,9 @@ class WurbRecManager(object):
                 self.wurb_logging.info(message, short_message=message)
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def stop_rec(self):
         """ """
@@ -116,6 +125,9 @@ class WurbRecManager(object):
             await self.ultrasound_devices.reset_devices()
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def restart_rec(self):
         """ """
@@ -130,6 +142,9 @@ class WurbRecManager(object):
                 await self.start_rec()
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_notification_event(self):
         """ """
@@ -139,6 +154,9 @@ class WurbRecManager(object):
             return self.notification_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_status_dict(self):
         """ """
@@ -151,6 +169,9 @@ class WurbRecManager(object):
             return status_dict
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def update_status(self):
         """ """
@@ -175,5 +196,8 @@ class WurbRecManager(object):
                     old_notification_event.set()
         except Exception as e:
             print("DEBUG: update_status exception: ", e)
+            # Logging error.
+            message = "Manager: start_rec: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
             print("DEBUG: update_status terminated.")

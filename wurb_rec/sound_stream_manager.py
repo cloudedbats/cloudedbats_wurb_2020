@@ -22,7 +22,7 @@ class SoundStreamManager(object):
             self.queue_max_size = queue_max_size
             self.clear()
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: init:", e)
 
     def clear(self):
         """ """
@@ -33,7 +33,7 @@ class SoundStreamManager(object):
             self.process_task = None
             self.target_task = None
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: clear:", e)
 
     async def start_streaming(self):
         """ """
@@ -43,7 +43,7 @@ class SoundStreamManager(object):
             self.process_task = asyncio.create_task(self.sound_process_worker())
             self.target_task = asyncio.create_task(self.sound_target_worker())
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: start_streaming:", e)
 
     async def stop_streaming(self, stop_immediate=True):
         """ """
@@ -63,7 +63,7 @@ class SoundStreamManager(object):
                     self.source_task.cancel()
                 await self.from_source_queue.put(None)  # Terminate.
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: stop_streaming:", e)
 
     async def wait_for_shutdown(self):
         """ To be called after stop_streaming. """
@@ -75,7 +75,7 @@ class SoundStreamManager(object):
             if self.target_task and (not self.target_task.done()):
                 await self.target_task
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: wait_for_shutdown:", e)
 
     async def sound_source_worker(self):
         """ Abstract worker method for sound sources. Mainly files or streams.
@@ -99,7 +99,7 @@ class SoundStreamManager(object):
                 except Exception as e:
                     print("DEBUG: sound_source_worker exception: ", e)
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: sound_source_worker:", e)
         finally:
             print("DEBUG: ", "sound_source_worker terminated.")
 
@@ -133,7 +133,7 @@ class SoundStreamManager(object):
                 except Exception as e:
                     print("DEBUG: soundProcessWorker exception: ", e)
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: sound_process_worker:", e)
         finally:
             print("DEBUG: ", "soundProcessWorker terminated.")
 
@@ -160,7 +160,7 @@ class SoundStreamManager(object):
                 except Exception as e:
                     print("DEBUG: soundTargetWorker exception: ", e)
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: sound_target_worker:", e)
         finally:
             print("DEBUG: soundTargetWorker terminated.")
 
@@ -174,7 +174,7 @@ class SoundStreamManager(object):
                 except asyncio.QueueEmpty:
                     return
         except Exception as e:
-            print("Exception: ", e)
+            print("Exception: SoundStreamManager: remove_items_from_queue:", e)
 
 
 # === MAIN - for test ===
@@ -195,7 +195,7 @@ async def main():
         await stream_manager.wait_for_shutdown()
         print("Test finished.")
     except Exception as e:
-        print("Exception: ", e)
+        print("Exception: SoundStreamManager: main-test:", e)
 
 
 if __name__ == "__main__":

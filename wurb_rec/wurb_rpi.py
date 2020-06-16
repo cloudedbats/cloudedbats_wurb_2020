@@ -71,6 +71,9 @@ class WurbRaspberryPi(object):
                 self.wurb_manager.wurb_logging.warning(message, short_message=message)
         except Exception as e:
             print("EXCEPTION: set_detector_time: ", e)
+            # Logging error.
+            message = "RPi set_detector_time: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def get_settings_dir_path(self):
         """ """
@@ -121,7 +124,10 @@ class WurbRaspberryPi(object):
             if free_disk >= 500.0:  # 500 MB.
                 return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
             else:
-                print("ERROR: Not enough space left on RPi SD card.")
+                print("RPi Not enough space left on RPi SD card.")
+                # Logging error.
+                message = "RPi Not enough space left on RPi SD card."
+                self.wurb_manager.wurb_logging.error(message, short_message=message)
                 return None  # Not enough space left on RPi SD card.
 
         # Default for not Raspberry Pi.
@@ -146,7 +152,10 @@ class WurbRaspberryPi(object):
                 else:
                     self.os_raspbian = False
             except Exception as e:
-                print("EXCEPTION: is_os_raspbian: ", e)
+                print("EXCEPTION: RPi is_os_raspbian: ", e)
+                # Logging error.
+                message = "RPi is_os_raspbian: " + str(e)
+                self.wurb_manager.wurb_logging.error(message, short_message=message)
         #
         return self.os_raspbian
 

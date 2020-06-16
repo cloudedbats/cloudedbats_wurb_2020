@@ -82,7 +82,10 @@ class WurbGps(object):
                 await self.stop()
                 # print("CONTROL LOOP")
         except Exception as e:
-            print("EXCEPTION: gps_control_loop: ", e)
+            print("EXCEPTION: GPS Control loop: ", e)
+            # Logging error.
+            message = "GPS Control loop: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def start(self):
         """ """
@@ -234,6 +237,9 @@ class WurbGps(object):
                     )
         except Exception as e:
             print("Exception: GPS time: ", e)
+            # Logging error.
+            message = "GPS time: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
         # Check if lat/long changed.
         lat_dd = round(self.gps_latitude, 5)
@@ -265,6 +271,9 @@ class WurbGps(object):
                 return True
         except Exception as e:
             print("EXCEPTION: GPS is_time_valid: ", e)
+            # Logging error.
+            message = "GPS is_time_valid: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
             return False
 
 
@@ -286,6 +295,9 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                         self.gps_manager.parse_nmea_gprmc(data_gprmc)
         except Exception as e:
             print("EXCEPTION: data_received: ", e)
+            # Logging error.
+            message = "GPS data_received: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def connection_lost(self, exc):
         print("GPS: Connection closed.")

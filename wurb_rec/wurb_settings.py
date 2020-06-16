@@ -231,6 +231,9 @@ class WurbSettings(object):
             return self.settings_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Logging: get_settings_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_location_event(self):
         """ """
@@ -240,6 +243,9 @@ class WurbSettings(object):
             return self.location_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Logging: get_location_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     async def get_latlong_event(self):
         """ """
@@ -249,6 +255,9 @@ class WurbSettings(object):
             return self.latlong_event
         except Exception as e:
             print("Exception: ", e)
+            # Logging error.
+            message = "Logging: get_latlong_event: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def load_settings_from_file(self):
         """ Load from file. """
