@@ -120,7 +120,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.rec_start_time = None
         self.restart_activated = False
         # Config.
-        self.max_adc_time_diff_s = 10 # Unit: sec.
+        self.max_adc_time_diff_s = 10  # Unit: sec.
+        self.rec_length_s = 6  # Unit: sec.
 
     async def get_notification_event(self):
         """ """
@@ -159,40 +160,40 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         except Exception as e:
             print("Exception: ", e)
 
-    async def put_on_fromsourcequeue(self, send_dict):
-        """ """
-        # Compare real time and stream time.
-        adc_time = send_dict["time"]
-        time_now = time.time()
-        # Restart if it differ too much.
-        if abs(adc_time - time_now) > self.max_adc_time_diff_s:
-            # Check if restart already is requested.
-            if self.restart_activated:
-                return
-            # Logging.
-            message = "Warning: Time diff. detected. Rec. will be restarted."
-            self.wurb_logging.info(message, short_message=message)
-            # Restart recording.
-            self.restart_activated = True
-            loop = asyncio.get_event_loop()
-            asyncio.run_coroutine_threadsafe(
-                self.wurb_manager.restart_rec(), loop,
-            )
-            await self.remove_items_from_queue(self.from_source_queue)
-            await self.from_source_queue.put(False)  # Flush.
-            return
-        # Put buffer on queue.
-        try:
-            if not self.from_source_queue.full():
-                await self.from_source_queue.put_nowait(send_dict)
-            else:
-                await self.remove_items_from_queue(self.from_source_queue)
-                await self.from_source_queue.put(False)  # Flush.
-                print("DEBUG: from_source_queue id FULL. Queues are flushed.")
-        except QueueFull:
-            print("EXCEPTION: put_on_queue_from_source: QueueFull.")
-        except Exception as e:
-            print("EXCEPTION: put_on_queue_from_source: ", e)
+    # async def put_on_fromsourcequeue(self, send_dict):
+    #     """ """
+    #     # Compare real time and stream time.
+    #     adc_time = send_dict["adc_time"]
+    #     time_now = time.time()
+    #     # Restart if it differ too much.
+    #     if abs(adc_time - time_now) > self.max_adc_time_diff_s:
+    #         # Check if restart already is requested.
+    #         if self.restart_activated:
+    #             return
+    #         # Logging.
+    #         message = "Warning: Time diff. detected. Rec. will be restarted."
+    #         self.wurb_logging.info(message, short_message=message)
+    #         # Restart recording.
+    #         self.restart_activated = True
+    #         loop = asyncio.get_event_loop()
+    #         asyncio.run_coroutine_threadsafe(
+    #             self.wurb_manager.restart_rec(), loop,
+    #         )
+    #         await self.remove_items_from_queue(self.from_source_queue)
+    #         await self.from_source_queue.put(False)  # Flush.
+    #         return
+    #     # Put buffer on queue.
+    #     try:
+    #         if not self.from_source_queue.full():
+    #             await self.from_source_queue.put_nowait(send_dict)
+    #         else:
+    #             await self.remove_items_from_queue(self.from_source_queue)
+    #             await self.from_source_queue.put(False)  # Flush.
+    #             print("DEBUG: from_source_queue id FULL. Queues are flushed.")
+    #     except QueueFull:
+    #         print("EXCEPTION: put_on_queue_from_source: QueueFull.")
+    #     except Exception as e:
+    #         print("EXCEPTION: put_on_queue_from_source: ", e)
 
     async def sound_source_worker(self):
         """ Abstract worker method for sound sources. Mainly files or streams.
@@ -216,30 +217,45 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     input_buffer_adc_time = input_buffer_adc_time + 0.121
                     self.rec_start_time = time.time() - input_buffer_adc_time
                 # Round to half seconds.
-                buffer_dac_time = (
+                buffer_adc_time = (
                     int((self.rec_start_time + input_buffer_adc_time) * 2) / 2
                 )
                 # print(
-                #     "DEBUG: buffer_dac_time: ",
-                #     buffer_dac_time,
+                #     "DEBUG: adc_time: ",
+                #     buffer_adc_time,
                 #     "   ",
-                #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_dac_time)),
+                #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_adc_time)),
                 # )
-
+                # Convert and copy buffer.
                 indata_raw = indata[:, 0]  # Transform list of lists to list.
                 indata_copy = indata_raw.copy()
- 
+                # Used to check time drift.
+                detector_time = time.time()
+                # Put together.
                 send_dict = {
                     "status": "data",
-                    "time": buffer_dac_time,
+                    "adc_time": buffer_adc_time,
+                    "detector_time": detector_time,
                     "data": indata_copy,
                 }
-                # Add to queue. Should be attached to the main async loop.
-                asyncio.run_coroutine_threadsafe(
-                    self.put_on_fromsourcequeue(send_dict), loop,
-                )
+                # Add to queue.
+                # Note: Maybe "call_soon_threadsafe" is faster than "run_coroutine_threadsafe".
+                try:
+                    if not self.from_source_queue.full():
+                        loop.call_soon_threadsafe(
+                            self.from_source_queue.put_nowait, send_dict
+                        )
+                except Exception as e:
+                    print("DEBUG: Failed to put buffer on queue: ", e)
+
+                # # Add to queue. Should be attached to the main async loop.
+                # asyncio.run_coroutine_threadsafe(
+                #     self.put_on_fromsourcequeue(send_dict), loop,
+                # )
+
             except Exception as e:
                 print("EXCEPTION: audio_callback: ", e)
+                # Exit recording loop.
                 loop.call_soon_threadsafe(sound_source_event.set())
 
             """ End of locally defined callback. """
@@ -289,7 +305,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         try:
             self.process_deque = deque()  # Double ended queue. TODO: Move this.
             self.process_deque.clear()
-
+            self.process_deque_length = self.rec_length_s * 2
+            self.detection_counter_max = self.process_deque_length - 3  # 1.5 s before.
+            #
             sound_detected = False
             sound_detected_counter = 0
             sound_detector = wurb_rec.SoundDetection(self.wurb_manager).get_detection()
@@ -299,7 +317,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     try:
                         item = await self.from_source_queue.get()
                         try:
-                            # print("=== PROCESS: ", item["time"], item["data"][:5])
+                            # print("=== PROCESS: ", item["adc_time"], item["data"][:5])
                             if item == None:
                                 sound_detected == False
                                 sound_detected_counter = 0
@@ -315,36 +333,63 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                 await self.remove_items_from_queue(self.to_target_queue)
                                 await self.to_target_queue.put(False)  # Flush.
                             else:
+                                # Compare real time and stream time.
+                                adc_time = item["adc_time"]
+                                detector_time = item["detector_time"]
+                                # Restart if it differ too much.
+                                if (
+                                    abs(adc_time - detector_time)
+                                    > self.max_adc_time_diff_s
+                                ):
+                                    # Check if restart already is requested.
+                                    if self.restart_activated:
+                                        return
+                                    # Logging.
+                                    message = "Warning: Time diff. detected. Rec. will be restarted."
+                                    self.wurb_logging.info(
+                                        message, short_message=message
+                                    )
+                                    # Restart recording.
+                                    self.restart_activated = True
+                                    loop = asyncio.get_event_loop()
+                                    asyncio.run_coroutine_threadsafe(
+                                        self.wurb_manager.restart_rec(), loop,
+                                    )
+                                    await self.remove_items_from_queue(
+                                        self.from_source_queue
+                                    )
+                                    await self.from_source_queue.put(False)  # Flush.
+                                    return
                                 # Store in 6 sec. long list
                                 new_item = {}
                                 new_item["status"] = "data-Counter-" + str(
                                     sound_detected_counter
                                 )
-                                new_item["time"] = item["time"]
+                                new_item["adc_time"] = item["adc_time"]
                                 new_item["data"] = item["data"]
 
                                 self.process_deque.append(new_item)
                                 # Remove oldest items if the list is too long.
-                                while len(self.process_deque) > 12:
+                                while len(self.process_deque) > self.process_deque_length:
                                     self.process_deque.popleft()
 
                                 if sound_detected == False:
                                     sound_detected_counter = 0
                                     # Check for sound.
                                     sound_detected = sound_detector.check_for_sound(
-                                        (item["time"], item["data"])
+                                        (item["adc_time"], item["data"])
                                     )
                                     # sound_detected = True
 
                                 if sound_detected == True:
                                     sound_detected_counter += 1
-                                    if (sound_detected_counter >= 9) and (
-                                        len(self.process_deque) >= 12
+                                    if (sound_detected_counter >= self.detection_counter_max) and (
+                                        len(self.process_deque) >= self.process_deque_length
                                     ):
                                         sound_detected = False
                                         sound_detected_counter = 0
                                         # Send to target.
-                                        for index in range(0, 12):
+                                        for index in range(0, self.process_deque_length):
                                             to_file_item = self.process_deque.popleft()
                                             #
                                             if index == 0:
@@ -360,9 +405,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                             # await asyncio.sleep(0)
 
                             # status = item.get('status', '')
-                            # buffer_dac_time = item.get('time', '')
+                            # adc_time = item.get('time', '')
                             # data = item.get('data', '')
-                            # print("DEBUG: Process status:", status, " time:", buffer_dac_time, " data: ", len(data))
+                            # print("DEBUG: Process status:", status, " time:", adc_time, " data: ", len(data))
                         finally:
                             self.from_source_queue.task_done()
                             await asyncio.sleep(0)
@@ -406,7 +451,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     wave_file_writer.close()
 
                                 wave_file_writer = WaveFileWriter(self.wurb_manager)
-                                wave_file_writer.create(item["time"])
+                                wave_file_writer.create(item["adc_time"])
                             # Data.
                             if wave_file_writer:
                                 data_array = item["data"]
@@ -441,6 +486,7 @@ class WaveFileWriter:
         self.wurb_recorder = wurb_manager.wurb_recorder
         self.wurb_settings = wurb_manager.wurb_settings
         self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_rpi = wurb_manager.wurb_rpi
         self.rec_target_dir_path = None
         self.wave_file = None
         # self.size_counter = 0
@@ -450,7 +496,7 @@ class WaveFileWriter:
 
         sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
         rec_file_prefix = self.wurb_settings.get_setting("filename_prefix")
-        self.rec_target_dir_path = self.get_target_dir_path()
+        self.rec_target_dir_path = self.wurb_rpi.get_wavefile_target_dir_path()
         rec_datetime = self.get_datetime(start_time)
         rec_location = self.get_location()
         rec_type = self.get_type(sampling_freq_hz)
@@ -510,51 +556,51 @@ class WaveFileWriter:
         except Exception as e:
             print("Exception: Copy settings to wave file directory: ", e)
 
-    def get_target_dir_path(self):
-        """ """
-        file_directory = self.wurb_settings.get_setting("file_directory")
+    # def get_wavefile_target_dir_path(self):
+    #     """ """
+    #     file_directory = self.wurb_settings.get_setting("file_directory")
 
-        target_rpi_media_path = "/media/pi/"  # For RPi USB.
-        target_rpi_internal_path = "/home/pi/"  # For RPi SD card with user 'pi'.
+    #     target_rpi_media_path = "/media/pi/"  # For RPi USB.
+    #     target_rpi_internal_path = "/home/pi/"  # For RPi SD card with user 'pi'.
 
-        dir_path = None
+    #     dir_path = None
 
-        # hdd = psutil.disk_usage(str(dir_path))
-        # total_disk = hdd.total / (2**20)
-        # used_disk = hdd.used / (2**20)
-        # free_disk = hdd.free / (2**20)
-        # percent_disk = hdd.percent
-        # print("Total disk: ", total_disk, "MB")
-        # print("Used disk: ", used_disk, "MB")
-        # print("Free disk: ", free_disk, "MB")
-        # print("Percent: ", percent_disk, "%")
+    #     # hdd = psutil.disk_usage(str(dir_path))
+    #     # total_disk = hdd.total / (2**20)
+    #     # used_disk = hdd.used / (2**20)
+    #     # free_disk = hdd.free / (2**20)
+    #     # percent_disk = hdd.percent
+    #     # print("Total disk: ", total_disk, "MB")
+    #     # print("Used disk: ", used_disk, "MB")
+    #     # print("Free disk: ", free_disk, "MB")
+    #     # print("Percent: ", percent_disk, "%")
 
-        # Check mounted USB memory sticks. At least 20 MB left.
-        rpi_media_path = pathlib.Path(target_rpi_media_path)
-        if rpi_media_path.exists():
-            for usb_stick_name in sorted(list(rpi_media_path.iterdir())):
-                usb_stick_path = pathlib.Path(rpi_media_path, usb_stick_name)
-                # Directory may exist even when no USB attached.
-                if usb_stick_path.is_mount():
-                    hdd = psutil.disk_usage(str(usb_stick_path))
-                    free_disk = hdd.free / (2 ** 20)  # To MB.
-                    if free_disk >= 20.0:  # 20 MB.
-                        return pathlib.Path(usb_stick_path, file_directory)
+    #     # Check mounted USB memory sticks. At least 20 MB left.
+    #     rpi_media_path = pathlib.Path(target_rpi_media_path)
+    #     if rpi_media_path.exists():
+    #         for usb_stick_name in sorted(list(rpi_media_path.iterdir())):
+    #             usb_stick_path = pathlib.Path(rpi_media_path, usb_stick_name)
+    #             # Directory may exist even when no USB attached.
+    #             if usb_stick_path.is_mount():
+    #                 hdd = psutil.disk_usage(str(usb_stick_path))
+    #                 free_disk = hdd.free / (2 ** 20)  # To MB.
+    #                 if free_disk >= 20.0:  # 20 MB.
+    #                     return pathlib.Path(usb_stick_path, file_directory)
 
-        # Check internal SD card. At least 500 MB left.
-        rpi_internal_path = pathlib.Path(target_rpi_internal_path)
-        if rpi_internal_path.exists():
-            hdd = psutil.disk_usage(str(rpi_internal_path))
-            free_disk = hdd.free / (2 ** 20)  # To MB.
-            if free_disk >= 500.0:  # 500 MB.
-                return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
-            else:
-                print("ERROR: Not enough space left on RPi SD card.")
-                return None  # Not enough space left on RPi SD card.
+    #     # Check internal SD card. At least 500 MB left.
+    #     rpi_internal_path = pathlib.Path(target_rpi_internal_path)
+    #     if rpi_internal_path.exists():
+    #         hdd = psutil.disk_usage(str(rpi_internal_path))
+    #         free_disk = hdd.free / (2 ** 20)  # To MB.
+    #         if free_disk >= 500.0:  # 500 MB.
+    #             return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
+    #         else:
+    #             print("ERROR: Not enough space left on RPi SD card.")
+    #             return None  # Not enough space left on RPi SD card.
 
-        # Default for not Raspberry Pi.
-        dir_path = pathlib.Path("wurb_files", file_directory)
-        return dir_path
+    #     # Default for not Raspberry Pi.
+    #     dir_path = pathlib.Path("wurb_files", file_directory)
+    #     return dir_path
 
     def get_datetime(self, start_time):
         """ """
