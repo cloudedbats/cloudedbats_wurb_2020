@@ -17,6 +17,7 @@ class WurbSettings(object):
         """ """
         self.wurb_manager = wurb_manager
         self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_rpi = wurb_manager.wurb_rpi
         self.default_settings = None
         self.current_settings = None
         self.default_location = None
@@ -24,10 +25,10 @@ class WurbSettings(object):
         self.settings_event = None
         self.location_event = None
         self.latlong_event = None
-        self.os_raspbian = None
+        # self.os_raspbian = None
         #
         self.settings_file_name = "wurb_rec_settings.txt"
-        self.settings_dir_path = self.get_settings_dir_path()
+        self.settings_dir_path = self.wurb_rpi.get_settings_dir_path()
         #
         self.define_default_settings()
         self.current_settings = self.default_settings.copy()
@@ -172,51 +173,51 @@ class WurbSettings(object):
         """ """
         return self.current_location
 
-    async def set_detector_time(self, posix_time_s):
-        """ Only valid for Raspbian and user pi. """
-        try:
-            local_datetime = datetime.datetime.fromtimestamp(posix_time_s)
-            # utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
-            # local_datetime = utc_datetime.replace(
-            #     tzinfo=datetime.timezone.utc
-            # ).astimezone(tz=None)
-            time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            print(time_string)
-            # Logging.
-            message = "Detector time update: " +  time_string
-            self.wurb_logging.info(message, short_message=message)
-            # First check: OS Raspbian.
-            if self.is_os_raspbian():
-                # Second check: User pi exists. Perform: "date --set".
-                os.system('cd /home/pi && sudo date --set "' + time_string + '"')
-            else:
-                # Logging.
-                message = "Detector time update failed, not Raspbian OS."
-                self.wurb_logging.info(message, short_message=message)
-        except Exception as e:
-            print("EXCEPTION: set_detector_time: ", e)
+    # async def set_detector_time(self, posix_time_s):
+    #     """ Only valid for Raspbian and user pi. """
+    #     try:
+    #         local_datetime = datetime.datetime.fromtimestamp(posix_time_s)
+    #         # utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
+    #         # local_datetime = utc_datetime.replace(
+    #         #     tzinfo=datetime.timezone.utc
+    #         # ).astimezone(tz=None)
+    #         time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    #         print(time_string)
+    #         # Logging.
+    #         message = "Detector time update: " +  time_string
+    #         self.wurb_logging.info(message, short_message=message)
+    #         # First check: OS Raspbian.
+    #         if self.is_os_raspbian():
+    #             # Second check: User pi exists. Perform: "date --set".
+    #             os.system('cd /home/pi && sudo date --set "' + time_string + '"')
+    #         else:
+    #             # Logging.
+    #             message = "Detector time update failed, not Raspbian OS."
+    #             self.wurb_logging.info(message, short_message=message)
+    #     except Exception as e:
+    #         print("EXCEPTION: set_detector_time: ", e)
 
-    async def rpi_control(self, command):
-        """ Only valid for Raspbian and user pi. """
-        # First check: OS Raspbian.
-        if self.is_os_raspbian():
-            # Second check: User pi exists.
-            if command == "rpi_shutdown":
-                os.system("cd /home/pi && sudo shutdown -h now")
-            elif command == "rpi_reboot":
-                os.system("cd /home/pi && sudo reboot")
-            elif command == "rpi_update_sw":
-                command_string = "cd /home/pi/cloudedbats_wurb_2020"
-                command_string += " && git pull"
-                command_string += " && source venv/bin/activate"
-                command_string += " && pip install -r requirements.txt "
-                os.system(command_string)
-            else:
-                print(
-                    "DEBUG: Settings: rpi_control: Failed, command not valid:", command
-                )
-        else:
-            print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
+    # async def rpi_control(self, command):
+    #     """ Only valid for Raspbian and user pi. """
+    #     # First check: OS Raspbian.
+    #     if self.is_os_raspbian():
+    #         # Second check: User pi exists.
+    #         if command == "rpi_shutdown":
+    #             os.system("cd /home/pi && sudo shutdown -h now")
+    #         elif command == "rpi_reboot":
+    #             os.system("cd /home/pi && sudo reboot")
+    #         elif command == "rpi_update_sw":
+    #             command_string = "cd /home/pi/cloudedbats_wurb_2020"
+    #             command_string += " && git pull"
+    #             command_string += " && source venv/bin/activate"
+    #             command_string += " && pip install -r requirements.txt "
+    #             os.system(command_string)
+    #         else:
+    #             print(
+    #                 "DEBUG: Settings: rpi_control: Failed, command not valid:", command
+    #             )
+    #     else:
+    #         print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
 
     async def get_settings_event(self):
         """ """
@@ -277,36 +278,36 @@ class WurbSettings(object):
             for key, value in self.current_settings.items():
                 settings_file.write(key + ": " + str(value) + "\n")
 
-    def get_settings_dir_path(self):
-        """ """
-        rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
-        # Default for not Raspberry Pi.
-        dir_path = pathlib.Path("wurb_files")
-        if pathlib.Path(rpi_dir_path).exists():
-            dir_path = pathlib.Path(rpi_dir_path, "wurb_files")
-        # Create directories.
-        if not dir_path.exists():
-            dir_path.mkdir(parents=True)
-        return dir_path
+    # def get_settings_dir_path(self):
+    #     """ """
+    #     rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
+    #     # Default for not Raspberry Pi.
+    #     dir_path = pathlib.Path("wurb_files")
+    #     if pathlib.Path(rpi_dir_path).exists():
+    #         dir_path = pathlib.Path(rpi_dir_path, "wurb_files")
+    #     # Create directories.
+    #     if not dir_path.exists():
+    #         dir_path.mkdir(parents=True)
+    #     return dir_path
 
-    def is_os_raspbian(self):
-        """ Check OS version for Raspberry Pi. """
-        if self.os_raspbian is not None:
-            return self.os_raspbian
-        else:
-            try:
-                os_version_path = pathlib.Path("/etc/os-release")
-                if os_version_path.exists():
-                    with os_version_path.open("r") as os_file:
-                        os_file_content = os_file.read()
-                        print("Content of /etc/os-release: ", os_file_content)
-                        if "raspbian" in os_file_content:
-                            self.os_raspbian = True
-                        else:
-                            self.os_raspbian = False
-                else:
-                    self.os_raspbian = False
-            except Exception as e:
-                print("EXCEPTION: is_os_raspbian: ", e)
-        #
-        return self.os_raspbian
+    # def is_os_raspbian(self):
+    #     """ Check OS version for Raspberry Pi. """
+    #     if self.os_raspbian is not None:
+    #         return self.os_raspbian
+    #     else:
+    #         try:
+    #             os_version_path = pathlib.Path("/etc/os-release")
+    #             if os_version_path.exists():
+    #                 with os_version_path.open("r") as os_file:
+    #                     os_file_content = os_file.read()
+    #                     print("Content of /etc/os-release: ", os_file_content)
+    #                     if "raspbian" in os_file_content:
+    #                         self.os_raspbian = True
+    #                     else:
+    #                         self.os_raspbian = False
+    #             else:
+    #                 self.os_raspbian = False
+    #         except Exception as e:
+    #             print("EXCEPTION: is_os_raspbian: ", e)
+    #     #
+    #     return self.os_raspbian

@@ -28,8 +28,9 @@ class WurbRecManager(object):
             self.wurb_recorder = None
             self.update_status_task = None
 
-            self.wurb_settings = None
+            self.wurb_rpi = None
             self.wurb_logging = None
+            self.wurb_settings = None
             self.wurb_recorder = None
             self.wurb_gps = None
             self.wurb_scheduler = None
@@ -40,6 +41,7 @@ class WurbRecManager(object):
     async def startup(self):
         """ """
         try:
+            self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_logging = wurb_rec.WurbLogging(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
             self.ultrasound_devices = wurb_rec.UltrasoundDevices()
