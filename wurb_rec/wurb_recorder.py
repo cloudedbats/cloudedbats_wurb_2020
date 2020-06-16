@@ -20,8 +20,9 @@ import wurb_rec
 class UltrasoundDevices(object):
     """ """
 
-    def __init__(self):
+    def __init__(self, wurb_manager):
         """ """
+        self.wurb_manager = wurb_manager
         # Ultrasound microphones supported by default:
         # - Pettersson: M500-384, u384, u256.
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.

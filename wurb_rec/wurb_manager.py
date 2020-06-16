@@ -44,7 +44,7 @@ class WurbRecManager(object):
             self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_logging = wurb_rec.WurbLogging(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
-            self.ultrasound_devices = wurb_rec.UltrasoundDevices()
+            self.ultrasound_devices = wurb_rec.UltrasoundDevices(self)
             self.wurb_recorder = wurb_rec.WurbRecorder(self)
             self.wurb_gps = wurb_rec.WurbGps(self)
             self.wurb_scheduler = wurb_rec.WurbScheduler(self)
@@ -59,7 +59,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: startup: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def shutdown(self):
         """ """
@@ -80,7 +80,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: shutdown:" + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def start_rec(self):
         """ """
@@ -109,7 +109,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def stop_rec(self):
         """ """
@@ -127,7 +127,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def restart_rec(self):
         """ """
@@ -144,7 +144,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def get_notification_event(self):
         """ """
@@ -156,7 +156,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def get_status_dict(self):
         """ """
@@ -171,7 +171,7 @@ class WurbRecManager(object):
             print("Exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
 
     async def update_status(self):
         """ """
@@ -198,6 +198,6 @@ class WurbRecManager(object):
             print("DEBUG: update_status exception: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.wurb_logging.error(message, short_message=message)
         finally:
             print("DEBUG: update_status terminated.")

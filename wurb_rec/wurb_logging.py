@@ -58,7 +58,7 @@ class WurbLogging(object):
         """ """
         try:
             time_str = datetime_local.strftime("%H:%M:%S")
-            datetime_str = datetime_local.strftime("%Y-%m-%d %H:%M:%S%z")
+            # datetime_str = datetime_local.strftime("%Y-%m-%d %H:%M:%S%z")
             if short_message:
                 if msg_type in ["info", "warning", "error"]:
                     if msg_type in ["warning", "error"]:
