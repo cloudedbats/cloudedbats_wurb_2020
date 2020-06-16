@@ -18,6 +18,7 @@ class WurbGps(object):
         self.wurb_manager = wurb_manager
         self.wurb_settings = wurb_manager.wurb_settings
         self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_rpi = wurb_manager.wurb_rpi
         self.asyncio_loop = None
         #
         self.gps_datetime_utc = None
@@ -33,7 +34,7 @@ class WurbGps(object):
         self.serial_transport = None
         self.serial_protocol = None
         # Config.
-        self.max_time_diff_s = 60 # Unit: sec.
+        self.max_time_diff_s = 60  # Unit: sec.
 
     async def startup(self):
         """ """
@@ -112,8 +113,7 @@ class WurbGps(object):
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             asyncio.run_coroutine_threadsafe(
-                self.wurb_settings.save_latlong(0.0, 0.0),
-                self.asyncio_loop,
+                self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
             )
 
     async def stop(self):
@@ -150,7 +150,7 @@ class WurbGps(object):
 
         print("GPS data: ", data)
         parts = data.split(",")
-        
+
         if (len(data) >= 50) and (len(parts) >= 8):
             time = parts[1]
             gps_status = parts[2]
@@ -163,8 +163,7 @@ class WurbGps(object):
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             asyncio.run_coroutine_threadsafe(
-                self.wurb_settings.save_latlong(0.0, 0.0),
-                self.asyncio_loop,
+                self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
             )
             return
 
@@ -196,7 +195,7 @@ class WurbGps(object):
         # Check if detector time should be set.
         try:
             if not self.first_gps_time_received:
-                # Wait for GPS to stabilize. 
+                # Wait for GPS to stabilize.
                 self.first_gps_time_counter -= 1
                 if self.first_gps_time_counter <= 0:
                     if self.gps_datetime_utc:
@@ -210,8 +209,8 @@ class WurbGps(object):
 
                             # Connect to main loop.
                             asyncio.run_coroutine_threadsafe(
-                                self.wurb_settings.set_detector_time(
-                                    gps_local_timestamp
+                                self.wurb_rpi.set_detector_time(
+                                    gps_local_timestamp, cmd_source="from GPS",
                                 ),
                                 self.asyncio_loop,
                             )
@@ -228,8 +227,8 @@ class WurbGps(object):
                     gps_local_timestamp = gps_local_time.timestamp()
                     # Connect to main loop.
                     asyncio.run_coroutine_threadsafe(
-                        self.wurb_settings.set_detector_time(
-                            gps_local_timestamp
+                        self.wurb_rpi.set_detector_time(
+                            gps_local_timestamp, cmd_source="from GPS"
                         ),
                         self.asyncio_loop,
                     )
@@ -245,8 +244,7 @@ class WurbGps(object):
             self.last_used_long_dd = long_dd
             # Connect to main loop.
             asyncio.run_coroutine_threadsafe(
-                self.wurb_settings.save_latlong(lat_dd, long_dd),
-                self.asyncio_loop,
+                self.wurb_settings.save_latlong(lat_dd, long_dd), self.asyncio_loop,
             )
 
         # print("GPS datetime: ", datetime_utc)

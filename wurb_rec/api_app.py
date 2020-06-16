@@ -151,7 +151,9 @@ async def set_time(posixtime: str):
         print("DEBUG: Called: set_time: ", posixtime)
         global wurb_rec_manager
         posix_time_s = int(int(posixtime) / 1000)
-        await wurb_rec_manager.wurb_settings.set_detector_time(posix_time_s)
+        await wurb_rec_manager.wurb_rpi.set_detector_time(
+            posix_time_s, cmd_source="by user"
+        )
     except Exception as e:
         print("EXCEPTION: Called: set_time: ", e)
 
@@ -194,7 +196,7 @@ async def rpi_control(command: str):
     try:
         print("DEBUG: Called: rpi_control: ", command)
         global wurb_rec_manager
-        await wurb_rec_manager.wurb_settings.rpi_control(command)
+        await wurb_rec_manager.wurb_rpi.rpi_control(command)
     except Exception as e:
         print("EXCEPTION: Called: rpi_control: ", e)
 
