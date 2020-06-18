@@ -151,12 +151,12 @@ class SoundDetectionSimple(SoundDetectionBase):
                         peak_frequency_hz = (
                             bin_peak_index * self.sampling_freq / self.window_size
                         )
-                        print(
-                            "DEBUG: Peak freq hz: "
-                            + str(peak_frequency_hz)
-                            + "   dBFS: "
-                            + str(peak_db)
-                        )
+                        # print(
+                        #     "DEBUG: Peak freq hz: "
+                        #     + str(peak_frequency_hz)
+                        #     + "   dBFS: "
+                        #     + str(peak_db)
+                        # )
         # # Log if sound was detected.
         # if sound_detected:
         #     # Logging.
