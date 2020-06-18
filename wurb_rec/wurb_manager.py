@@ -194,10 +194,13 @@ class WurbRecManager(object):
                 self.notification_event = asyncio.Event()
                 if old_notification_event:
                     old_notification_event.set()
+        except asyncio.CancelledError:
+            print("DEBUG: ", "Manager update status cancelled.")
+            # break
         except Exception as e:
-            print("DEBUG: update_status exception: ", e)
+            print("DEBUG: Manager update status: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
         finally:
-            print("DEBUG: update_status terminated.")
+            print("DEBUG: Manager update status terminated.")

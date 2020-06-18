@@ -81,6 +81,9 @@ class WurbGps(object):
                 await asyncio.sleep(6)
                 await self.stop()
                 # print("CONTROL LOOP")
+        except asyncio.CancelledError:
+            print("DEBUG: ", "GPS Control loop cancelled.")
+            # break
         except Exception as e:
             print("EXCEPTION: GPS Control loop: ", e)
             # Logging error.

@@ -42,10 +42,16 @@ class WurbScheduler(object):
                 if rec_mode == "rec-mode-scheduler":
                     await self.check_scheduler()
 
+        except asyncio.CancelledError:
+            print("DEBUG: ", "Scheduler main loop cancelled.")
+            # break
         except Exception as e:
-            print("DEBUG: Scheduler main_loop exception: ", e)
+            print("EXCEPTION: Scheduler main loop: ", e)
+            # Logging error.
+            message = "Scheduler main loop: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
-            print("DEBUG: Scheduler main_loop terminated.")
+            print("DEBUG: Scheduler main loop terminated.")
 
     async def check_scheduler(self):
         """ """
