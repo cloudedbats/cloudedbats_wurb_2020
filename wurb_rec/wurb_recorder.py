@@ -334,6 +334,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         """
 
         try:
+            # Get rec length from settings.
+            self.rec_length_s = int(self.wurb_settings.get_setting("rec_length_s"))
+            #
             self.process_deque = deque()  # Double ended queue.
             self.process_deque.clear()
             self.process_deque_length = self.rec_length_s * 2
@@ -401,31 +404,53 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
                                 self.process_deque.append(new_item)
                                 # Remove oldest items if the list is too long.
-                                while len(self.process_deque) > self.process_deque_length:
+                                while (
+                                    len(self.process_deque) > self.process_deque_length
+                                ):
                                     self.process_deque.popleft()
 
                                 if sound_detected == False:
                                     sound_detected_counter = 0
                                     # Check for sound.
-                                    sound_detected = sound_detector.check_for_sound(
+                                    result = sound_detector.check_for_sound(
                                         (item["adc_time"], item["data"])
                                     )
-                                    # sound_detected = True
+                                    sound_detected, peak_freq_hz, peak_dbfs = result
+
+                                    # Log if sound was detected.
+                                    if sound_detected:
+                                        # Logging.
+                                        message = (
+                                            "Sound peak: "
+                                            + str(round(peak_freq_hz / 1000.0, 1))
+                                            + " kHz / "
+                                            + str(round(peak_dbfs, 1))
+                                            + " dBFS."
+                                        )
+                                        self.wurb_logging.info(
+                                            message, short_message=message
+                                        )
 
                                 if sound_detected == True:
                                     sound_detected_counter += 1
-                                    if (sound_detected_counter >= self.detection_counter_max) and (
-                                        len(self.process_deque) >= self.process_deque_length
+                                    if (
+                                        sound_detected_counter
+                                        >= self.detection_counter_max
+                                    ) and (
+                                        len(self.process_deque)
+                                        >= self.process_deque_length
                                     ):
                                         sound_detected = False
                                         sound_detected_counter = 0
                                         # Send to target.
-                                        for index in range(0, self.process_deque_length):
+                                        for index in range(
+                                            0, self.process_deque_length
+                                        ):
                                             to_file_item = self.process_deque.popleft()
                                             #
                                             if index == 0:
                                                 to_file_item["status"] = "new_file"
-                                            if index == 11:
+                                            if index == (self.process_deque_length - 1):
                                                 to_file_item["status"] = "close_file"
                                             #
                                             if not self.to_target_queue.full():
@@ -534,12 +559,17 @@ class WaveFileWriter:
     def create(self, start_time):
         """ Abstract. """
 
-        sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
         rec_file_prefix = self.wurb_settings.get_setting("filename_prefix")
+        rec_type = self.wurb_settings.get_setting("rec_type")
+        sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
+        if rec_type == "TE":
+            sampling_freq_hz = int(sampling_freq_hz / 10.0)
         self.rec_target_dir_path = self.wurb_rpi.get_wavefile_target_dir_path()
         rec_datetime = self.get_datetime(start_time)
         rec_location = self.get_location()
-        rec_type = self.get_type(sampling_freq_hz)
+        rec_type_str = self.create_rec_type_str(
+            self.wurb_recorder.sampling_freq_hz, rec_type
+        )
 
         if self.rec_target_dir_path is None:
             self.wave_file = None
@@ -553,7 +583,7 @@ class WaveFileWriter:
             + "_"
             + rec_location
             + "_"
-            + rec_type
+            + rec_type_str
             + ".wav"
         )
 
@@ -570,8 +600,10 @@ class WaveFileWriter:
         target_path_str = str(self.rec_target_dir_path)
         target_path_str = target_path_str.replace("/media/pi/", "USB:")
         target_path_str = target_path_str.replace("/home/pi/", "SD-card:/home/pi/")
-        message = "Sound file to: " + target_path_str
-        # message = "Sound file to: " + filename
+        message_rec_type = ""
+        if rec_type == "TE":
+            message_rec_type = "(TE) "
+        message = "Sound file " + message_rec_type + "to: " + target_path_str
         self.wurb_logging.info(message, short_message=message)
 
     def write(self, buffer):
@@ -595,52 +627,6 @@ class WaveFileWriter:
                 to_file_path.write_text(from_file_path.read_text())
         except Exception as e:
             print("Exception: Copy settings to wave file directory: ", e)
-
-    # def get_wavefile_target_dir_path(self):
-    #     """ """
-    #     file_directory = self.wurb_settings.get_setting("file_directory")
-
-    #     target_rpi_media_path = "/media/pi/"  # For RPi USB.
-    #     target_rpi_internal_path = "/home/pi/"  # For RPi SD card with user 'pi'.
-
-    #     dir_path = None
-
-    #     # hdd = psutil.disk_usage(str(dir_path))
-    #     # total_disk = hdd.total / (2**20)
-    #     # used_disk = hdd.used / (2**20)
-    #     # free_disk = hdd.free / (2**20)
-    #     # percent_disk = hdd.percent
-    #     # print("Total disk: ", total_disk, "MB")
-    #     # print("Used disk: ", used_disk, "MB")
-    #     # print("Free disk: ", free_disk, "MB")
-    #     # print("Percent: ", percent_disk, "%")
-
-    #     # Check mounted USB memory sticks. At least 20 MB left.
-    #     rpi_media_path = pathlib.Path(target_rpi_media_path)
-    #     if rpi_media_path.exists():
-    #         for usb_stick_name in sorted(list(rpi_media_path.iterdir())):
-    #             usb_stick_path = pathlib.Path(rpi_media_path, usb_stick_name)
-    #             # Directory may exist even when no USB attached.
-    #             if usb_stick_path.is_mount():
-    #                 hdd = psutil.disk_usage(str(usb_stick_path))
-    #                 free_disk = hdd.free / (2 ** 20)  # To MB.
-    #                 if free_disk >= 20.0:  # 20 MB.
-    #                     return pathlib.Path(usb_stick_path, file_directory)
-
-    #     # Check internal SD card. At least 500 MB left.
-    #     rpi_internal_path = pathlib.Path(target_rpi_internal_path)
-    #     if rpi_internal_path.exists():
-    #         hdd = psutil.disk_usage(str(rpi_internal_path))
-    #         free_disk = hdd.free / (2 ** 20)  # To MB.
-    #         if free_disk >= 500.0:  # 500 MB.
-    #             return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
-    #         else:
-    #             print("ERROR: Not enough space left on RPi SD card.")
-    #             return None  # Not enough space left on RPi SD card.
-
-    #     # Default for not Raspberry Pi.
-    #     dir_path = pathlib.Path("wurb_files", file_directory)
-    #     return dir_path
 
     def get_datetime(self, start_time):
         """ """
@@ -670,12 +656,12 @@ class WaveFileWriter:
 
         return latlongstring
 
-    def get_type(self, sampling_freq_hz):
+    def create_rec_type_str(self, sampling_freq_hz, rec_type):
         """ """
         try:
             sampling_freq_khz = sampling_freq_hz / 1000.0
             sampling_freq_khz = int(round(sampling_freq_khz, 0))
         except:
-            sampling_freq_khz = "000"
+            sampling_freq_khz = "FS000"
 
-        return "FS" + str(sampling_freq_khz)
+        return rec_type + str(sampling_freq_khz)

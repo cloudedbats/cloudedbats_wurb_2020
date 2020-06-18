@@ -312,13 +312,13 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
             # Send to client.
             await websocket.send_json(ws_json)
 
-    except websockets.exceptions.ConnectionClosedOK as e:
+    except websockets.exceptions.ConnectionClosed as e:
         pass
     except Exception as e:
         print("EXCEPTION: Called: websocket_endpoint: ", e)
-        # Logging error.
-        message = "Called: websocket_endpoint: " + str(e)
-        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+        # # Logging error.
+        # message = "Called: websocket_endpoint: " + str(e)
+        # wurb_rec_manager.wurb_logging.error(message, short_message=message)
 
 
 # Example:
