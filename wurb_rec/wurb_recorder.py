@@ -123,7 +123,7 @@ class UltrasoundDevices(object):
 class WurbRecorder(wurb_rec.SoundStreamManager):
     """ """
 
-    def __init__(self, wurb_manager, queue_max_size=120):
+    def __init__(self, wurb_manager, queue_max_size=1200):
         """ """
         super().__init__(queue_max_size)
         self.wurb_manager = wurb_manager
@@ -342,9 +342,12 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             self.process_deque_length = self.rec_length_s * 2
             self.detection_counter_max = self.process_deque_length - 3  # 1.5 s before.
             #
+            first_sound_detected = False
             sound_detected = False
             sound_detected_counter = 0
             sound_detector = wurb_rec.SoundDetection(self.wurb_manager).get_detection()
+            max_peak_freq_hz = None
+            max_peak_dbfs = None
 
             while True:
                 try:
@@ -353,7 +356,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                         try:
                             # print("=== PROCESS: ", item["adc_time"], item["data"][:5])
                             if item == None:
-                                sound_detected == False
+                                first_sound_detected == False
                                 sound_detected_counter = 0
                                 self.process_deque.clear()
                                 await self.to_target_queue.put(None)  # Terminate.
@@ -361,7 +364,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                 break
                             elif item == False:
                                 print("DEBUG-2: Flush.")
-                                sound_detected == False
+                                first_sound_detected == False
                                 sound_detected_counter = 0
                                 self.process_deque.clear()
                                 await self.remove_items_from_queue(self.to_target_queue)
@@ -394,7 +397,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     )
                                     await self.from_source_queue.put(False)  # Flush.
                                     return
-                                # Store in 6 sec. long list
+
+                                # Store in list-
                                 new_item = {}
                                 new_item["status"] = "data-Counter-" + str(
                                     sound_detected_counter
@@ -409,16 +413,24 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                 ):
                                     self.process_deque.popleft()
 
-                                if sound_detected == False:
-                                    sound_detected_counter = 0
-                                    # Check for sound.
-                                    result = sound_detector.check_for_sound(
-                                        (item["adc_time"], item["data"])
-                                    )
-                                    sound_detected, peak_freq_hz, peak_dbfs = result
+                                # Check for sound.
+                                detection_result = sound_detector.check_for_sound(
+                                    (item["adc_time"], item["data"])
+                                )
+                                (
+                                    sound_detected,
+                                    peak_freq_hz,
+                                    peak_dbfs,
+                                ) = detection_result
 
-                                    # Log if sound was detected.
-                                    if sound_detected:
+                                if (not first_sound_detected) and sound_detected:
+                                    first_sound_detected = True
+                                    sound_detected_counter = 0
+                                    max_peak_freq_hz = peak_freq_hz
+                                    max_peak_dbfs = peak_dbfs
+
+                                    # Log first detected sound.
+                                    if first_sound_detected:
                                         # Logging.
                                         message = (
                                             "Sound peak: "
@@ -431,8 +443,13 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                             message, short_message=message
                                         )
 
-                                if sound_detected == True:
+                                # Accumulate in file queue.
+                                if first_sound_detected == True:
                                     sound_detected_counter += 1
+                                    if max_peak_dbfs and peak_dbfs:
+                                        if peak_dbfs > max_peak_dbfs:
+                                            max_peak_freq_hz = peak_freq_hz
+                                            max_peak_dbfs = peak_dbfs
                                     if (
                                         sound_detected_counter
                                         >= self.detection_counter_max
@@ -440,7 +457,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                         len(self.process_deque)
                                         >= self.process_deque_length
                                     ):
-                                        sound_detected = False
+                                        first_sound_detected = False
                                         sound_detected_counter = 0
                                         # Send to target.
                                         for index in range(
@@ -450,6 +467,12 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                             #
                                             if index == 0:
                                                 to_file_item["status"] = "new_file"
+                                                to_file_item[
+                                                    "max_peak_freq_hz"
+                                                ] = max_peak_freq_hz
+                                                to_file_item[
+                                                    "max_peak_dbfs"
+                                                ] = max_peak_dbfs
                                             if index == (self.process_deque_length - 1):
                                                 to_file_item["status"] = "close_file"
                                             #
@@ -510,7 +533,11 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     wave_file_writer.close()
 
                                 wave_file_writer = WaveFileWriter(self.wurb_manager)
-                                wave_file_writer.create(item["adc_time"])
+                                max_peak_freq_hz = item.get("max_peak_freq_hz", None)
+                                max_peak_dbfs = item.get("max_peak_dbfs", None)
+                                wave_file_writer.create(
+                                    item["adc_time"], max_peak_freq_hz, max_peak_dbfs
+                                )
                             # Data.
                             if wave_file_writer:
                                 data_array = item["data"]
@@ -556,9 +583,8 @@ class WaveFileWriter:
         self.wave_file = None
         # self.size_counter = 0
 
-    def create(self, start_time):
-        """ Abstract. """
-
+    def create(self, start_time, max_peak_freq_hz, max_peak_dbfs):
+        """ """
         rec_file_prefix = self.wurb_settings.get_setting("filename_prefix")
         rec_type = self.wurb_settings.get_setting("rec_type")
         sampling_freq_hz = self.wurb_recorder.sampling_freq_hz
@@ -571,21 +597,29 @@ class WaveFileWriter:
             self.wurb_recorder.sampling_freq_hz, rec_type
         )
 
+        # Peak info to filename.
+        peak_info_str = ""
+        if max_peak_freq_hz and max_peak_dbfs:
+            peak_info_str += "_"  # "_Peak"
+            peak_info_str += str(int(round(max_peak_freq_hz / 1000.0, 0)))
+            peak_info_str += "kHz"
+            peak_info_str += str(int(round(max_peak_dbfs, 0)))
+            peak_info_str += "dB"
+
         if self.rec_target_dir_path is None:
             self.wave_file = None
             return
 
         # Filename example: "WURB1_20180420T205942+0200_N00.00E00.00_TE384.wav"
-        filename = (
-            rec_file_prefix
-            + "_"
-            + rec_datetime
-            + "_"
-            + rec_location
-            + "_"
-            + rec_type_str
-            + ".wav"
-        )
+        filename = rec_file_prefix
+        filename += "_"
+        filename += rec_datetime
+        filename += "_"
+        filename += rec_location
+        filename += "_"
+        filename += rec_type_str
+        filename += peak_info_str
+        filename += ".wav"
 
         # Create directories.
         if not self.rec_target_dir_path.exists():
