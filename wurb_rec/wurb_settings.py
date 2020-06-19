@@ -95,7 +95,7 @@ class WurbSettings(object):
             old_settings_event.set()
         # Logging.
         rec_mode_str = rec_mode.replace("rec-mode-", "").capitalize()
-        message = "Rec. mode: " +  rec_mode_str
+        message = "Rec. mode: " + rec_mode_str
         self.wurb_logging.info(message, short_message=message)
 
     async def save_settings(self, settings_dict={}):
@@ -135,11 +135,15 @@ class WurbSettings(object):
         for key, value in location_dict.items():
             if value is not None:
                 self.current_location[key] = value
-                
+
         # Manual.
         if self.current_location["geo_source_option"] == "geo-manual":
-            self.current_location["latitude_dd"] = self.current_location["manual_latitude_dd"]
-            self.current_location["longitude_dd"] = self.current_location["manual_longitude_dd"]
+            self.current_location["latitude_dd"] = self.current_location[
+                "manual_latitude_dd"
+            ]
+            self.current_location["longitude_dd"] = self.current_location[
+                "manual_longitude_dd"
+            ]
         # GPS.
         if self.current_location["geo_source_option"] == "geo-usb-gps":
             self.current_location["latitude_dd"] = 0.0
@@ -177,52 +181,6 @@ class WurbSettings(object):
         """ """
         return self.current_location
 
-    # async def set_detector_time(self, posix_time_s):
-    #     """ Only valid for Raspbian and user pi. """
-    #     try:
-    #         local_datetime = datetime.datetime.fromtimestamp(posix_time_s)
-    #         # utc_datetime = datetime.datetime.utcfromtimestamp(posix_time_s)
-    #         # local_datetime = utc_datetime.replace(
-    #         #     tzinfo=datetime.timezone.utc
-    #         # ).astimezone(tz=None)
-    #         time_string = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
-    #         print(time_string)
-    #         # Logging.
-    #         message = "Detector time update: " +  time_string
-    #         self.wurb_logging.info(message, short_message=message)
-    #         # First check: OS Raspbian.
-    #         if self.is_os_raspbian():
-    #             # Second check: User pi exists. Perform: "date --set".
-    #             os.system('cd /home/pi && sudo date --set "' + time_string + '"')
-    #         else:
-    #             # Logging.
-    #             message = "Detector time update failed, not Raspbian OS."
-    #             self.wurb_logging.info(message, short_message=message)
-    #     except Exception as e:
-    #         print("EXCEPTION: set_detector_time: ", e)
-
-    # async def rpi_control(self, command):
-    #     """ Only valid for Raspbian and user pi. """
-    #     # First check: OS Raspbian.
-    #     if self.is_os_raspbian():
-    #         # Second check: User pi exists.
-    #         if command == "rpi_shutdown":
-    #             os.system("cd /home/pi && sudo shutdown -h now")
-    #         elif command == "rpi_reboot":
-    #             os.system("cd /home/pi && sudo reboot")
-    #         elif command == "rpi_update_sw":
-    #             command_string = "cd /home/pi/cloudedbats_wurb_2020"
-    #             command_string += " && git pull"
-    #             command_string += " && source venv/bin/activate"
-    #             command_string += " && pip install -r requirements.txt "
-    #             os.system(command_string)
-    #         else:
-    #             print(
-    #                 "DEBUG: Settings: rpi_control: Failed, command not valid:", command
-    #             )
-    #     else:
-    #         print("DEBUG: Settings: rpi_control: Failed, not Raspbian.")
-
     async def get_settings_event(self):
         """ """
         try:
@@ -230,7 +188,7 @@ class WurbSettings(object):
                 self.settings_event = asyncio.Event()
             return self.settings_event
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_settings_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -242,7 +200,7 @@ class WurbSettings(object):
                 self.location_event = asyncio.Event()
             return self.location_event
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_location_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -254,14 +212,16 @@ class WurbSettings(object):
                 self.latlong_event = asyncio.Event()
             return self.latlong_event
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_latlong_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def load_settings_from_file(self):
         """ Load from file. """
-        settings_file_path = pathlib.Path(self.settings_dir_path, self.settings_file_name)
+        settings_file_path = pathlib.Path(
+            self.settings_dir_path, self.settings_file_name
+        )
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
@@ -279,48 +239,21 @@ class WurbSettings(object):
 
     def save_settings_to_file(self):
         """ Save to file. """
-        settings_file_path = pathlib.Path(self.settings_dir_path, self.settings_file_name)
+        settings_file_path = pathlib.Path(
+            self.settings_dir_path, self.settings_file_name
+        )
         with settings_file_path.open("w") as settings_file:
             settings_file.write("# CloudedBats, http://cloudedbats.org" + "\n")
             settings_file.write("# Settings for the WURB bat detector." + "\n")
-            settings_file.write("# Saved: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n")
-            settings_file.write("# "  + "\n")
+            settings_file.write(
+                "# Saved: "
+                + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                + "\n"
+            )
+            settings_file.write("# " + "\n")
             #
             for key, value in self.current_location.items():
                 settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
                 settings_file.write(key + ": " + str(value) + "\n")
 
-    # def get_settings_dir_path(self):
-    #     """ """
-    #     rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
-    #     # Default for not Raspberry Pi.
-    #     dir_path = pathlib.Path("wurb_files")
-    #     if pathlib.Path(rpi_dir_path).exists():
-    #         dir_path = pathlib.Path(rpi_dir_path, "wurb_files")
-    #     # Create directories.
-    #     if not dir_path.exists():
-    #         dir_path.mkdir(parents=True)
-    #     return dir_path
-
-    # def is_os_raspbian(self):
-    #     """ Check OS version for Raspberry Pi. """
-    #     if self.os_raspbian is not None:
-    #         return self.os_raspbian
-    #     else:
-    #         try:
-    #             os_version_path = pathlib.Path("/etc/os-release")
-    #             if os_version_path.exists():
-    #                 with os_version_path.open("r") as os_file:
-    #                     os_file_content = os_file.read()
-    #                     print("Content of /etc/os-release: ", os_file_content)
-    #                     if "raspbian" in os_file_content:
-    #                         self.os_raspbian = True
-    #                     else:
-    #                         self.os_raspbian = False
-    #             else:
-    #                 self.os_raspbian = False
-    #         except Exception as e:
-    #             print("EXCEPTION: is_os_raspbian: ", e)
-    #     #
-    #     return self.os_raspbian

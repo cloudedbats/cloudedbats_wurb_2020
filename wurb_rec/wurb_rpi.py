@@ -70,7 +70,7 @@ class WurbRaspberryPi(object):
                 message = "Detector time update failed, not Raspbian OS."
                 self.wurb_manager.wurb_logging.warning(message, short_message=message)
         except Exception as e:
-            print("EXCEPTION: set_detector_time: ", e)
+            # print("EXCEPTION: set_detector_time: ", e)
             # Logging error.
             message = "RPi set_detector_time: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -124,7 +124,7 @@ class WurbRaspberryPi(object):
             if free_disk >= 500.0:  # 500 MB.
                 return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
             else:
-                print("RPi Not enough space left on RPi SD card.")
+                # print("RPi Not enough space left on RPi SD card.")
                 # Logging error.
                 message = "RPi Not enough space left on RPi SD card."
                 self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -144,7 +144,7 @@ class WurbRaspberryPi(object):
                 if os_version_path.exists():
                     with os_version_path.open("r") as os_file:
                         os_file_content = os_file.read()
-                        print("Content of /etc/os-release: ", os_file_content)
+                        # print("Content of /etc/os-release: ", os_file_content)
                         if "raspbian" in os_file_content:
                             self.os_raspbian = True
                         else:
@@ -152,7 +152,7 @@ class WurbRaspberryPi(object):
                 else:
                     self.os_raspbian = False
             except Exception as e:
-                print("EXCEPTION: RPi is_os_raspbian: ", e)
+                # print("EXCEPTION: RPi is_os_raspbian: ", e)
                 # Logging error.
                 message = "RPi is_os_raspbian: " + str(e)
                 self.wurb_manager.wurb_logging.error(message, short_message=message)

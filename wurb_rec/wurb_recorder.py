@@ -64,7 +64,7 @@ class UltrasoundDevices(object):
             await self.set_connected_device(device_name, sampling_freq_hz)
 
         except Exception as e:
-            print("Exception: Rec. check_devices: ", e)
+            # print("EXCEPTION: Rec. check_devices: ", e)
             # Logging error.
             message = "Rec. check_devices: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -75,7 +75,7 @@ class UltrasoundDevices(object):
             await self.set_connected_device("", 0)
 
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: reset_devices: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -87,7 +87,7 @@ class UltrasoundDevices(object):
                 self.notification_event = asyncio.Event()
             return self.notification_event
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: get_notification_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -97,7 +97,7 @@ class UltrasoundDevices(object):
         try:
             return self.device_name, self.sampling_freq_hz
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: get_connected_device: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -105,7 +105,7 @@ class UltrasoundDevices(object):
     async def set_connected_device(self, device_name, sampling_freq_hz):
         """ """
         try:
-            print("DEBUG: set_connected_device called.")
+            # print("DEBUG: set_connected_device called.")
             self.device_name = device_name
             self.sampling_freq_hz = sampling_freq_hz
             # Create a new event and release all from the old event.
@@ -114,7 +114,7 @@ class UltrasoundDevices(object):
             if old_notification_event:
                 old_notification_event.set()
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             # Logging error.
             message = "Recorder: set_connected_device: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -146,7 +146,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 self.notification_event = asyncio.Event()
             return self.notification_event
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: get_notification_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -156,7 +156,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         try:
             return self.rec_status
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: get_rec_status: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -164,7 +164,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
     async def set_rec_status(self, rec_status):
         """ """
         try:
-            print("DEBUG: set_rec_status called.")
+            # print("DEBUG: set_rec_status called.")
             self.rec_status = rec_status
             # Create a new event and release all from the old event.
             old_notification_event = self.notification_event
@@ -172,7 +172,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             if old_notification_event:
                 old_notification_event.set()
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: set_rec_status: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -183,7 +183,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             self.device_name = device_name
             self.sampling_freq_hz = sampling_freq_hz
         except Exception as e:
-            print("Exception: ", e)
+            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Recorder: set_device: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -274,7 +274,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                             self.from_source_queue.put_nowait, send_dict
                         )
                 except Exception as e:
-                    print("DEBUG: Failed to put buffer on queue: ", e)
+                    # print("DEBUG: Failed to put buffer on queue: ", e)
+                    pass
 
                 # # Add to queue. Should be attached to the main async loop.
                 # asyncio.run_coroutine_threadsafe(
@@ -282,7 +283,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 # )
 
             except Exception as e:
-                print("EXCEPTION: audio_callback: ", e)
+                # print("EXCEPTION: audio_callback: ", e)
                 # Logging error.
                 message = "Recorder: audio_callback: " + str(e)
                 self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -292,16 +293,16 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             """ End of locally defined callback. """
 
         try:
-            print(
-                "DEBUG: Rec started: ", self.device_name, "   ", self.sampling_freq_hz
-            )
-            time_start = time.time()
-            print(
-                "DEBUG: Rec start: ",
-                time_start,
-                "   ",
-                time.strftime("%Y%m%dT%H%M%S%z", time.localtime(time_start)),
-            )
+            # print(
+            #     "DEBUG: Rec started: ", self.device_name, "   ", self.sampling_freq_hz
+            # )
+            # time_start = time.time()
+            # print(
+            #     "DEBUG: Rec start: ",
+            #     time_start,
+            #     "   ",
+            #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(time_start)),
+            # )
 
             blocksize = int(self.sampling_freq_hz / 2)
 
@@ -321,10 +322,13 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 await sound_source_event.wait()
 
         except asyncio.CancelledError:
-            print("DEBUG: ", "sound_source_worker cancelled.")
-            # break
+            # print("DEBUG: ", "sound_source_worker cancelled.")
+            pass
         except Exception as e:
-            print("DEBUG: sound_source_worker exception: ", e)
+            # print("DEBUG: sound_source_worker exception: ", e)
+            # Logging error.
+            message = "Recorder: sound_source_worker: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
             await self.set_rec_status("Recording finished.")
 
@@ -360,10 +364,10 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                 sound_detected_counter = 0
                                 self.process_deque.clear()
                                 await self.to_target_queue.put(None)  # Terminate.
-                                print("DEBUG-2: Terminated by source.")
+                                # print("DEBUG-2: Terminated by source.")
                                 break
                             elif item == False:
-                                print("DEBUG-2: Flush.")
+                                # print("DEBUG-2: Flush.")
                                 first_sound_detected == False
                                 sound_detected_counter = 0
                                 self.process_deque.clear()
@@ -428,9 +432,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     sound_detected_counter = 0
                                     max_peak_freq_hz = peak_freq_hz
                                     max_peak_dbfs = peak_dbfs
-
                                     # Log first detected sound.
-                                    if first_sound_detected:
+                                    if max_peak_dbfs and peak_dbfs:
                                         # Logging.
                                         message = (
                                             "Sound peak: "
@@ -496,19 +499,24 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                         self.process_deque.clear()
                         await self.to_target_queue.put(False)  # Flush.
                 except asyncio.CancelledError:
-                    print("DEBUG: ", "soundProcessWorker cancelled.")
+                    # print("DEBUG: ", "soundProcessWorker cancelled.")
                     break
                 except Exception as e:
-                    print("DEBUG: soundProcessWorker exception: ", e)
+                    # print("DEBUG: sound_process_worker(1) exception: ", e)
+                    # Logging error.
+                    message = "Recorder: sound_process_worker(1): " + str(e)
+                    self.wurb_manager.wurb_logging.error(message, short_message=message)
+
             # While end.
 
         except Exception as e:
-            print("Exception: Recorder: sound_process_worker: ", e)
+            # print("EXCEPTION: Recorder: sound_process_worker(2): ", e)
             # Logging error.
-            message = "Recorder: sound_process_worker: " + str(e)
+            message = "Recorder: sound_process_worker(2): " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
-            print("DEBUG: ", "soundProcessWorker terminated.")
+            # print("DEBUG: ", "soundProcessWorker terminated.")
+            pass
 
     async def sound_target_worker(self):
         """ Worker for sound targets. Mainly files or streams.
@@ -552,20 +560,21 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                         await asyncio.sleep(0)
 
                 except asyncio.CancelledError:
-                    print("DEBUG: ", "SoundTargetWorker cancelled.")
+                    # print("DEBUG: ", "SoundTargetWorker cancelled.")
                     break
                 except Exception as e:
-                    print("DEBUG: SoundTargetWorker exception: ", e)
+                    # print("DEBUG: SoundTargetWorker exception: ", e)
                     # Logging error.
                     message = "Recorder: sound_target_worker: " + str(e)
                     self.wurb_manager.wurb_logging.error(message, short_message=message)
         except Exception as e:
-            print("Exception: Recorder: sound_target_worker: ", e)
+            # print("EXCEPTION: Recorder: sound_target_worker: ", e)
             # Logging error.
             message = "Recorder: sound_target_worker: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
-            print("DEBUG: SoundTargetWorker terminated.")
+            # print("DEBUG: SoundTargetWorker terminated.")
+            pass
 
 
 class WaveFileWriter:
@@ -660,7 +669,10 @@ class WaveFileWriter:
                 to_file_path = pathlib.Path(self.rec_target_dir_path, log_file_name)
                 to_file_path.write_text(from_file_path.read_text())
         except Exception as e:
-            print("Exception: Copy settings to wave file directory: ", e)
+            # print("EXCEPTION: Copy settings to wave file directory: ", e)
+            # Logging error.
+            message = "Recorder: Copy settings to wave file directory: " + str(e)
+            self.wurb_manager.wurb_logging.error(message, short_message=message)
 
     def get_datetime(self, start_time):
         """ """

@@ -101,14 +101,14 @@ class SoundDetectionSimple(SoundDetectionBase):
             self.window_size / self.sampling_freq
         )
 
-        print(
-            "DEBUG: Detection: Freq: ",
-            self.sampling_freq,
-            " Filter: ",
-            self.filter_min_hz,
-            " Sens: ",
-            self.threshold_dbfs,
-        )
+        # print(
+        #     "DEBUG: Detection: Freq: ",
+        #     self.sampling_freq,
+        #     " Filter: ",
+        #     self.filter_min_hz,
+        #     " Sens: ",
+        #     self.threshold_dbfs,
+        # )
 
     def check_for_sound(self, time_and_data):
         """ """

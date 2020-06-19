@@ -63,7 +63,11 @@ class WurbLogging(object):
                 if msg_type in ["info", "warning", "error"]:
                     if msg_type in ["warning", "error"]:
                         self.client_messages.append(
-                            time_str + " - " + msg_type.capitalize() + ": " + short_message
+                            time_str
+                            + " - "
+                            + msg_type.capitalize()
+                            + ": "
+                            + short_message
                         )
                     else:
                         self.client_messages.append(time_str + " - " + short_message)
@@ -76,6 +80,7 @@ class WurbLogging(object):
                     if old_logging_event:
                         old_logging_event.set()
         except Exception as e:
+            # Can't log this, must use print.
             print("Exception: Logging: write_log_async: ", e)
 
     async def get_logging_event(self):
@@ -85,7 +90,7 @@ class WurbLogging(object):
                 self.logging_event = asyncio.Event()
             return self.logging_event
         except Exception as e:
-            print("Exception: Logging: get_logging_event: ", e)
+            # print("EXCEPTION: Logging: get_logging_event: ", e)
             # Logging error.
             message = "get_logging_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)

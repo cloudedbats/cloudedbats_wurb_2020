@@ -58,11 +58,11 @@ class DetectorSettings(BaseModel):
 async def startup_event():
     """ """
     try:
-        print("DEBUG: Called: startup.")
+        # print("DEBUG: Called: startup.")
         global wurb_rec_manager
         await wurb_rec_manager.startup()
     except Exception as e:
-        print("EXCEPTION: Called: startup: ", e)
+        # print("EXCEPTION: Called: startup: ", e)
         # Logging error.
         message = "Called: startup: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -72,11 +72,11 @@ async def startup_event():
 async def shutdown_event():
     """ """
     try:
-        print("DEBUG: Called: shutdown.")
+        # print("DEBUG: Called: shutdown.")
         global wurb_rec_manager
         await wurb_rec_manager.shutdown()
     except Exception as e:
-        print("EXCEPTION: Called: shutdown: ", e)
+        # print("EXCEPTION: Called: shutdown: ", e)
         # Logging error.
         message = "Called: shutdown: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -97,7 +97,7 @@ async def webpage(request: fastapi.Request):
             },
         )
     except Exception as e:
-        print("EXCEPTION: Called: webpage: ", e)
+        # print("EXCEPTION: Called: webpage: ", e)
         # Logging error.
         message = "Called: webpage: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -106,11 +106,11 @@ async def webpage(request: fastapi.Request):
 @app.get("/start-rec/")
 async def start_recording():
     try:
-        print("DEBUG: Called: start_rec.")
+        # print("DEBUG: Called: start_rec.")
         global wurb_rec_manager
         await wurb_rec_manager.start_rec()
     except Exception as e:
-        print("EXCEPTION: Called: start_rec: ", e)
+        # print("EXCEPTION: Called: start_rec: ", e)
         # Logging error.
         message = "Called: start_rec: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -119,11 +119,11 @@ async def start_recording():
 @app.get("/stop-rec/")
 async def stop_recording():
     try:
-        print("DEBUG: Called: stop_rec.")
+        # print("DEBUG: Called: stop_rec.")
         global wurb_rec_manager
         await wurb_rec_manager.stop_rec()
     except Exception as e:
-        print("EXCEPTION: Called: stop_rec: ", e)
+        # print("EXCEPTION: Called: stop_rec: ", e)
         # Logging error.
         message = "Called: stop_rec: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -132,7 +132,7 @@ async def stop_recording():
 @app.get("/get-status/")
 async def get_status():
     try:
-        print("DEBUG: Called: get_status.")
+        # print("DEBUG: Called: get_status.")
         global wurb_rec_manager
         status_dict = await wurb_rec_manager.get_status_dict()
         return {
@@ -141,7 +141,7 @@ async def get_status():
             "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
         }
     except Exception as e:
-        print("EXCEPTION: Called: get_status: ", e)
+        # print("EXCEPTION: Called: get_status: ", e)
         # Logging error.
         message = "Called: get_status: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -150,11 +150,11 @@ async def get_status():
 @app.post("/save-location/")
 async def save_location(settings: LocationSettings):
     try:
-        print("DEBUG: Called: save_location: ", settings)
+        # print("DEBUG: Called: save_location: ", settings)
         global wurb_rec_manager
         await wurb_rec_manager.wurb_settings.save_location(settings.dict())
     except Exception as e:
-        print("EXCEPTION: Called: save_location: ", e)
+        # print("EXCEPTION: Called: save_location: ", e)
         # Logging error.
         message = "Called: save_location: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -163,12 +163,12 @@ async def save_location(settings: LocationSettings):
 @app.get("/get-location/")
 async def get_location(default: bool = False):
     try:
-        print("DEBUG: Called: get_location.")
+        # print("DEBUG: Called: get_location.")
         global wurb_rec_manager
         current_location_dict = await wurb_rec_manager.wurb_settings.get_location()
         return current_location_dict
     except Exception as e:
-        print("EXCEPTION: Called: get_location: ", e)
+        # print("EXCEPTION: Called: get_location: ", e)
         # Logging error.
         message = "Called: get_location: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -177,14 +177,14 @@ async def get_location(default: bool = False):
 @app.get("/set-time/")
 async def set_time(posixtime: str):
     try:
-        print("DEBUG: Called: set_time: ", posixtime)
+        # print("DEBUG: Called: set_time: ", posixtime)
         global wurb_rec_manager
         posix_time_s = int(int(posixtime) / 1000)
         await wurb_rec_manager.wurb_rpi.set_detector_time(
             posix_time_s, cmd_source="by user"
         )
     except Exception as e:
-        print("EXCEPTION: Called: set_time: ", e)
+        # print("EXCEPTION: Called: set_time: ", e)
         # Logging error.
         message = "Called: set_time: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -193,11 +193,11 @@ async def set_time(posixtime: str):
 @app.get("/save-rec-mode/")
 async def save_rec_mode(recmode: str):
     try:
-        print("DEBUG: Called: save_rec_mode: ", recmode)
+        # print("DEBUG: Called: save_rec_mode: ", recmode)
         global wurb_rec_manager
         await wurb_rec_manager.wurb_settings.save_rec_mode(recmode)
     except Exception as e:
-        print("EXCEPTION: Called: save_rec_mode: ", e)
+        # print("EXCEPTION: Called: save_rec_mode: ", e)
         # Logging error.
         message = "Called: save_rec_mode: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -206,11 +206,11 @@ async def save_rec_mode(recmode: str):
 @app.post("/save-settings/")
 async def save_settings(settings: DetectorSettings):
     try:
-        print("DEBUG: Called: save_settings: ", settings)
+        # print("DEBUG: Called: save_settings: ", settings)
         global wurb_rec_manager
         await wurb_rec_manager.wurb_settings.save_settings(settings.dict())
     except Exception as e:
-        print("EXCEPTION: Called: save_settings: ", e)
+        # print("EXCEPTION: Called: save_settings: ", e)
         # Logging error.
         message = "Called: save_settings: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -219,14 +219,14 @@ async def save_settings(settings: DetectorSettings):
 @app.get("/get-settings/")
 async def get_settings(default: bool = False):
     try:
-        print("DEBUG: Called: get_settings.")
+        # print("DEBUG: Called: get_settings.")
         global wurb_rec_manager
         current_settings_dict = await wurb_rec_manager.wurb_settings.get_settings(
             default
         )
         return current_settings_dict
     except Exception as e:
-        print("EXCEPTION: Called: get_settings: ", e)
+        # print("EXCEPTION: Called: get_settings: ", e)
         # Logging error.
         message = "Called: get_settings: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -235,11 +235,11 @@ async def get_settings(default: bool = False):
 @app.get("/rpi-control/")
 async def rpi_control(command: str):
     try:
-        print("DEBUG: Called: rpi_control: ", command)
+        # print("DEBUG: Called: rpi_control: ", command)
         global wurb_rec_manager
         await wurb_rec_manager.wurb_rpi.rpi_control(command)
     except Exception as e:
-        print("EXCEPTION: Called: rpi_control: ", e)
+        # print("EXCEPTION: Called: rpi_control: ", e)
         # Logging error.
         message = "Called: rpi_control: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
@@ -248,7 +248,7 @@ async def rpi_control(command: str):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
-        print("DEBUG: Called:  websocket_endpoint.")
+        # print("DEBUG: Called:  websocket_endpoint.")
         global wurb_rec_manager
         wurb_settings = wurb_rec_manager.wurb_settings
         wurb_logging = wurb_rec_manager.wurb_logging
@@ -315,10 +315,10 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
     except websockets.exceptions.ConnectionClosed as e:
         pass
     except Exception as e:
-        print("EXCEPTION: Called: websocket_endpoint: ", e)
-        # # Logging error.
-        # message = "Called: websocket_endpoint: " + str(e)
-        # wurb_rec_manager.wurb_logging.error(message, short_message=message)
+        # print("EXCEPTION: Called: websocket_endpoint: ", e)
+        # Logging error.
+        message = "Called: websocket_endpoint: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=None)
 
 
 # Example:

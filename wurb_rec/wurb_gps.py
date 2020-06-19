@@ -77,15 +77,15 @@ class WurbGps(object):
         """ """
         try:
             while True:
-                await self.start()
-                await asyncio.sleep(6)
-                await self.stop()
-                # print("CONTROL LOOP")
-        except asyncio.CancelledError:
-            print("DEBUG: ", "GPS Control loop cancelled.")
-            # break
+                try:
+                    await self.start()
+                    await asyncio.sleep(6)
+                    await self.stop()
+                except asyncio.CancelledError:
+                    # print("DEBUG: ", "GPS Control loop cancelled.")
+                    break
         except Exception as e:
-            print("EXCEPTION: GPS Control loop: ", e)
+            # print("EXCEPTION: GPS Control loop: ", e)
             # Logging error.
             message = "GPS Control loop: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -154,7 +154,7 @@ class WurbGps(object):
         latitude_dd = 0.0
         longitude_dd = 0.0
 
-        print("GPS data: ", data)
+        # print("GPS data: ", data)
         parts = data.split(",")
 
         if (len(data) >= 50) and (len(parts) >= 8):
@@ -239,7 +239,7 @@ class WurbGps(object):
                         self.asyncio_loop,
                     )
         except Exception as e:
-            print("Exception: GPS time: ", e)
+            # print("EXCEPTION: GPS time: ", e)
             # Logging error.
             message = "GPS time: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -273,7 +273,7 @@ class WurbGps(object):
             else:
                 return True
         except Exception as e:
-            print("EXCEPTION: GPS is_time_valid: ", e)
+            # print("EXCEPTION: GPS is_time_valid: ", e)
             # Logging error.
             message = "GPS is_time_valid: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -302,7 +302,9 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                     if self.gps_manager:
                         self.gps_manager.parse_nmea_gprmc(data_gprmc)
         except Exception as e:
-            print("EXCEPTION: data_received: ", e)
+            # print("EXCEPTION: data_received: ", e)
+            pass
 
     def connection_lost(self, exc):
-        print("GPS: Connection closed.")
+        # print("GPS: Connection closed.")
+        pass
