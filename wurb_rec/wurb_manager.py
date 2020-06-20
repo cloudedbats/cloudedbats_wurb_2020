@@ -41,8 +41,8 @@ class WurbRecManager(object):
     async def startup(self):
         """ """
         try:
-            self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_logging = wurb_rec.WurbLogging(self)
+            self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
             self.ultrasound_devices = wurb_rec.UltrasoundDevices(self)
             self.wurb_recorder = wurb_rec.WurbRecorder(self)

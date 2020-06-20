@@ -1,8 +1,8 @@
 
+from .wurb_logging import WurbLogging
 from .lib.solartime import SolarTime
 from .sound_stream_manager import SoundStreamManager
 from .wurb_rpi import WurbRaspberryPi
-from .wurb_logging import WurbLogging
 from .wurb_settings import WurbSettings
 from .wurb_gps import WurbGps
 from .wurb_sound_detection import SoundDetection

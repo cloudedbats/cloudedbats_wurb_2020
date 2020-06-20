@@ -648,6 +648,9 @@ class WaveFileWriter:
             message_rec_type = "(TE) "
         message = "Sound file " + message_rec_type + "to: " + target_path_str
         self.wurb_logging.info(message, short_message=message)
+        # Logging - debug.
+        message = "Filename: " + filename
+        self.wurb_logging.debug(message, short_message=message)
 
     def write(self, buffer):
         """ """
@@ -668,6 +671,9 @@ class WaveFileWriter:
                 from_file_path = pathlib.Path(from_dir, log_file_name)
                 to_file_path = pathlib.Path(self.rec_target_dir_path, log_file_name)
                 to_file_path.write_text(from_file_path.read_text())
+                # Logging - debug.
+                message = "File closed."
+                self.wurb_logging.debug(message, short_message=message)
         except Exception as e:
             # print("EXCEPTION: Copy settings to wave file directory: ", e)
             # Logging error.
