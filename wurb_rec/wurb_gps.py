@@ -50,6 +50,7 @@ class WurbGps(object):
         await self.stop()
         if self.gps_control_task:
             self.gps_control_task.cancel()
+            self.gps_control_task = None
 
     async def get_datetime_utc(self):
         """ """
@@ -159,7 +160,7 @@ class WurbGps(object):
 
         if (len(data) >= 50) and (len(parts) >= 8):
             time = parts[1]
-            gps_status = parts[2]
+            _gps_status = parts[2]
             latitude = parts[3]
             lat_n_s = parts[4]
             longitude = parts[5]
@@ -295,13 +296,14 @@ class ReadGpsSerialNmea(asyncio.Protocol):
 
     def data_received(self, data):
         try:
+            # print("GPS data: ", data)
             for data in data.splitlines():
                 # Check for NMEA:s RMC, The Recommended Minimum.
                 if data.find(b"GPRMC") > 0:
                     data_gprmc = data.strip().decode("utf-8")
                     if self.gps_manager:
                         self.gps_manager.parse_nmea_gprmc(data_gprmc)
-        except Exception as e:
+        except:  # Exception as e:
             # print("EXCEPTION: data_received: ", e)
             pass
 
