@@ -73,6 +73,12 @@ class WurbSettings(object):
             await self.wurb_manager.wurb_gps.startup()
         else:
             await self.wurb_manager.wurb_gps.shutdown()
+        # Rec. mode. Scheduler, rec-on or rec-off.
+        rec_mode = self.current_settings["rec_mode"]
+        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
+            await self.wurb_manager.wurb_scheduler.startup()
+        else:
+            await self.wurb_manager.wurb_scheduler.shutdown()
 
     async def shutdown(self):
         """ """
@@ -88,6 +94,11 @@ class WurbSettings(object):
             await self.wurb_manager.start_rec()
         if rec_mode == "rec-mode-off":
             await self.wurb_manager.stop_rec()
+        # Rec. mode: Scheduler, rec-on or rec-off.
+        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
+            await self.wurb_manager.wurb_scheduler.startup()
+        else:
+            await self.wurb_manager.wurb_scheduler.shutdown()
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
         self.settings_event = asyncio.Event()

@@ -51,7 +51,7 @@ class WurbRecManager(object):
             self.update_status_task = asyncio.create_task(self.update_status())
             await self.wurb_logging.startup()
             await self.wurb_settings.startup()
-            await self.wurb_scheduler.startup()
+            # await self.wurb_scheduler.startup()
             # Logging.
             message = "Detector started."
             self.wurb_logging.info(message, short_message=message)
@@ -68,14 +68,19 @@ class WurbRecManager(object):
 
             if self.wurb_gps:
                 await self.wurb_gps.shutdown()
+                self.wurb_gps = None
             if self.wurb_scheduler:
                 await self.wurb_scheduler.shutdown()
+                self.wurb_scheduler = None
             if self.wurb_settings:
                 await self.wurb_settings.shutdown()
+                self.wurb_settings = None
             if self.update_status_task:
                 self.update_status_task.cancel()
+                self.update_status_task = None
             if self.wurb_logging:
                 await self.wurb_logging.shutdown()
+                self.wurb_logging = None
         except Exception as e:
             # print("EXCEPTION: ", e)
             # Logging error.
