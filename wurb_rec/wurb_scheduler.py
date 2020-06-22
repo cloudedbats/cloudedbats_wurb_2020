@@ -140,7 +140,7 @@ class WurbScheduler(object):
 
         return (start_event_local, stop_event_local)
 
-    async def get_solartime_data(self):
+    async def get_solartime_data(self, print_new=True):
         """ """
 
         location_dict = self.wurb_settings.get_location_dict()
@@ -171,16 +171,17 @@ class WurbScheduler(object):
             dawn_utc = solartime_dict.get("dawn", None)
             sunrise_utc = solartime_dict.get("sunrise", None)
             if sunset_utc and dusk_utc and dawn_utc and sunrise_utc:
-                sunset_local = sunset_utc.astimezone()
-                dusk_local = dusk_utc.astimezone()
-                dawn_local = dawn_utc.astimezone()
-                sunrise_local = sunrise_utc.astimezone()
-                message = "Scheduler calc.: "
-                message += " Sunset: " + sunset_local.strftime("%H:%M:%S")
-                message += " Dusk: " + dusk_local.strftime("%H:%M:%S")
-                message += " Dawn: " + dawn_local.strftime("%H:%M:%S")
-                message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
-                self.wurb_manager.wurb_logging.info(message, short_message=message)
+                if print_new:
+                    sunset_local = sunset_utc.astimezone()
+                    dusk_local = dusk_utc.astimezone()
+                    dawn_local = dawn_utc.astimezone()
+                    sunrise_local = sunrise_utc.astimezone()
+                    message = "Solartime recalculated: "
+                    message += " Sunset: " + sunset_local.strftime("%H:%M:%S")
+                    message += " Dusk: " + dusk_local.strftime("%H:%M:%S")
+                    message += " Dawn: " + dawn_local.strftime("%H:%M:%S")
+                    message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
+                    self.wurb_manager.wurb_logging.info(message, short_message=message)
             else:
                 return None
 

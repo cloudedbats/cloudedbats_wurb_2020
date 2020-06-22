@@ -25,7 +25,8 @@ window.onload = function () {
   const div_settings_basic_id = document.getElementById("div_settings_basic_id");
   const div_settings_more_id = document.getElementById("div_settings_more_id");
   const div_settings_scheduler_id = document.getElementById("div_settings_scheduler_id");
-  const div_settings_clear_sd_confirm_id = document.getElementById("div_settings_clear_sd_confirm_id");
+  // const div_settings_clear_sd_confirm_id = document.getElementById("div_settings_clear_sd_confirm_id");
+  const div_settings_software_update_id = document.getElementById("div_settings_software_update_id");
 
   // Fields and buttons.
   const settings_rec_mode_id = document.getElementById("settings_rec_mode_id");
@@ -335,11 +336,20 @@ async function getDefaultSettings() {
 
 async function raspberryPiControl(command) {
   try {
-    if (command == "rpi_clear_sd") {
-      showDivision(div_settings_clear_sd_confirm_id)
+    // if (command == "rpi_clear_sd") {
+    //   showDivision(div_settings_clear_sd_confirm_id)
+    // } else {
+    //   hideDivision(div_settings_clear_sd_confirm_id)
+    //   if (command != "rpi_clear_sd") { // 
+    //     let url_string = `/rpi-control/?command=${command}`;
+    //     await fetch(url_string);
+    //   }
+    // }
+    if (command == "rpi_sw_update_dialog") {
+      showDivision(div_settings_software_update_id)
     } else {
-      hideDivision(div_settings_clear_sd_confirm_id)
-      if (command != "rpi_clear_sd_cancel") { // 
+      hideDivision(div_settings_software_update_id)
+      if (command != "rpi_sw_update_dialog") { // 
         let url_string = `/rpi-control/?command=${command}`;
         await fetch(url_string);
       }

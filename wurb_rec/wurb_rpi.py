@@ -21,6 +21,10 @@ class WurbRaspberryPi(object):
 
     async def rpi_control(self, command):
         """ """
+        if command == "rpi_status":
+            await self.rpi_status()
+            return
+
         # First check: OS Raspbian. Only valid for Raspbian and user pi.
         if self.is_os_raspbian():
             # Select command.
@@ -33,10 +37,12 @@ class WurbRaspberryPi(object):
             # elif command == "rpi_clear_sd_ok":
             elif command == "rpi_clear_sd":
                 await self.rpi_clear_sd()
-            elif command == "rpi_status":
-                await self.rpi_status()
-            elif command == "rpi_update_sw":
-                await self.rpi_update_sw()
+            # elif command == "rpi_status":
+            #     await self.rpi_status()
+            elif command == "rpi_sw_update_stable":
+                await self.rpi_sw_update_stable()
+            elif command == "rpi_sw_update_development":
+                await self.rpi_sw_update_development()
             else:
                 # Logging.
                 message = "Raspberry Pi command failed. Not a valid command: " + command
@@ -162,7 +168,7 @@ class WurbRaspberryPi(object):
     async def rpi_shutdown(self):
         """ """
         # Logging.
-        message = "Raspberry Pi command 'Shutdown' is activated."
+        message = "The Raspberry Pi command 'Shutdown' is activated."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
         await asyncio.sleep(1.0)
         #
@@ -171,7 +177,7 @@ class WurbRaspberryPi(object):
     async def rpi_reboot(self):
         """ """
         # Logging.
-        message = "Raspberry Pi command 'Reboot' is activated."
+        message = "The Raspberry Pi command 'Reboot' is activated."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
         await asyncio.sleep(1.0)
         #
@@ -180,38 +186,104 @@ class WurbRaspberryPi(object):
     async def rpi_sd_to_usb(self):
         """ """
         # Logging.
-        message = "Raspberry Pi command 'Copy SD to USB' is not implemented."
+        message = "The Raspberry Pi command 'Copy SD to USB' is not implemented."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
 
     async def rpi_clear_sd(self):
         """ """
         # Logging.
-        message = "Raspberry Pi command 'Clear SD card' is not implemented."
+        message = "The Raspberry Pi command 'Clear SD card' is not implemented."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
 
     async def rpi_status(self):
         """ """
-        # Logging.
-        message = "Raspberry Pi command 'Detector status' is not implemented."
-        self.wurb_manager.wurb_logging.info(message, short_message=message)
+        # Mic.
+        rec_status = await self.wurb_manager.wurb_recorder.get_rec_status()
+        if rec_status != "Recording.":
+            await self.wurb_manager.ultrasound_devices.check_devices()
+            device_name = self.wurb_manager.ultrasound_devices.device_name
+            sampling_freq_hz = self.wurb_manager.ultrasound_devices.sampling_freq_hz
+            if device_name:
+                # Logging.
+                message = "Connected microphone: "
+                message += device_name
+                message += " Frequency: "
+                message += str(sampling_freq_hz)
+                message += " Hz."
+                self.wurb_manager.wurb_logging.info(message, short_message=message)
+            else:
+                # Logging.
+                message = "No microphone is found. "
+                self.wurb_manager.wurb_logging.info(message, short_message=message)
 
-    async def rpi_update_sw(self):
+        # Solartime.
+        solartime_dict = await self.wurb_manager.wurb_scheduler.get_solartime_data(
+            print_new=False
+        )
+        sunset_utc = solartime_dict.get("sunset", None)
+        dusk_utc = solartime_dict.get("dusk", None)
+        dawn_utc = solartime_dict.get("dawn", None)
+        sunrise_utc = solartime_dict.get("sunrise", None)
+        if sunset_utc and dusk_utc and dawn_utc and sunrise_utc:
+            sunset_local = sunset_utc.astimezone()
+            dusk_local = dusk_utc.astimezone()
+            dawn_local = dawn_utc.astimezone()
+            sunrise_local = sunrise_utc.astimezone()
+            message = "Solartime: "
+            message += " Sunset: " + sunset_local.strftime("%H:%M:%S")
+            message += " Dusk: " + dusk_local.strftime("%H:%M:%S")
+            message += " Dawn: " + dawn_local.strftime("%H:%M:%S")
+            message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
+            self.wurb_manager.wurb_logging.info(message, short_message=message)
+
+    async def rpi_sw_update_stable(self):
+        """ """
+
+        # https://github.com/cloudedbats/cloudedbats_wurb_2020/releases/latest
+
+        # # Logging.
+        # message = "The Raspberry Pi command 'Software update' is activated. Please wait."
+        # self.wurb_manager.wurb_logging.info(message, short_message=message)
+        # await asyncio.sleep(1.0)
+        # #
+        # command_string = "cd /home/pi/cloudedbats_wurb_2020"
+        # command_string += " && git pull"
+        # command_string += " && source venv/bin/activate"
+        # command_string += " && pip install -r requirements.txt "
+        # await asyncio.sleep(1.0)
+        # #
+        # os.system(command_string)
+
+        # # Logging.
+        # message = "Software update is finished. A restart (reboot) of the detector is needed."
+        # self.wurb_manager.wurb_logging.info(message, short_message=message)
+        # asyncio.sleep(1.0)
+        # #
+
+    async def rpi_sw_update_development(self):
         """ """
         # Logging.
-        message = "Raspberry Pi command 'Software update' is activated."
+        message = "The Raspberry Pi command 'Software update' "
+        message += "is activated. Please wait."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
-        asyncio.sleep(1.0)
+
+        await asyncio.sleep(1.0)
         #
+        # Logging debug.
+        self.wurb_manager.wurb_logging.debug("Software update started.")
+
         command_string = "cd /home/pi/cloudedbats_wurb_2020"
         command_string += " && git pull"
         command_string += " && source venv/bin/activate"
         command_string += " && pip install -r requirements.txt "
-        await asyncio.sleep(1.0)
-        #
         os.system(command_string)
 
+        await asyncio.sleep(20.0)
+
         # Logging.
-        message = "Software is updated."
+        message = "Software update is finished. "
+        message += "A restart of the detector is needed."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
         asyncio.sleep(1.0)
         #
+

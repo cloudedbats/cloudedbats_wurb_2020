@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=7') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=9') }}"></script>
 </head>
 
 <body>
@@ -266,7 +266,7 @@
                                                     <option value="60">1 minute</option>
                                                     <option value="120">2 minutes</option>
                                                     <option value="300">5 minutes</option>
-                                                 </select>
+                                                </select>
                                             </div>
                                         </div>
                                         <p class="help is-info">
@@ -295,10 +295,10 @@
                                             </button>
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_reboot')">
-                                                Reboot
+                                                Restart
                                             </button>
                                         </div>
-                                        <div class="control">
+                                        <!-- <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_sd_to_usb')">
                                                 Copy SD to USB
@@ -308,7 +308,7 @@
                                                 Clear SD card...
                                             </button>
                                         </div>
-                                        <div  id="div_settings_clear_sd_confirm_id" 
+                                        <div id="div_settings_clear_sd_confirm_id"
                                             style="visibility:hidden; overflow:hidden; height:0; width:0;">
                                             <div style="border:1px solid white; margin: 0px; padding: 25px;">
                                                 <div class="control">
@@ -326,16 +326,46 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
                                         <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
                                                 onclick="raspberryPiControl('rpi_status')">
                                                 Detector status
                                             </button>
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_update_sw')">
-                                                Software update
+                                                onclick="raspberryPiControl('rpi_sw_update_dialog')">
+                                                Software update...
                                             </button>
+                                        </div>
+                                    </div>
+                                    <div id="div_settings_software_update_id"
+                                        style="visibility:hidden; overflow:hidden; height:0; width:0;">
+                                        <div style="border:1px solid white; margin: 0px; padding: 25px;">
+                                            <div class="control">
+                                                <label class="label">Please connect your detector to Internet before you
+                                                    continue, for example by connecting an Ethernet cable.</label>
+                                                <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                    onclick="raspberryPiControl('rpi_sw_update_cancel')">
+                                                    Cancel
+                                                </button>
+                                                <!-- <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                    onclick="raspberryPiControl('rpi_sw_update_stable')">
+                                                    Latest stable version
+                                                </button> -->
+                                                <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                    onclick="raspberryPiControl('rpi_sw_update_development')">
+                                                    Development version
+                                                </button>
+                                                <!-- <label class="label"> -->
+                                                <p class="help is-info"></p>
+                                                    Not all software updates can be done by 
+                                                    using this methods. 
+                                                    If it doesn't work as expected, then follow the installation
+                                                    instruction that can be found here:
+                                                    https://github.com/cloudedbats/cloudedbats_wurb_2020
+                                                </p>
+                                                <!-- </label> -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -435,7 +465,7 @@
                                         <label class="label">Post&nbsp;action</label>
                                         <div class="control">
                                             <div class="select">
-                                                <select id="settings_scheduler_post_action_id">
+                                                <select id="settings_scheduler_post_action_id" disabled>
                                                     <option value="post-none">No action</option>
                                                     <!-- <option value="post-shutdown">Detector shutdown</option> -->
                                                 </select>
@@ -446,7 +476,7 @@
                                         <label class="label">Post&nbsp;action&nbsp;delay&nbsp;(minutes)</label>
                                         <div class="control">
                                             <input id="settings_scheduler_post_action_delay_id" class="input"
-                                                type="number" placeholder="5" value="5">
+                                                type="number" placeholder="5" value="5" disabled>
                                         </div>
                                     </div>
                                 </div>
