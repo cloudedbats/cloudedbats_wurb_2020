@@ -220,21 +220,27 @@ class WurbRaspberryPi(object):
         solartime_dict = await self.wurb_manager.wurb_scheduler.get_solartime_data(
             print_new=False
         )
-        sunset_utc = solartime_dict.get("sunset", None)
-        dusk_utc = solartime_dict.get("dusk", None)
-        dawn_utc = solartime_dict.get("dawn", None)
-        sunrise_utc = solartime_dict.get("sunrise", None)
-        if sunset_utc and dusk_utc and dawn_utc and sunrise_utc:
-            sunset_local = sunset_utc.astimezone()
-            dusk_local = dusk_utc.astimezone()
-            dawn_local = dawn_utc.astimezone()
-            sunrise_local = sunrise_utc.astimezone()
-            message = "Solartime: "
-            message += " Sunset: " + sunset_local.strftime("%H:%M:%S")
-            message += " Dusk: " + dusk_local.strftime("%H:%M:%S")
-            message += " Dawn: " + dawn_local.strftime("%H:%M:%S")
-            message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
+        if solartime_dict:
+            sunset_utc = solartime_dict.get("sunset", None)
+            dusk_utc = solartime_dict.get("dusk", None)
+            dawn_utc = solartime_dict.get("dawn", None)
+            sunrise_utc = solartime_dict.get("sunrise", None)
+            if sunset_utc and dusk_utc and dawn_utc and sunrise_utc:
+                sunset_local = sunset_utc.astimezone()
+                dusk_local = dusk_utc.astimezone()
+                dawn_local = dawn_utc.astimezone()
+                sunrise_local = sunrise_utc.astimezone()
+                message = "Solartime: "
+                message += " Sunset: " + sunset_local.strftime("%H:%M:%S")
+                message += " Dusk: " + dusk_local.strftime("%H:%M:%S")
+                message += " Dawn: " + dawn_local.strftime("%H:%M:%S")
+                message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
+                self.wurb_manager.wurb_logging.info(message, short_message=message)
+        else:
+            # Logging.
+            message = "Can't calculate solartime. Lat/long is missing."
             self.wurb_manager.wurb_logging.info(message, short_message=message)
+
 
     async def rpi_sw_update_stable(self):
         """ """
