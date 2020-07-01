@@ -287,6 +287,7 @@ class ReadGpsSerialNmea(asyncio.Protocol):
     def __init__(self):
         """ """
         super().__init__()
+        self.buf = bytes()
         self.gps_manager = None
 
     def connection_made(self, transport):
@@ -296,13 +297,17 @@ class ReadGpsSerialNmea(asyncio.Protocol):
 
     def data_received(self, data):
         try:
-            # print("GPS data: ", data)
-            for data in data.splitlines():
-                # Check for NMEA:s RMC, The Recommended Minimum.
-                if data.find(b"GPRMC") > 0:
-                    data_gprmc = data.strip().decode("utf-8")
-                    if self.gps_manager:
-                        self.gps_manager.parse_nmea_gprmc(data_gprmc)
+            # print("Data: ", data)
+            self.buf += data
+            if b'\n' in self.buf:
+                rows = self.buf.split(b'\n')
+                self.buf = rows[-1]  # Save remaining part.
+                for row in rows[:-1]:
+                    row = row.strip().decode()
+                    if row.find("GPRMC") > 0:
+                        # print("NMEA: ", row)
+                        if self.gps_manager:
+                            self.gps_manager.parse_nmea_gprmc(row)
         except:  # Exception as e:
             # print("EXCEPTION: data_received: ", e)
             pass
