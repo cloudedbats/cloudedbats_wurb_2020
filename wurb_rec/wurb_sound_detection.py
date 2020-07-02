@@ -94,7 +94,7 @@ class SoundDetectionSimple(SoundDetectionBase):
         self.jump_size = 1000
 
         # self.window_function = scipy.signal.blackmanharris(self.window_size)
-        self.window_function = scipy.signal.hann(self.window_size)
+        self.window_function = scipy.signal.windows.hann(self.window_size)
         # Max db value in window. dbFS = db full scale. Half spectrum used.
         self.window_function_dbfs_max = np.sum(self.window_function) / 2
         self.freq_bins_hz = np.arange((self.window_size / 2) + 1) / (
