@@ -19,7 +19,7 @@ import wurb_rec
 app = fastapi.FastAPI(
     title="CloudedBats WURB 2020",
     description="CloudedBats WURB 2020 - a part of CloudedBats.org.",
-    version="0.1.0",
+    version=wurb_rec.__version__,
 )
 
 app.mount("/static", StaticFiles(directory="wurb_rec/static"), name="static")
@@ -94,6 +94,7 @@ async def webpage(request: fastapi.Request):
                 "rec_status": status_dict.get("rec_status", ""),
                 "device_name": status_dict.get("device_name", ""),
                 "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+                "wurb_version": wurb_rec.__version__,
             },
         )
     except Exception as e:

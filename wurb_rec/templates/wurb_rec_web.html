@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CloudedBats - Ultrasonic recorder for bats</title>
+    <title>CloudedBats - WURB 2020</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -27,8 +27,8 @@
 
                             <!-- Tile: Ultrasonic recorder -->
                             <article class="tile is-child box has-background-grey-lighter">
-                                <p class="title">Ultrasonic recorder</p>
-                                <p class="subtitle">Recording unit for bats.</p>
+                                <p class="title">CloudedBats-WURB</p>
+                                <p class="subtitle">The DIY Bat Detector</p>
                                 <div class="buttons is-centered">
                                     <button style="margin:5px;" id="rec_start_button_id"
                                         class="button is-info is-rounded is-medium" onclick="startRecording()">
@@ -358,11 +358,11 @@
                                                 </button>
                                                 <!-- <label class="label"> -->
                                                 <p class="help is-info"></p>
-                                                    Not all software updates can be done by 
-                                                    using this methods. 
-                                                    If it doesn't work as expected, then follow the installation
-                                                    instruction that can be found here:
-                                                    https://github.com/cloudedbats/cloudedbats_wurb_2020
+                                                Not all software updates can be done by
+                                                using this methods.
+                                                If it doesn't work as expected, then follow the installation
+                                                instruction that can be found here:
+                                                https://github.com/cloudedbats/cloudedbats_wurb_2020
                                                 </p>
                                                 <!-- </label> -->
                                             </div>
@@ -579,7 +579,8 @@
                         <article class="tile is-child box has-background-grey-lighter">
                             <!-- Content. -->
                             <p class="title">About</p>
-                            <p class="subtitle">CloudedBats WURB 2020</p>
+                            <p class="subtitle">CloudedBats - WURB 2020<br>
+                                Version: {{ wurb_version }}</p>
                             <div class="content">
                                 <p>
                                     This is a part of the open source
@@ -593,6 +594,11 @@
                                     REST API for programmatic control:
                                     <a href="/docs">OpenAPI 3.0</a>.
                                 </p>
+                                <p>
+                                    The links above only works when your detector is connected to the internet. 
+                                    For example, by using an Ethernet cable.
+                                </p>
+                                <hr>
                                 <p>
                                     Developed by: Arnold&nbsp;Andreasson,&nbsp;Sweden.<br />
                                     Contact and feedback: info@cloudedbats.org
