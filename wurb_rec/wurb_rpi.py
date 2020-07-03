@@ -39,10 +39,8 @@ class WurbRaspberryPi(object):
                 await self.rpi_clear_sd()
             # elif command == "rpi_status":
             #     await self.rpi_status()
-            elif command == "rpi_sw_update_stable":
-                await self.rpi_sw_update_stable()
-            elif command == "rpi_sw_update_development":
-                await self.rpi_sw_update_development()
+            elif command == "rpi_sw_update":
+                await self.rpi_sw_update()
             else:
                 # Logging.
                 message = "Raspberry Pi command failed. Not a valid command: " + command
@@ -237,7 +235,7 @@ class WurbRaspberryPi(object):
                 message += " Sunrise: " + sunrise_local.strftime("%H:%M:%S")
                 self.wurb_manager.wurb_logging.info(message, short_message=message)
         else:
-            # Logging.
+            # Logging. 
             message = "Can't calculate solartime. Lat/long is missing."
             self.wurb_manager.wurb_logging.info(message, short_message=message)
 
@@ -266,7 +264,7 @@ class WurbRaspberryPi(object):
         # asyncio.sleep(1.0)
         # #
 
-    async def rpi_sw_update_development(self):
+    async def rpi_sw_update(self):
         """ """
         # Logging.
         message = "The Raspberry Pi command 'Software update' "
@@ -284,10 +282,10 @@ class WurbRaspberryPi(object):
         command_string += " && pip install -r requirements.txt "
         os.system(command_string)
 
-        await asyncio.sleep(20.0)
+        await asyncio.sleep(30.0) # Dummy time.
 
         # Logging.
-        message = "Software update is finished. "
+        message = "Software update is finished, but can't be verified. "
         message += "A restart of the detector is needed."
         self.wurb_manager.wurb_logging.info(message, short_message=message)
         asyncio.sleep(1.0)

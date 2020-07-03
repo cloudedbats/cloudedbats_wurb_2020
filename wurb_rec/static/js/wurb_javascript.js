@@ -349,9 +349,11 @@ async function raspberryPiControl(command) {
       showDivision(div_settings_software_update_id)
     } else {
       hideDivision(div_settings_software_update_id)
-      if (command != "rpi_sw_update_dialog") { // 
-        let url_string = `/rpi-control/?command=${command}`;
-        await fetch(url_string);
+      if (command != "rpi_sw_update_dialog") {
+        if (command != "rpi_sw_update_cancel") {
+          let url_string = `/rpi-control/?command=${command}`;
+          await fetch(url_string);
+        }
       }
     }
   } catch (err) {
