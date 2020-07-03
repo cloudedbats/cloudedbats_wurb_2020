@@ -119,6 +119,7 @@ class WurbSettings(object):
                     value = value.replace("_", "-")
                 self.current_settings[key] = value
         self.save_settings_to_file()
+
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
         self.settings_event = asyncio.Event()
@@ -128,6 +129,9 @@ class WurbSettings(object):
         # Logging.
         message = "Settings saved."
         self.wurb_logging.info(message, short_message=message)
+
+        # Restart recording. Needed for some settings.
+        await self.wurb_manager.restart_rec()
 
     def get_setting(self, key=None):
         """ """

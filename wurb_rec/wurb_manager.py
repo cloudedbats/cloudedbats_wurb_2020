@@ -140,7 +140,7 @@ class WurbRecManager(object):
             rec_status = await self.wurb_recorder.get_rec_status()
             if rec_status == "Recording.":
                 # Logging.
-                message = "Rec. restarted."
+                message = "Rec. restart initiated."
                 self.wurb_logging.info(message, short_message=message)
                 await self.stop_rec()
                 await asyncio.sleep(1.0)
