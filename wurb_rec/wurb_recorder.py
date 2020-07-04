@@ -132,6 +132,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         # Config.
         self.max_adc_time_diff_s = 10  # Unit: sec.
         self.rec_length_s = 6  # Unit: sec.
+        self.rec_timeout_before_restart_s = 30  # Unit: sec.
 
     async def get_notification_event(self):
         """ """
@@ -342,7 +343,31 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             while True:
                 try:
                     try:
-                        item = await self.from_source_queue.get()
+                        # item = await self.from_source_queue.get()
+                        try:
+                            item = await asyncio.wait_for(
+                                self.from_source_queue.get(),
+                                timeout=self.rec_timeout_before_restart_s,
+                            )
+                        except asyncio.TimeoutError:
+                            # Check if restart already is requested.
+                            if self.restart_activated:
+                                return
+                            # Logging.
+                            message = (
+                                "Lost connection with the microphone. Rec. restarted."
+                            )
+                            self.wurb_logging.warning(message, short_message=message)
+                            # Restart recording.
+                            self.restart_activated = True
+                            loop = asyncio.get_event_loop()
+                            asyncio.run_coroutine_threadsafe(
+                                self.wurb_manager.restart_rec(), loop,
+                            )
+                            await self.remove_items_from_queue(self.from_source_queue)
+                            await self.from_source_queue.put(False)  # Flush.
+                            return
+                        #
                         try:
                             # print("REC PROCESS: ", item["adc_time"], item["data"][:5])
                             if item == None:
