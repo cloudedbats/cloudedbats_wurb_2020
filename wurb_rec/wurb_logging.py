@@ -106,7 +106,6 @@ class WurbLogging(object):
                 self.logging_event = asyncio.Event()
             return self.logging_event
         except Exception as e:
-            # print("EXCEPTION: Logging: get_logging_event: ", e)
             # Logging error.
             message = "get_logging_event: " + str(e)
             self.error(message, short_message=message)

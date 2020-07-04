@@ -56,7 +56,6 @@ class WurbRecManager(object):
             message = "Detector started."
             self.wurb_logging.info(message, short_message=message)
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: startup: " + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -82,7 +81,6 @@ class WurbRecManager(object):
                 await self.wurb_logging.shutdown()
                 self.wurb_logging = None
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: shutdown:" + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -111,7 +109,6 @@ class WurbRecManager(object):
                 message = "Failed: No valid microphone."
                 self.wurb_logging.info(message, short_message=message)
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -129,7 +126,6 @@ class WurbRecManager(object):
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -146,7 +142,6 @@ class WurbRecManager(object):
                 await asyncio.sleep(1.0)
                 await self.start_rec()
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -158,7 +153,6 @@ class WurbRecManager(object):
                 self.notification_event = asyncio.Event()
             return self.notification_event
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
@@ -173,14 +167,12 @@ class WurbRecManager(object):
             }
             return status_dict
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def update_status(self):
         """ """
-        # print("DEBUG: update_status activated.")
         try:
             while True:
                 try:
@@ -193,7 +185,6 @@ class WurbRecManager(object):
                         rec_notification.wait(),
                     ]
                     await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
-                    # # print("DEBUG: update_status released.")
 
                     # Create a new event and release all from the old event.
                     old_notification_event = self.notification_event
@@ -201,13 +192,12 @@ class WurbRecManager(object):
                     if old_notification_event:
                         old_notification_event.set()
                 except asyncio.CancelledError:
-                    # print("DEBUG: ", "Manager update status cancelled.")
                     exit
         except Exception as e:
-            # # print("DEBUG: Manager update status: ", e)
             # Logging error.
             message = "Manager: start_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
         finally:
-            # print("DEBUG: Manager update status terminated.")
-            pass
+            # Logging error.
+            message = "Manager update status terminated."
+            self.wurb_logging.debug(message=message)

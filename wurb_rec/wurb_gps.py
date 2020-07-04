@@ -83,10 +83,8 @@ class WurbGps(object):
                     await asyncio.sleep(6)
                     await self.stop()
                 except asyncio.CancelledError:
-                    # print("DEBUG: ", "GPS Control loop cancelled.")
                     break
         except Exception as e:
-            # print("EXCEPTION: GPS Control loop: ", e)
             # Logging error.
             message = "GPS Control loop: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -96,15 +94,12 @@ class WurbGps(object):
         # Check if USB GPS is connected.
         gps_device_path_found = None
         for gps_device_path in ["/dev/ttyACM0", "/dev/ttyUSB0"]:
-            # print("Check :", gps_device_path)
             gps_device = pathlib.Path(gps_device_path)
             if gps_device.exists():
                 gps_device_path_found = gps_device_path
                 break
         # Read serial, if connected.
         if gps_device_path_found:
-            # print("GPS found: ", gps_device_path_found)
-            # connection_lost_event = asyncio.Event()
             self.serial_coro = serial_asyncio.create_serial_connection(
                 self.asyncio_loop,
                 ReadGpsSerialNmea,
@@ -240,7 +235,6 @@ class WurbGps(object):
                         self.asyncio_loop,
                     )
         except Exception as e:
-            # print("EXCEPTION: GPS time: ", e)
             # Logging error.
             message = "GPS time: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -274,7 +268,6 @@ class WurbGps(object):
             else:
                 return True
         except Exception as e:
-            # print("EXCEPTION: GPS is_time_valid: ", e)
             # Logging error.
             message = "GPS is_time_valid: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -309,9 +302,13 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                         if self.gps_manager:
                             self.gps_manager.parse_nmea_gprmc(row)
         except:  # Exception as e:
-            # print("EXCEPTION: data_received: ", e)
-            pass
+            # Logging debug.
+            if self.gps_manager:
+                message = "EXCEPTION in GPS:ReadGpsSerialNmea:data_received: " + str(e)
+                self.gps_manager.wurb_logging.debug(message=message)
 
     def connection_lost(self, exc):
-        # print("GPS: Connection closed.")
-        pass
+        # Logging debug.
+        if self.gps_manager:
+            message = "GPS:ReadGpsSerialNmea: connection_lost."
+            self.gps_manager.wurb_logging.debug(message=message)

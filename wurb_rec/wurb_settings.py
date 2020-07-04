@@ -203,7 +203,6 @@ class WurbSettings(object):
                 self.settings_event = asyncio.Event()
             return self.settings_event
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_settings_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -215,7 +214,6 @@ class WurbSettings(object):
                 self.location_event = asyncio.Event()
             return self.location_event
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_location_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
@@ -227,7 +225,6 @@ class WurbSettings(object):
                 self.latlong_event = asyncio.Event()
             return self.latlong_event
         except Exception as e:
-            # print("EXCEPTION: ", e)
             # Logging error.
             message = "Logging: get_latlong_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
