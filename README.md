@@ -1,8 +1,8 @@
 #  CloudedBats - WURB 2020
 
-**Note: New version of the bat detector - work in progress.**
-
-The old version can be found here: https://github.com/cloudedbats/cloudedbats_wurb
+**Note: This is a new version of the WURB bat detector.
+The old version can still be found here: 
+https://github.com/cloudedbats/cloudedbats_wurb**
 
 ## New features
 
@@ -181,8 +181,6 @@ And finally restart the detector:
 
 ## Run the detector
 
-**Note: Again - work in progress - only a few parts have been implemented so far.**
-
 - Connect the ultrasonic microphone to the detector (can also be done after startup).
 - Connect USB memory stick(s) (optional, or can be done after startup).
 - Start the Raspberry Pi. It will start automatically when power is added.
@@ -208,6 +206,10 @@ If files are stored on the SD card then they can be downloaded and/or removed by
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
 Path to files on the SD card: "/home/pi/wurb_files".
+
+It is also possible to download files by using FileZilla, or similar, from the USB 
+memory stick during an ongoing recording session. The path to the USB memory is then 
+"/media/pi/<your-usb-memory-stick-name>".
 
 Note: Some mobile phones complains if the "wifi4bats" network not is 
 connected to internet. If that happens, then tell it to forget the network, 
