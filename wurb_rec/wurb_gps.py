@@ -33,8 +33,12 @@ class WurbGps(object):
         self.serial_coro = None
         self.serial_transport = None
         self.serial_protocol = None
+        #
+        self.is_gps_quality_ok = False
         # Config.
         self.max_time_diff_s = 60  # Unit: sec.
+        self.min_number_of_satellites = 3
+        self.gps_control_loop_sleep_s = 20
 
     async def startup(self):
         """ """
@@ -77,10 +81,11 @@ class WurbGps(object):
     async def gps_control_loop(self):
         """ """
         try:
+            self.is_gps_quality_ok = False
             while True:
                 try:
                     await self.start()
-                    await asyncio.sleep(6)
+                    await asyncio.sleep(self.gps_control_loop_sleep_s)
                     await self.stop()
                 except asyncio.CancelledError:
                     break
@@ -112,6 +117,7 @@ class WurbGps(object):
             self.serial_protocol.gps_manager = self
         else:
             # GPS device not found.
+            self.is_gps_quality_ok = False
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
             asyncio.run_coroutine_threadsafe(
@@ -124,7 +130,7 @@ class WurbGps(object):
             if self.serial_transport:
                 self.serial_transport.close()
 
-    def parse_nmea_gprmc(self, data):
+    def parse_nmea(self, data):
         """ 
         From NMEA documentation:
 
@@ -147,113 +153,133 @@ class WurbGps(object):
         Example from test (Navilock NL-602U):
             $GPRMC,181841.000,A,5739.7158,N,01238.3515,E,0.52,289.92,040620,,,A*6D
         """
-        latitude_dd = 0.0
-        longitude_dd = 0.0
-
-        # print("GPS data: ", data)
         parts = data.split(",")
+        # print("GPS data: ", data)
 
-        if (len(data) >= 50) and (len(parts) >= 8):
-            time = parts[1]
-            _gps_status = parts[2]
-            latitude = parts[3]
-            lat_n_s = parts[4]
-            longitude = parts[5]
-            long_w_e = parts[6]
-            date = parts[9]
-        else:
-            self.last_used_lat_dd = 0.0
-            self.last_used_long_dd = 0.0
-            asyncio.run_coroutine_threadsafe(
-                self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
-            )
+        # GPGGA. Check quality.
+        if (len(parts) >= 8) and (parts[0] == "$GPGGA"):
+            if parts[6] == "0": 
+                # Fix quality 0 = invalid. 
+                self.is_gps_quality_ok = False
+                return
+            number_of_satellites = parts[7]
+            if int(number_of_satellites) < self.min_number_of_satellites:
+                # More satellites needed.
+                self.is_gps_quality_ok = False
+                return
+            # Seems to be ok.
+            self.is_gps_quality_ok = True
             return
 
-        # Extract date and time.
-        datetime_utc = datetime.datetime(
-            int("20" + date[4:6]),
-            int(date[2:4]),
-            int(date[0:2]),
-            int(time[0:2]),
-            int(time[2:4]),
-            int(time[4:6]),
-        )
-        # Extract latitude and longitude.
-        latitude_dd = round(
-            float(latitude[0:2]) + (float(latitude[2:].strip()) / 60.0), 5
-        )
-        if lat_n_s == "S":
-            latitude_dd *= -1.0
-        longitude_dd = round(
-            float(longitude[0:3]) + (float(longitude[3:].strip()) / 60.0), 5
-        )
-        if long_w_e == "W":
-            longitude_dd *= -1.0
+        # GPRMC. Get date, time and lat/long.
+        if (len(parts) >= 8) and (parts[0] == "$GPRMC"):
+            if self.is_gps_quality_ok == False:
+                return
 
-        self.gps_datetime_utc = datetime_utc
-        self.gps_latitude = latitude_dd
-        self.gps_longitude = longitude_dd
+            latitude_dd = 0.0
+            longitude_dd = 0.0
 
-        # Check if detector time should be set.
-        try:
-            if not self.first_gps_time_received:
-                # Wait for GPS to stabilize.
-                self.first_gps_time_counter -= 1
-                if self.first_gps_time_counter <= 0:
-                    if self.gps_datetime_utc:
-                        if self.is_time_valid(self.gps_datetime_utc):
-                            self.first_gps_time_received = True
-                            # Set detector unit time.
-                            gps_local_time = self.gps_datetime_utc.replace(
-                                tzinfo=datetime.timezone.utc
-                            ).astimezone()
-                            gps_local_timestamp = gps_local_time.timestamp()
-
-                            # Connect to main loop.
-                            asyncio.run_coroutine_threadsafe(
-                                self.wurb_rpi.set_detector_time(
-                                    gps_local_timestamp, cmd_source="from GPS",
-                                ),
-                                self.asyncio_loop,
-                            )
+            if (len(data) >= 50) and (len(parts) >= 8):
+                time = parts[1]
+                _gps_status = parts[2]
+                latitude = parts[3]
+                lat_n_s = parts[4]
+                longitude = parts[5]
+                long_w_e = parts[6]
+                date = parts[9]
             else:
-                # Compare detector time and GPS time.
-                datetime_utc = datetime.datetime.utcnow()
-                diff = self.gps_datetime_utc - datetime_utc
-                diff_in_s = diff.total_seconds()
-                if abs(diff_in_s) > self.max_time_diff_s:
-                    # Set detector unit time.
-                    gps_local_time = self.gps_datetime_utc.replace(
-                        tzinfo=datetime.timezone.utc
-                    ).astimezone()
-                    gps_local_timestamp = gps_local_time.timestamp()
-                    # Connect to main loop.
-                    asyncio.run_coroutine_threadsafe(
-                        self.wurb_rpi.set_detector_time(
-                            gps_local_timestamp, cmd_source="from GPS"
-                        ),
-                        self.asyncio_loop,
-                    )
-        except Exception as e:
-            # Logging error.
-            message = "GPS time: " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+                self.last_used_lat_dd = 0.0
+                self.last_used_long_dd = 0.0
+                asyncio.run_coroutine_threadsafe(
+                    self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
+                )
+                return
 
-        # Check if lat/long changed.
-        lat_dd = round(self.gps_latitude, 5)
-        long_dd = round(self.gps_longitude, 5)
-        if (self.last_used_lat_dd != lat_dd) or (self.last_used_long_dd != long_dd):
-            # Changed.
-            self.last_used_lat_dd = lat_dd
-            self.last_used_long_dd = long_dd
-            # Connect to main loop.
-            asyncio.run_coroutine_threadsafe(
-                self.wurb_settings.save_latlong(lat_dd, long_dd), self.asyncio_loop,
+            # Extract date and time.
+            datetime_utc = datetime.datetime(
+                int("20" + date[4:6]),
+                int(date[2:4]),
+                int(date[0:2]),
+                int(time[0:2]),
+                int(time[2:4]),
+                int(time[4:6]),
             )
+            # Extract latitude and longitude.
+            latitude_dd = round(
+                float(latitude[0:2]) + (float(latitude[2:].strip()) / 60.0), 5
+            )
+            if lat_n_s == "S":
+                latitude_dd *= -1.0
+            longitude_dd = round(
+                float(longitude[0:3]) + (float(longitude[3:].strip()) / 60.0), 5
+            )
+            if long_w_e == "W":
+                longitude_dd *= -1.0
 
-        # print("GPS datetime: ", datetime_utc)
-        # print("GPS latitude: ", latitude_dd)
-        # print("GPS longitude: ", longitude_dd)
+            self.gps_datetime_utc = datetime_utc
+            self.gps_latitude = latitude_dd
+            self.gps_longitude = longitude_dd
+
+            # Check if detector time should be set.
+            try:
+                if not self.first_gps_time_received:
+                    # Wait for GPS to stabilize.
+                    self.first_gps_time_counter -= 1
+                    if self.first_gps_time_counter <= 0:
+                        if self.gps_datetime_utc:
+                            if self.is_time_valid(self.gps_datetime_utc):
+                                self.first_gps_time_received = True
+                                # Set detector unit time.
+                                gps_local_time = self.gps_datetime_utc.replace(
+                                    tzinfo=datetime.timezone.utc
+                                ).astimezone()
+                                gps_local_timestamp = gps_local_time.timestamp()
+
+                                # Connect to main loop.
+                                asyncio.run_coroutine_threadsafe(
+                                    self.wurb_rpi.set_detector_time(
+                                        gps_local_timestamp, cmd_source="from GPS",
+                                    ),
+                                    self.asyncio_loop,
+                                )
+                else:
+                    # Compare detector time and GPS time.
+                    datetime_utc = datetime.datetime.utcnow()
+                    diff = self.gps_datetime_utc - datetime_utc
+                    diff_in_s = diff.total_seconds()
+                    if abs(diff_in_s) > self.max_time_diff_s:
+                        # Set detector unit time.
+                        gps_local_time = self.gps_datetime_utc.replace(
+                            tzinfo=datetime.timezone.utc
+                        ).astimezone()
+                        gps_local_timestamp = gps_local_time.timestamp()
+                        # Connect to main loop.
+                        asyncio.run_coroutine_threadsafe(
+                            self.wurb_rpi.set_detector_time(
+                                gps_local_timestamp, cmd_source="from GPS"
+                            ),
+                            self.asyncio_loop,
+                        )
+            except Exception as e:
+                # Logging error.
+                message = "GPS time: " + str(e)
+                self.wurb_manager.wurb_logging.error(message, short_message=message)
+
+            # Check if lat/long changed.
+            lat_dd = round(self.gps_latitude, 5)
+            long_dd = round(self.gps_longitude, 5)
+            if (self.last_used_lat_dd != lat_dd) or (self.last_used_long_dd != long_dd):
+                # Changed.
+                self.last_used_lat_dd = lat_dd
+                self.last_used_long_dd = long_dd
+                # Connect to main loop.
+                asyncio.run_coroutine_threadsafe(
+                    self.wurb_settings.save_latlong(lat_dd, long_dd), self.asyncio_loop,
+                )
+
+            # print("GPS datetime: ", datetime_utc)
+            # print("GPS latitude: ", latitude_dd)
+            # print("GPS longitude: ", longitude_dd)
 
     def is_time_valid(self, gps_time):
         """ To avoid strange datetime (like 1970-01-01 or 2038-01-19) from some GPS units. """
@@ -301,10 +327,10 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                 self.buf = rows[-1]  # Save remaining part.
                 for row in rows[:-1]:
                     row = row.decode().strip()
-                    if row.find("GPRMC") > 0:
+                    if (row.find("GPRMC") > 0) or (row.find("GPGGA") > 0):
                         # print("NMEA: ", row)
                         if self.gps_manager:
-                            self.gps_manager.parse_nmea_gprmc(row)
+                            self.gps_manager.parse_nmea(row)
         except Exception as e:
             # Logging debug.
             if self.gps_manager:
@@ -312,7 +338,8 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                 self.gps_manager.wurb_logging.debug(message=message)
 
     def connection_lost(self, exc):
-        # Logging debug.
-        if self.gps_manager:
-            message = "GPS:ReadGpsSerialNmea: connection_lost."
-            self.gps_manager.wurb_logging.debug(message=message)
+        pass
+        # # Logging debug.
+        # if self.gps_manager:
+        #     message = "GPS:ReadGpsSerialNmea: connection_lost."
+        #     self.gps_manager.wurb_logging.debug(message=message)
