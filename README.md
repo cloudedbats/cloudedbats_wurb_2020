@@ -180,7 +180,7 @@ Please uninstall it if that's the case.
 
 ### CloudedBats software
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb/releases/latest
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.0
     cd cloudedbats_wurb_2020/
     python3 -m venv venv
     source venv/bin/activate
