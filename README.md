@@ -199,10 +199,9 @@ And finally restart the detector:
 
 ### CloudedBats software - development version
 
-If you want to run the latest development version, then replace these two lines in the instruction above.
+If you want to run the latest development version, then replace the git clone line in the instruction above.
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
-    pip install -r requirements.txt 
 
 ## Run the detector
 
