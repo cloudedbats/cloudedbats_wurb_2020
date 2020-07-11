@@ -4,6 +4,24 @@
 The old version can still be found here: 
 https://github.com/cloudedbats/cloudedbats_wurb**
 
+![WURB-2020](images/CloudedBats-WURB.jpg?raw=true  "CloudedBats WURB 2020.")
+CloudedBats - WURB 2020. CloudedBats.org / [CC-BY](https://creativecommons.org/licenses/by/3.0/)
+
+## Introduction
+
+This is what you need to build your own bat detector; an ultrasonic USB microphone, a Raspberry Pi computer 
+with SD card, power supply and this CloudedBats-WURB 2020 open source software. Optional parts that 
+are recommended are USB memory sticks, an USB GPS receiver and a Power bank for single night sessions.
+
+**Release plan:** With this software version I will start to use Semantic versioning (https://semver.org/) and
+keep track on changes between releases. Since there are earlier major WURB releases the first release here
+is named "0.8.0". Release "0.9.0" will contain at least the most important parts from the issue list.
+When it has been used for a while and seem to be stable there will be a release "1.0.0", and this 
+major release will break the backward compatibility for the REST API. 
+Since it is a spare time project there are no dates assigned for these releases.
+
+**User manuals:** They are not written yet. Please contact me if there are any questions.
+
 ## New features
 
 Some differences from a user perspective:
@@ -12,7 +30,7 @@ Some differences from a user perspective:
 - Web pages are used for configuration and control.
 - Automatic detection of connected Ultrasonic microphones.
 - Automatic detection of connected USB GPS Receiver.
-- etc.
+- Sound peaks, kHz and dBFS, is presented in live log and in file names.
 
 ## Software
 
@@ -22,7 +40,7 @@ Notes from a developers perspective:
 - Raspbian Buster Lite used for Raspberry Pi 4 support.
 - RaspAP (https://raspap.com/) used to run the detector as a WiFi Hotspot/AccessPoint.
 - More modular software design by use of micro services.
-- API:s are specified as OpenAPI 3.0.
+- The REST API is specified as OpenAPI 3.0.
 - Asynchronous (async/await) programming both in frontend and backend.
 - WebSockets are used for fast client updates.
 - Stylesheets for responsive web pages are based on Bulma (https://bulma.io).
@@ -45,7 +63,8 @@ Optional hardware:
 
 - USB memory sticks. This is optional since the internal SD card will be used for storage if 
 no USB sticks are available. More than one memory stick can be used.
-- USB GPS Receiver using the NMEA format. Tested with "Navilock NL-602U" and "GPS/GLONASS U-blox7".
+- USB GPS Receiver using the NMEA format. Tested with "Navilock NL-602U", "G-STAR IV, BU-353S4" 
+and "GPS/GLONASS U-blox7".
 - Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
 missing features: On/off button, real time clock, possibility to use other 
 power sources than 5V, and scripting capability for turning the unit on/off 
@@ -161,11 +180,11 @@ Please uninstall it if that's the case.
 
 ### CloudedBats software
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
+    git clone https://github.com/cloudedbats/cloudedbats_wurb/releases/latest
     cd cloudedbats_wurb_2020/
     python3 -m venv venv
     source venv/bin/activate
-    pip install -r requirements.txt 
+    pip install -r requirements_latest.txt 
 
     sudo nano /etc/rc.local 
 
@@ -178,6 +197,12 @@ And finally restart the detector:
 
     sudo reboot
 
+### CloudedBats software - development version
+
+If you want to run the latest development version, then replace these two lines in the instruction above.
+
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
+    pip install -r requirements.txt 
 
 ## Run the detector
 
@@ -216,6 +241,13 @@ connected to internet. If that happens, then tell it to forget the network,
 connect to i again and answer the question if you want to connect to it
 anyway.
 
+## The MIT license
+
+The code is released under the MIT license that means that you are free to use it as you want; 
+use it, share it, cut it into pieces, extend it or even sell it for money. 
+But you are not allowed to remove the MIT license clause 
+(just change my name to yours in the copyright row for modified parts), 
+and it comes "as-is" with no warranties at all.
 
 ## Contact
 
