@@ -14,9 +14,9 @@ with SD card, power supply and this CloudedBats-WURB 2020 open source software. 
 are recommended are USB memory sticks, an USB GPS receiver and a Power bank for single night sessions.
 
 **Release plan:** With this software version I will start to use Semantic versioning (https://semver.org/) and
-keep track on changes between releases. Since there are earlier major WURB releases the first release here
+keep track on changes between releases. Since there are earlier WURB releases the first release here
 is named "0.8.0". Release "0.9.0" will contain at least the most important parts from the issue list.
-When it has been used for a while and seem to be stable there will be a release "1.0.0", and this 
+When it has been used for a while and seems to be stable there will be a release "1.0.0", and this 
 major release will break the backward compatibility for the REST API. 
 Since it is a spare time project there are no dates assigned for these releases.
 
@@ -184,7 +184,7 @@ Please uninstall it if that's the case.
     cd cloudedbats_wurb_2020/
     python3 -m venv venv
     source venv/bin/activate
-    pip install -r requirements_latest.txt 
+    pip install -r requirements.txt 
 
     sudo nano /etc/rc.local 
 
@@ -246,7 +246,7 @@ anyway.
 The code is released under the MIT license that means that you are free to use it as you want; 
 use it, share it, cut it into pieces, extend it or even sell it for money. 
 But you are not allowed to remove the MIT license clause 
-(just change my name to yours in the copyright row for modified parts), 
+(just change my name to yours in the copyright row for modified code files), 
 and it comes "as-is" with no warranties at all.
 
 ## Contact
