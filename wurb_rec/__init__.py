@@ -1,5 +1,5 @@
 
-__version__ = "development"
+__version__ = "0.8.0"
 
 from .wurb_logging import WurbLogging
 from .lib.solartime import SolarTime
