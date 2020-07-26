@@ -20,11 +20,13 @@ class WurbLogging(object):
         self.rotating_log = logging.getLogger("CloudedBats-WURB")
         self.logging_event = None
         self.client_messages = []
+        self.event_loop = None
         # Config.
         self.max_client_messages = 50
 
     async def startup(self):
         """ """
+        self.event_loop = asyncio.get_event_loop()
         log_dir_path = self.get_logging_dir_path()
         self.setup_rotating_log(log_dir_path=log_dir_path)
         # Welcome message.
@@ -65,7 +67,7 @@ class WurbLogging(object):
         datetime_local = datetime.datetime.now()
         asyncio.run_coroutine_threadsafe(
             self.write_log_async(msg_type, datetime_local, message, short_message),
-            asyncio.get_event_loop(),
+            self.event_loop,
         )
 
     async def write_log_async(
