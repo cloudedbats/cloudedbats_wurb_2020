@@ -6,8 +6,9 @@ aiofiles
 # Sound, etc.
 sounddevice
 numpy
-scipy
+scipy<1.5
 psutil
+pyusb
 # GPS
 pyserial
 pyserial-asyncio
