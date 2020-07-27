@@ -58,7 +58,7 @@ class PetterssonM500BatMic(object):
             return False
 
     def reset(self):
-        """ Returns True if availableok. """
+        """ Returns True if available. """
         self.device = usb.core.find(idVendor=0x287D, idProduct=0x0146)
         if self.device:
             self.device.reset()
@@ -129,16 +129,17 @@ class PetterssonM500BatMic(object):
                 self.init_sound_card()
             if self.endpoint_in:
                 # Buffer must be an exponent of 2.
-                # return self.endpoint_in.read(0x10000, 2000) # Size = 65536, timeout = 2 sec.
-                return self.endpoint_in.read(
+                # buffer = self.endpoint_in.read(0x10000, 2000) # Size = 65536, timeout = 2 sec.
+                buffer = self.endpoint_in.read(
                     0x20000, 2000
                 )  # Size = 131072, timeout = 2 sec.
-                # return self.endpoint_in.read(0x40000, 4000) # Size = 262144, timeout = 2 sec.
+                # buffer = self.endpoint_in.read(0x40000, 4000) # Size = 262144, timeout = 2 sec.
+                return buffer
             else:
-                return None
+                return array.array("B")  # Empty array.
         except Exception as e:
-            print("EXCEPTION: M500 read_stream: ", e)
-            return None
+            # print("EXCEPTION: M500 read_stream: ", e)
+            return array.array("B")  # Empty array.
 
     def send_command(self, command):
         """ Commands: '01': Stream on, '02': LED flash, '03': LED on, '04': Stream off. 

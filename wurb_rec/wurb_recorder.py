@@ -68,7 +68,8 @@ class UltrasoundDevices(object):
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
                 settings_device_name_part = "GoMic"  # TODO: From settings.
-                settings_sampling_freq_hz = 20000  # TODO: From settings.
+                settings_sampling_freq_hz = 0  # TODO: From settings.
+                # settings_sampling_freq_hz = 44100  # TODO: From settings.
                 if settings_device_name_part:
                     device_dict = None
                     device_name = ""

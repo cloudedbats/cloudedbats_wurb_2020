@@ -6,28 +6,23 @@
 
 import asyncio
 import time
-import wave
-import pathlib
-import psutil
-from collections import deque
-import sounddevice
 import numpy
-
-import threading
+import array
 
 # CloudedBats.
 import wurb_rec
 
 
-class WurbRecorderM500(wurb_rec.WurbRecorder):
+class WurbRecorderM500:
     """ """
+
     def __init__(self, wurb_manager=None, asyncio_loop=None, asyncio_queue=None):
         """ """
         self.wurb_manager = wurb_manager
         self.asyncio_loop = asyncio_loop
         self.asyncio_queue = asyncio_queue
-        self.device_name = "Pettersson M500 (500kHz)" 
-        self.sampling_freq_hz = 500000 
+        self.device_name = "Pettersson M500 (500kHz)"
+        self.sampling_freq_hz = 500000
         self.active = False
         self.pettersson_m500 = wurb_rec.PetterssonM500BatMic()
 
@@ -66,21 +61,22 @@ class WurbRecorderM500(wurb_rec.WurbRecorder):
         # Main loop.
         try:
             # buffer_size = int(self.sampling_freq_hz / 2)
-            buffer_size = int(self.sampling_freq_hz) # Size gives 0.5 sec. buffers.
+            buffer_size = int(self.sampling_freq_hz)  # Size gives 0.5 sec. buffers.
+            data_array = array.array("B")
             data = self.pettersson_m500.read_stream()
-            data_array = data
+            data_array += data
             while self.active and (len(data) > 0):
                 # Push 0.5 sec each time. M500 can't deliver that size directly.
                 if len(data_array) >= buffer_size:
                     # Add time and check for time drift.
-                    self.stream_time_s += 0.5 # One buffer is 0.5 sec.
+                    self.stream_time_s += 0.5  # One buffer is 0.5 sec.
                     # Push time and data buffer.
                     data_buffer = data_array[0:buffer_size]
-                    data_int16 = numpy.fromstring(data_buffer.tostring(), dtype=numpy.int16) # To ndarray.
+                    data_int16 = numpy.fromstring(
+                        data_buffer.tostring(), dtype=numpy.int16
+                    )  # To ndarray.
                     # Round to half seconds.
-                    buffer_adc_time = (
-                        int((self.stream_time_s) * 2) / 2
-                    )
+                    buffer_adc_time = int((self.stream_time_s) * 2) / 2
                     detector_time = time.time()
                     # Put together.
                     send_dict = {
@@ -98,16 +94,16 @@ class WurbRecorderM500(wurb_rec.WurbRecorder):
                     except Exception as e:
                         # Logging error.
                         message = "Failed to put buffer on queue (M500): " + str(e)
-                        self.wurb_manager.wurb_logging.error(message, short_message=message)
+                        self.wurb_manager.wurb_logging.error(
+                            message, short_message=message
+                        )
                         pass
                     # print("DEBUG M500 buffer: ", data_int16, "    Len: ", len(data_int16))
                     # Save remaining part.
                     data_array = data_array[buffer_size:]
-                #
-                # Add next buffer.
+                # Add next buffer from M500.
                 data = self.pettersson_m500.read_stream()
-                if data:
-                    data_array += data
+                data_array += data
 
         except asyncio.CancelledError:
             pass
@@ -115,7 +111,4 @@ class WurbRecorderM500(wurb_rec.WurbRecorder):
             # Logging error.
             message = "Recorder: sound_source_worker (M500): " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
-        # finally:
-        #     self.pettersson_m500.stop_stream()
-        #     self.pettersson_m500.reset()
 
