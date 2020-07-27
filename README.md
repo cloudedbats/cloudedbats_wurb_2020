@@ -165,6 +165,18 @@ Install software:
     sudo apt install libportaudio2 libatlas-base-dev udevil
     sudo apt install python3-rpi.gpio
 
+### Pettersson M500 (500kHz)
+
+The Pettersson M500 microphone (the 500kHz version) differ in communication
+format compared to M500-384, u256, and u384. Some udev rules must be setup
+to allow the detector to communicate with it.
+
+    # Create a file with udv rules:
+    sudo nano /etc/udev/rules.d/pettersson_m500_batmic.rules
+    
+    # Add this row in the new file. 
+    SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pi"
+
 ### USB GPS Receiver (optional)
 
 The detector is listening to GPS units that are connected to  

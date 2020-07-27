@@ -26,41 +26,72 @@ class UltrasoundDevices(object):
         # Ultrasound microphones supported by default:
         # - Pettersson: M500-384, u384, u256.
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.
-        self.name_part_list = ["Pettersson", "UltraMic"]
+        self.default_name_part_list = ["Pettersson", "UltraMic"]
         self.device_name = ""
         self.sampling_freq_hz = 0
         self.check_interval_s = 5.0
         self.notification_event = None
+        self.recorder_m500 = wurb_rec.WurbRecorderM500()
 
     async def check_devices(self):
         """ For asyncio events. """
         try:
+            # Check default ALSA connected microphones.
             lock = asyncio.Lock()
             async with lock:
                 # Refresh device list.
                 sounddevice._terminate()
                 sounddevice._initialize()
                 await asyncio.sleep(0.2)
-
+            #
             await self.set_connected_device("", 0)
-
             device_dict = None
             device_name = ""
             sampling_freq_hz = 0
-            for device_name_part in self.name_part_list:
+            for device_name_part in self.default_name_part_list:
                 try:
                     device_dict = sounddevice.query_devices(device=device_name_part)
                     if device_dict:
                         device_name = device_dict["name"]
                         if ":" in device_name:
-                            device_name = device_name.split(":")[
-                                0
-                            ]  # Extract name only.
+                            # Extract name only.
+                            device_name = device_name.split(":")[0]
                         sampling_freq_hz = int(device_dict["default_samplerate"])
                     break
                 except:
                     pass
-
+            # Check if Pettersson M500.
+            if not device_name:
+                if self.recorder_m500.is_m500_available():
+                    device_name = self.recorder_m500.get_device_name()
+                    sampling_freq_hz = self.recorder_m500.get_sampling_freq_hz()
+            # Check if another ALSA mic. is specified in advanced settings.
+            if not device_name:
+                settings_device_name_part = "GoMic"  # TODO: From settings.
+                settings_sampling_freq_hz = 0  # TODO: From settings.
+                # settings_sampling_freq_hz = 44100  # TODO: From settings.
+                if settings_device_name_part:
+                    device_dict = None
+                    device_name = ""
+                    sampling_freq_hz = 0
+                    try:
+                        device_dict = sounddevice.query_devices(
+                            device=settings_device_name_part
+                        )
+                        if device_dict:
+                            device_name = device_dict["name"]
+                            if ":" in device_name:
+                                # Extract name only.
+                                device_name = device_name.split(":")[0]
+                            if settings_sampling_freq_hz > 0:
+                                sampling_freq_hz = settings_sampling_freq_hz
+                            else:
+                                sampling_freq_hz = int(
+                                    device_dict["default_samplerate"]
+                                )
+                    except:
+                        pass
+            # Done.
             await self.set_connected_device(device_name, sampling_freq_hz)
 
         except Exception as e:
@@ -222,6 +253,32 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         sound_source_event = asyncio.Event()
         self.restart_activated = False
 
+        # Use another implementation if Pettersson M500.
+        recorder_m500 = wurb_rec.WurbRecorderM500(
+            wurb_manager=self.wurb_manager,
+            asyncio_loop=loop,
+            asyncio_queue=self.from_source_queue,
+        )
+        if self.device_name == recorder_m500.get_device_name():
+            # Logging.
+            message = "Recorder: M500 started."
+            self.wurb_manager.wurb_logging.info(message, short_message=message)
+            await self.set_rec_status("Recording.")
+            try:
+                await loop.run_in_executor(
+                    None, recorder_m500.start_streaming, 
+                )            
+            except asyncio.CancelledError:
+                recorder_m500.stop_streaming()
+            except Exception as e:
+                # Logging error.
+                message = "Recorder: sound_source_worker: " + str(e)
+                self.wurb_manager.wurb_logging.error(message, short_message=message)
+            finally:
+                await self.set_rec_status("Recording finished.")
+            return
+
+        # Standard ASLA microphones.
         def audio_callback(indata, frames, cffi_time, status):
             """ Locally defined callback.
                 This is called (from a separate thread) for each audio block. """

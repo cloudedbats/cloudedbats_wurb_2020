@@ -97,7 +97,7 @@ class WurbRecManager(object):
 
             device_name = self.ultrasound_devices.device_name
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
-            if (len(device_name) > 1) and sampling_freq_hz > 180000:
+            if (len(device_name) > 1) and sampling_freq_hz > 0:
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
