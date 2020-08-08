@@ -12,10 +12,17 @@ import datetime
 """
     Python script for testing GPS receivers. 
 
+    Note: Deselect "Geographic location - Source: USB GPS Receiver"
+    before starting this test.
+    > cd /home/pi/cloudedbats_wurb_2020
+    > source venv/bin/activate
+    > python test/gps_test.py
+
+    Alternative to use if the WURB detector software is not installed.
     > python3 -m venv venv
     > source venv/bin/activate
     > pip install pyserial pyserial-asyncio
-    > sudo python gps_test.py
+    > python gps_test.py
 
     Example output when it works as expected. Received rows may differ but
     the NMEA sentences GGA and RMC must be present and number of satellites > 3:
