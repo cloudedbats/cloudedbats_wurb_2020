@@ -114,9 +114,9 @@ class GpsTest(object):
         print("Used NMEA: ", data)
 
         # GPGGA. Check quality.
-        if (len(parts) >= 8) and (parts[0] == "$GPGGA"):
-            if parts[6] == "0": 
-                # Fix quality 0 = invalid. 
+        if (len(parts) >= 8) and (len(parts[0]) >= 6) and (parts[0][3:6] == "GGA"):
+            if parts[6] == "0":
+                # Fix quality 0 = invalid.
                 self.is_gps_quality_ok = False
                 return
             number_of_satellites = parts[7]
@@ -129,7 +129,7 @@ class GpsTest(object):
             return
 
         # GPRMC. Get date, time and lat/long.
-        if (len(parts) >= 8) and (parts[0] == "$GPRMC"):
+        if (len(parts) >= 8) and (len(parts[0]) >= 6) and (parts[0][3:6] == "RMC"):
             if self.is_gps_quality_ok == False:
                 return
 
@@ -181,7 +181,6 @@ class GpsTest(object):
             print("")
 
 
-
 class ReadGpsSerialNmea(asyncio.Protocol):
     """ Serial connection for serial_asyncio. """
 
@@ -204,15 +203,15 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                 self.buf = bytes()
             #
             self.buf += data
-            if b'\n' in self.buf:
-                rows = self.buf.split(b'\n')
+            if b"\n" in self.buf:
+                rows = self.buf.split(b"\n")
                 self.buf = rows[-1]  # Save remaining part.
                 for row in rows[:-1]:
                     row = row.decode().strip()
 
                     print("Received row: ", row)
 
-                    if (row.find("GPRMC") > 0) or (row.find("GPGGA") > 0):
+                    if (row.find("RMC,") > 0) or (row.find("GGA,") > 0):
                         # print("NMEA: ", row)
                         if self.gps_manager:
                             self.gps_manager.parse_nmea(row)
@@ -234,6 +233,7 @@ async def main():
     await asyncio.sleep(60.0)
     # await gps_test.stop()
     print("Test finished.")
+
 
 if __name__ == "__main__":
     """ """

@@ -181,11 +181,10 @@ to allow the detector to communicate with it.
 
 The detector is listening to GPS units that are connected to  
 "/dev/ttyACM0" or "/dev/ttyUSB0". Only NMEA format is supported. 
-If there are problems this may help:
 
-    # Connect the USB GPS Receiver and check if it is available.
-    ls /dev/ttyUSB*
-    ls /dev/ttyACM*
+There is a python script to be used if the detector can't detect your GPS receiver. 
+Read the instructions in the test script: 
+https://github.com/cloudedbats/cloudedbats_wurb_2020/blob/master/test/gps_test.py 
 
 **Note:** This will not work if GPSD is installed. 
 Please uninstall it if that's the case.
