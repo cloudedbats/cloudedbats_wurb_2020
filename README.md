@@ -52,12 +52,12 @@ Notes from a developers perspective:
 
 - Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
 - SD card. For example Toshiba Exceria Pro 16GB, or similar.
-- Ultrasonic microphone. Tested with Pettersson u256, u384, M500-384 and 
+- Ultrasonic microphone. Tested with Pettersson u256, u384, M500, M500-384 and 
 Dodotronic UltraMic 192K, 250K, 384K BLE.
 
-**Note:** For some strange reason M500-384 has problems if connected directly to a 
+**Note:** For some strange reason both M500 and M500-384 has problems if connected directly to a 
 Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
-or attach the M500-384 microphone after startup.
+or attach the M500 or M500-384 microphone after startup.
 
 Optional hardware:
 
