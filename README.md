@@ -65,11 +65,6 @@ Optional hardware:
 no USB sticks are available. More than one memory stick can be used.
 - USB GPS Receiver using the NMEA format. Tested with "Navilock NL-602U", "G-STAR IV, BU-353S4" 
 and "GPS/GLONASS U-blox7".
-- Witty Pi 3 from UUGear.com. An extra board for the Raspberry Pi that adds a lot of 
-missing features: On/off button, real time clock, possibility to use other 
-power sources than 5V, and scripting capability for turning the unit on/off 
-to save battery during daytime. 
-http://www.uugear.com/product/witty-pi-3-realtime-clock-and-power-management-for-raspberry-pi/
 
 ## Installation
 
@@ -191,7 +186,7 @@ Please uninstall it if that's the case.
 
 ### CloudedBats software
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.0
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
     cd cloudedbats_wurb_2020/
     python3 -m venv venv
     source venv/bin/activate
@@ -207,12 +202,24 @@ Please uninstall it if that's the case.
 And finally restart the detector:
 
     sudo reboot
+    
+### Start problems
 
-### CloudedBats software - development version
+If the detector does not start properly, the cause may be incompatible releases 
+of the software packages used. Try to start the detector in the development mode 
+to check for error messages.
 
-If you want to run the latest development version, then replace the git clone line in the instruction above.
+    cd cloudedbats_wurb_2020
+    /home/pi/cloudedbats_wurb_2020/venv/bin/python3 wurb_rec_start.py
+   
+Please contact me if this happens. Most of the time the solution is to avoid 
+the latest relese of the library that causes the error.
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
+### CloudedBats software - latest stable version
+
+If you want to run the latest stable version, then replace the git clone line in the instruction above.
+
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.0
 
 ## Run the detector
 
@@ -231,7 +238,6 @@ recommended since there is a small risk of corrupted SD card or USB memory stick
 
 - Go to "Settings - More" and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
-- If you are using a "Witty Pi 3" board from UUGear.com, just press the power off button. 
 
 More than one USB memory stick can be used. They will be filled up with wave files 
 in alphabetic order. When the last USB memory stick is full, then it will continue 
