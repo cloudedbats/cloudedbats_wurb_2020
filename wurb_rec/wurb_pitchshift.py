@@ -10,11 +10,8 @@ import scipy.signal
 import sounddevice
 
 import sys
-import time
 import soundfile
 import pathlib
-
-# import threading
 
 
 class WurbPitchShift(object):
@@ -26,6 +23,8 @@ class WurbPitchShift(object):
         # self.wurb_settings = wurb_manager.wurb_settings
         # self.wurb_logging = wurb_manager.wurb_logging
         self.asyncio_loop = None
+        self.sound_task = None
+        #
         self.clear()
 
     def clear(self):
@@ -46,7 +45,7 @@ class WurbPitchShift(object):
         self.to_out_limit = None
         self.out_buffer = None
 
-    def startup(
+    async def setup(
         self,
         sampling_freq=384000,
         pitch_div_factor=10,
@@ -54,6 +53,7 @@ class WurbPitchShift(object):
         filter_low_limit_hz=15000,
         filter_high_limit_hz=120000,
         filter_order=10,
+        max_buffer_size_s=1.0,
         overlap_in_factor=1.5,
         kaiser_beta=14,
     ):
@@ -65,6 +65,7 @@ class WurbPitchShift(object):
             self.filter_low_limit_hz = filter_low_limit_hz
             self.filter_high_limit_hz = filter_high_limit_hz
             self.filter_order = filter_order
+            self.max_buffer_size_s = max_buffer_size_s
             # Calculated parameters.
             self.sampling_freq_out = int(self.sampling_freq_in / pitch_div_factor)
             self.hop_out_length = int(self.sampling_freq_in / 1000 / pitch_div_factor)
@@ -80,18 +81,30 @@ class WurbPitchShift(object):
                 self.sampling_freq_in / pitch_div_factor / 2
             )  # About 0.5 sec.
             self.out_buffer = numpy.array([], dtype=numpy.float64)
+
         except Exception as e:
-            print("Exception: WurbPitchShift: setup:", e)
+            print("Exception: WurbPitchShift: setup: ", e)
 
-    def shutdown(self):
+    async def startup(self):
         """ """
-        # await self.stop()
-        # if self.gps_control_task:
-        #     self.gps_control_task.cancel()
-        #     self.gps_control_task = None
+        # Start sound
+        self.asyncio_loop = asyncio.get_event_loop()
+        self.sound_task = asyncio.create_task(self.stream_sound())
 
-    def add_buffer(self, buffer):
+    async def shutdown(self):
         """ """
+        try:
+            if self.sound_task:
+                self.sound_task.cancel()
+        except Exception as e:
+            print("Exception: WurbPitchShift: shutdown: ", e)
+
+    async def add_buffer(self, buffer):
+        """ """
+        if (len(self.out_buffer) / self.sampling_freq_out) > self.max_buffer_size_s:
+            print("DEBUG: Out buffer too long: ", len(self.out_buffer))
+            return
+
         # Filter buffer. Butterworth bandpass.
         sos = scipy.signal.butter(
             self.filter_order,
@@ -129,31 +142,40 @@ class WurbPitchShift(object):
         self.pitchshift_buffer[self.window_size :] = 0.0
         insert_pos = 0
 
-    def stream_sound(self):
+    async def stream_sound(self):
         """ """
+        loop = asyncio.get_event_loop()
+        sound_event = asyncio.Event()
 
         def audio_out_callback(outdata, frames, cffi_time, status):
             """ Locally defined callback. Called from another thread. """
-            if status:
-                print("DEBUG: stream_sound/callback: ", status, file=sys.stderr)
-            #
-            if len(self.out_buffer) > frames:
-                data = self.out_buffer[:frames]
-                self.out_buffer = self.out_buffer[frames:]
-                data *= self.volume
-                data = data.reshape(-1, 1)
-                outdata[:] = data
-            else:
-                # Send zeroes if out buffer is empty.
-                outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float64)
+            try:
+                if status:
+                    print(
+                        "DEBUG: stream_sound/callback: Status: ",
+                        status,
+                        file=sys.stderr,
+                    )
+                #
+                if (self.out_buffer is not None) and (len(self.out_buffer) > frames):
+                    data = self.out_buffer[:frames]
+                    self.out_buffer = self.out_buffer[frames:]
+                    data *= self.volume
+                    data = data.reshape(-1, 1)
+                    outdata[:] = data
+                else:
+                    # Send zeroes if out buffer is empty.
+                    outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float64)
 
-                # raise sounddevice.CallbackStop
+                    # loop.call_soon_threadsafe(sound_event.set)
+
+            except Exception as e:
+                print("Exception stream_sound-callback: ", e)
+                loop.call_soon_threadsafe(sound_event.set)
 
         # End of locally defined callback.
 
         try:
-            # event = threading.Event()
-
             # Start streaming of sound.
             # self.asyncio_loop = asyncio.get_event_loop()
             stream = sounddevice.OutputStream(
@@ -162,29 +184,44 @@ class WurbPitchShift(object):
                 channels=1,
                 blocksize=0,  # Automatically by ALSA.
                 callback=audio_out_callback,  # Locally defined above.
-                # finished_callback=event.set,
             )
             with stream:
-                time.sleep(6.0)
-                # event.wait()
+                await sound_event.wait()
 
+        except asyncio.CancelledError:
+            pass
         except Exception as e:
             print("Exception stream_sound: ", e)
 
 
-if __name__ == "__main__":
+# === MAIN - for test ===
+async def main():
     """ """
     pitchshift = WurbPitchShift(wurb_manager=None)
     #
+    used_freq = 0
     for file_path in sorted(pathlib.Path("TEST_PITCHSHIFT").glob("*.wav")):
         print("\nFile: ", str(file_path))
         wav_data_in, fs = soundfile.read(file_path, dtype="float64")
-        pitchshift.startup(
-            sampling_freq=fs,
-            pitch_div_factor=10,
-            volume=0.5,
-            filter_low_limit_hz=15000,
-            filter_high_limit_hz=90000,
-        )
-        pitchshift.add_buffer(wav_data_in)
-        pitchshift.stream_sound()
+        if fs != used_freq:
+            used_freq = fs
+            await pitchshift.shutdown()
+            await pitchshift.setup(
+                sampling_freq=fs,
+                pitch_div_factor=10,
+                volume=0.5,
+                filter_low_limit_hz=15000,
+                filter_high_limit_hz=90000,
+            )
+            await pitchshift.startup()
+        #
+        await pitchshift.add_buffer(wav_data_in)
+        await asyncio.sleep(5.5)
+    #
+    await asyncio.sleep(2.0)
+    await pitchshift.shutdown()
+
+
+if __name__ == "__main__":
+    """ """
+    asyncio.run(main(), debug=True)
