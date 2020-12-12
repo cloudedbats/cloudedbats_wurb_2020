@@ -15,7 +15,10 @@ import pathlib
 
 
 class WurbPitchShifting(object):
-    """ For audio feedback by using Pitch Shifting, PS. """
+    """ For audio feedback by using Pitch Shifting, PS. 
+        Simple time domain implementation by using overlapped
+        windows and the Kaiser windowing function.
+    """
 
     def __init__(self, wurb_manager):
         """ """
@@ -43,7 +46,7 @@ class WurbPitchShifting(object):
         self.window_function = None
         self.in_buffer = None
         self.pitchshifting_buffer = None
-        self.to_out_limit = None
+        self.to_outbuffer_limit = None
         self.out_buffer = None
 
     async def setup(
@@ -51,7 +54,7 @@ class WurbPitchShifting(object):
         device_name="dmix",  # Raspberry Pi 3.5 mm earphone.
         sampling_freq=384000,
         pitch_div_factor=10,
-        volume=1.0,
+        volume=0.5,
         filter_low_limit_hz=15000,
         filter_high_limit_hz=120000,
         filter_order=10,
@@ -72,7 +75,7 @@ class WurbPitchShifting(object):
             self.hop_out_length = int(self.sampling_freq_in / 1000 / pitch_div_factor)
             self.hop_in_length = int(self.hop_out_length * pitch_div_factor)
             # Buffers.
-            buffer_in_overlap_factor=1.5,
+            buffer_in_overlap_factor=1.5
             kaiser_beta=int(self.pitch_div_factor * 0.8)
             self.window_size = int(self.hop_in_length * buffer_in_overlap_factor)
             self.window_function = numpy.kaiser(self.window_size, beta=kaiser_beta)
@@ -80,7 +83,7 @@ class WurbPitchShifting(object):
             self.pitchshifting_buffer = numpy.zeros(
                 self.sampling_freq_out, dtype=numpy.float64
             )  # 1 sec.
-            self.to_out_limit = int(
+            self.to_outbuffer_limit = int(
                 self.sampling_freq_in / pitch_div_factor / 2
             )  # About 0.5 sec.
             self.out_buffer = numpy.array([], dtype=numpy.float64)
@@ -99,14 +102,20 @@ class WurbPitchShifting(object):
         try:
             if self.audio_task:
                 self.audio_task.cancel()
+            self.audio_task = None
         except Exception as e:
             print("Exception: WurbPitchShifting: shutdown: ", e)
 
-    async def add_buffer(self, buffer):
+    async def add_buffer(self, buffer_int):
         """ """
+        if self.audio_task is None:
+            return
         if (len(self.out_buffer) / self.sampling_freq_out) > self.max_buffer_size_s:
             print("DEBUG: Out buffer too long: ", len(self.out_buffer))
             return
+
+        # Transform to intervall -1 to 1
+        buffer = buffer_int / 32768.0
 
         # Filter buffer. Butterworth bandpass.
         sos = scipy.signal.butter(
@@ -128,7 +137,7 @@ class WurbPitchShifting(object):
                 insert_pos : insert_pos + self.window_size
             ] += part
             insert_pos += self.hop_out_length
-            if insert_pos > self.to_out_limit:
+            if insert_pos > self.to_outbuffer_limit:
                 self.out_buffer = numpy.concatenate(
                     (self.out_buffer, self.pitchshifting_buffer[:insert_pos])
                 )
@@ -170,6 +179,7 @@ class WurbPitchShifting(object):
                     data *= self.volume
                     data = data.reshape(-1, 1)
                     outdata[:] = data
+                    # print("DEBUG: FRAMES: ", frames)
                 else:
                     # Send zeroes if out buffer is empty.
                     outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float64)
@@ -214,8 +224,8 @@ async def main():
             used_freq = fs
             await pitchshifting.shutdown()
             await pitchshifting.setup(
-                # device_name="dmix",  # Raspberry Pi 3.5 mm earphone.
-                device_name="Built-in Output",  # For test on Mac.
+                device_name="dmix",  # Raspberry Pi 3.5 mm earphone.
+                # device_name="Built-in Output",  # For test on Mac.
                 sampling_freq=fs,
                 pitch_div_factor=30,
                 volume=0.5,

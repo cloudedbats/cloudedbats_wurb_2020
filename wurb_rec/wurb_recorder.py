@@ -154,6 +154,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.wurb_manager = wurb_manager
         self.wurb_settings = wurb_manager.wurb_settings
         self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_audiofeedback = wurb_manager.wurb_audiofeedback
         self.rec_status = ""
         self.device_name = ""
         self.sampling_freq_hz = 0
@@ -245,8 +246,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
     #         print("EXCEPTION: put_on_queue_from_source: ", e)
 
     async def sound_source_worker(self):
-        """ Abstract worker method for sound sources. Mainly files or streams.
-            Test implementation to be used as template.
+        """Abstract worker method for sound sources. Mainly files or streams.
+        Test implementation to be used as template.
         """
         self.rec_start_time = None
         loop = asyncio.get_event_loop()
@@ -266,8 +267,9 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             await self.set_rec_status("Recording.")
             try:
                 await loop.run_in_executor(
-                    None, recorder_m500.start_streaming, 
-                )            
+                    None,
+                    recorder_m500.start_streaming,
+                )
             except asyncio.CancelledError:
                 recorder_m500.stop_streaming()
             except Exception as e:
@@ -280,8 +282,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
         # Standard ASLA microphones.
         def audio_callback(indata, frames, cffi_time, status):
-            """ Locally defined callback.
-                This is called (from a separate thread) for each audio block. """
+            """Locally defined callback.
+            This is called (from a separate thread) for each audio block."""
             try:
                 if status:
                     print("DEBUG: audio_callback Status:", status)
@@ -322,6 +324,15 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                         )
                 except Exception as e:
                     print("DEBUG: Failed to put buffer on queue: ", e)
+                    pass
+                try:
+                    indata_to_audiofeedback = indata_raw.copy()
+                    asyncio.run_coroutine_threadsafe(
+                        self.wurb_audiofeedback.add_buffer(indata_to_audiofeedback),
+                        loop,
+                    )
+                except Exception as e:
+                    print("DEBUG: Failed to call wurb_audiofeedback.add_buffer: ", e)
                     pass
 
                 # # Add to queue. Should be attached to the main async loop.
@@ -377,8 +388,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             await self.set_rec_status("Recording finished.")
 
     async def sound_process_worker(self):
-        """ Abstract worker for sound processing algorithms.
-            Test implementation to be used as template.
+        """Abstract worker for sound processing algorithms.
+        Test implementation to be used as template.
         """
 
         try:
@@ -419,7 +430,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                             self.restart_activated = True
                             loop = asyncio.get_event_loop()
                             asyncio.run_coroutine_threadsafe(
-                                self.wurb_manager.restart_rec(), loop,
+                                self.wurb_manager.restart_rec(),
+                                loop,
                             )
                             await self.remove_items_from_queue(self.from_source_queue)
                             await self.from_source_queue.put(False)  # Flush.
@@ -460,7 +472,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     self.restart_activated = True
                                     loop = asyncio.get_event_loop()
                                     asyncio.run_coroutine_threadsafe(
-                                        self.wurb_manager.restart_rec(), loop,
+                                        self.wurb_manager.restart_rec(),
+                                        loop,
                                     )
                                     await self.remove_items_from_queue(
                                         self.from_source_queue
@@ -581,8 +594,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             pass
 
     async def sound_target_worker(self):
-        """ Worker for sound targets. Mainly files or streams.
-         """
+        """Worker for sound targets. Mainly files or streams."""
         wave_file_writer = None
         try:
             while True:
@@ -636,8 +648,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
 
 class WaveFileWriter:
-    """ Each file is connected to a separate file writer object 
-        to avoid concurrency problems. """
+    """Each file is connected to a separate file writer object
+    to avoid concurrency problems."""
 
     def __init__(self, wurb_manager):
         """ """

@@ -31,9 +31,9 @@ class WurbRecManager(object):
             self.wurb_rpi = None
             self.wurb_logging = None
             self.wurb_settings = None
-            self.wurb_recorder = None
             self.wurb_gps = None
             self.wurb_scheduler = None
+            self.wurb_audiofeedback = None
 
         except Exception as e:
             print("Exception: ", e)
@@ -44,6 +44,7 @@ class WurbRecManager(object):
             self.wurb_logging = wurb_rec.WurbLogging(self)
             self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
+            self.wurb_audiofeedback = wurb_rec.WurbPitchShifting(self)
             self.ultrasound_devices = wurb_rec.UltrasoundDevices(self)
             self.wurb_recorder = wurb_rec.WurbRecorder(self)
             self.wurb_gps = wurb_rec.WurbGps(self)
@@ -52,6 +53,7 @@ class WurbRecManager(object):
             await self.wurb_logging.startup()
             await self.wurb_settings.startup()
             # await self.wurb_scheduler.startup()
+            # await self.wurb_audiofeedback.startup()
             # Logging.
             message = "Detector started."
             self.wurb_logging.info(message, short_message=message)
@@ -65,6 +67,9 @@ class WurbRecManager(object):
         try:
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
 
+            if self.wurb_audiofeedback:
+                await self.wurb_audiofeedback.shutdown()
+                self.wurb_audiofeedback = None
             if self.wurb_gps:
                 await self.wurb_gps.shutdown()
                 self.wurb_gps = None
@@ -98,6 +103,12 @@ class WurbRecManager(object):
             device_name = self.ultrasound_devices.device_name
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
+
+
+                await self.wurb_audiofeedback.startup()
+                await self.wurb_audiofeedback.setup(sampling_freq=sampling_freq_hz)
+
+
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
@@ -121,6 +132,10 @@ class WurbRecManager(object):
                 # Logging.
                 message = "Rec. stopped."
                 self.wurb_logging.info(message, short_message=message)
+
+
+            await self.wurb_audiofeedback.shutdown()
+
 
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
