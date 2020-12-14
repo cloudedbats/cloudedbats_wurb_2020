@@ -7,7 +7,7 @@ websockets
 # Sound, etc.
 sounddevice
 numpy
-scipy<1.5
+scipy
 psutil
 pyusb
 # GPS
@@ -17,3 +17,4 @@ pytz
 python-dateutil
 # Visual Studio Code.
 pylint
+black

@@ -103,12 +103,10 @@ class WurbRecManager(object):
             device_name = self.ultrasound_devices.device_name
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
-
-
+                # Audio feedback.
                 await self.wurb_audiofeedback.startup()
                 await self.wurb_audiofeedback.setup(sampling_freq=sampling_freq_hz)
-
-
+                # Rec.
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
@@ -133,10 +131,9 @@ class WurbRecManager(object):
                 message = "Rec. stopped."
                 self.wurb_logging.info(message, short_message=message)
 
-
+            # Audio feedback.
             await self.wurb_audiofeedback.shutdown()
-
-
+            # Rec.
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()

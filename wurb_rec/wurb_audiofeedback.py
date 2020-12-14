@@ -8,16 +8,14 @@ import asyncio
 import numpy
 import scipy.signal
 import sounddevice
-
 import sys
-import soundfile
 import pathlib
 
 
 class WurbPitchShifting(object):
-    """ For audio feedback by using Pitch Shifting, PS. 
-        Simple time domain implementation by using overlapped
-        windows and the Kaiser windowing function.
+    """For audio feedback by using Pitch Shifting, PS.
+    Simple time domain implementation by using overlapped
+    windows and the Kaiser window function.
     """
 
     def __init__(self, wurb_manager):
@@ -27,6 +25,7 @@ class WurbPitchShifting(object):
         # self.wurb_logging = wurb_manager.wurb_logging
         self.asyncio_loop = None
         self.audio_task = None
+        self.audio_callback_active = False
         #
         self.clear()
 
@@ -49,16 +48,20 @@ class WurbPitchShifting(object):
         self.to_outbuffer_limit = None
         self.out_buffer = None
 
+    def is_audio_feedback_active(self):
+        """ """
+        return self.audio_callback_active
+
     async def setup(
         self,
-        device_name="dmix",  # Raspberry Pi 3.5 mm earphone.
+        device_name="Headphones",  # RPi 3.5mm connection when using rhythmbox.
         sampling_freq=384000,
         pitch_div_factor=10,
-        volume=0.5,
+        volume=1.0,
         filter_low_limit_hz=15000,
         filter_high_limit_hz=120000,
         filter_order=10,
-        max_buffer_size_s=1.0,
+        max_buffer_size_s=0.5,
     ):
         """ """
         try:
@@ -75,18 +78,19 @@ class WurbPitchShifting(object):
             self.hop_out_length = int(self.sampling_freq_in / 1000 / pitch_div_factor)
             self.hop_in_length = int(self.hop_out_length * pitch_div_factor)
             # Buffers.
-            buffer_in_overlap_factor=1.5
-            kaiser_beta=int(self.pitch_div_factor * 0.8)
+            buffer_in_overlap_factor = 1.5
+            kaiser_beta = int(self.pitch_div_factor * 0.8)
             self.window_size = int(self.hop_in_length * buffer_in_overlap_factor)
             self.window_function = numpy.kaiser(self.window_size, beta=kaiser_beta)
-            self.in_buffer = numpy.array([], dtype=numpy.float64)
+            self.in_buffer = numpy.array([], dtype=numpy.float32)
+            pitchshifting_buffer_length = int(self.sampling_freq_out / pitch_div_factor)
             self.pitchshifting_buffer = numpy.zeros(
-                self.sampling_freq_out, dtype=numpy.float64
-            )  # 1 sec.
+                pitchshifting_buffer_length, dtype=numpy.float32
+            )  # 1 sec buffer length.
             self.to_outbuffer_limit = int(
-                self.sampling_freq_in / pitch_div_factor / 2
-            )  # About 0.5 sec.
-            self.out_buffer = numpy.array([], dtype=numpy.float64)
+                pitchshifting_buffer_length / 2
+            )  # Half buffer used.
+            self.out_buffer = numpy.array([], dtype=numpy.float32)
 
         except Exception as e:
             print("Exception: WurbPitchShifting: setup: ", e)
@@ -106,17 +110,20 @@ class WurbPitchShifting(object):
         except Exception as e:
             print("Exception: WurbPitchShifting: shutdown: ", e)
 
-    async def add_buffer(self, buffer_int):
+    async def add_buffer(self, buffer_int16):
         """ """
         if self.audio_task is None:
             return
+        if self.audio_callback_active == False:
+            return
+        # Reset before next check. Callback will set to true.
+        self.audio_callback_active = False
+        # Skip buffer to avoid too long delay before audio feedback.
         if (len(self.out_buffer) / self.sampling_freq_out) > self.max_buffer_size_s:
             print("DEBUG: Out buffer too long: ", len(self.out_buffer))
             return
-
-        # Transform to intervall -1 to 1
-        buffer = buffer_int / 32768.0
-
+        # Buffer delivered as int16. Transform to intervall -1 to 1.
+        buffer = buffer_int16 / 32768.0
         # Filter buffer. Butterworth bandpass.
         sos = scipy.signal.butter(
             self.filter_order,
@@ -158,6 +165,8 @@ class WurbPitchShifting(object):
         self.pitchshifting_buffer[self.window_size :] = 0.0
         insert_pos = 0
 
+        # print("DEBUG: Max/min amp: ", max(self.out_buffer), "   ", min(self.out_buffer))
+
     async def stream_audio(self):
         """ """
         loop = asyncio.get_event_loop()
@@ -166,6 +175,7 @@ class WurbPitchShifting(object):
         def audio_out_callback(outdata, frames, cffi_time, status):
             """ Locally defined callback. Called from another thread. """
             try:
+                self.audio_callback_active = True
                 if status:
                     print(
                         "DEBUG: stream_audio/callback: Status: ",
@@ -182,9 +192,7 @@ class WurbPitchShifting(object):
                     # print("DEBUG: FRAMES: ", frames)
                 else:
                     # Send zeroes if out buffer is empty.
-                    outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float64)
-
-                    # loop.call_soon_threadsafe(audio_event.set)
+                    outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float32)
 
             except Exception as e:
                 print("Exception stream_audio-callback: ", e)
@@ -214,30 +222,36 @@ class WurbPitchShifting(object):
 # === MAIN - for test ===
 async def main():
     """ """
+    # Run "pip install soundfile"
+    # and maybe also "sudo apt install libsndfile1"
+    # to execute this test.
+    import soundfile
+
     pitchshifting = WurbPitchShifting(wurb_manager=None)
     #
-    used_freq = 0
+    last_used_freq = 0
     for file_path in sorted(pathlib.Path("TEST_WAV").glob("*.wav")):
         print("\nFile: ", str(file_path))
-        wav_data_in, fs = soundfile.read(file_path, dtype="float64")
-        if fs != used_freq:
-            used_freq = fs
+        wav_data_in, fs = soundfile.read(file_path, dtype="int16")
+        if fs != last_used_freq:
+            last_used_freq = fs
             await pitchshifting.shutdown()
             await pitchshifting.setup(
-                device_name="dmix",  # Raspberry Pi 3.5 mm earphone.
-                # device_name="Built-in Output",  # For test on Mac.
+                # device_name="Headphones",  # RPi 3.5mm connection when using rhythmbox.
+                device_name="Built-in Output",  # For test on Mac.
                 sampling_freq=fs,
-                pitch_div_factor=30,
-                volume=0.5,
+                pitch_div_factor=10,
+                volume=1.0,
                 # filter_low_limit_hz=15000,
                 # filter_high_limit_hz=120000,
             )
             await pitchshifting.startup()
+            await asyncio.sleep(1.0)
         #
         await pitchshifting.add_buffer(wav_data_in)
-        await asyncio.sleep(5.5)
+        await asyncio.sleep(6.0)
     #
-    await asyncio.sleep(2.0)
+    await asyncio.sleep(1.0)
     await pitchshifting.shutdown()
 
 

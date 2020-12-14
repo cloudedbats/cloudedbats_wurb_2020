@@ -316,7 +316,6 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     "data": indata_copy,
                 }
                 # Add to queue.
-                # Note: Maybe "call_soon_threadsafe" is faster than "run_coroutine_threadsafe".
                 try:
                     if not self.from_source_queue.full():
                         loop.call_soon_threadsafe(
@@ -325,12 +324,18 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 except Exception as e:
                     print("DEBUG: Failed to put buffer on queue: ", e)
                     pass
+                # Add to audio feedback, if available.
                 try:
-                    indata_to_audiofeedback = indata_raw.copy()
-                    asyncio.run_coroutine_threadsafe(
-                        self.wurb_audiofeedback.add_buffer(indata_to_audiofeedback),
-                        loop,
-                    )
+                    if self.wurb_audiofeedback:
+                        is_active = self.wurb_audiofeedback.is_audio_feedback_active()
+                        if is_active:
+                            indata_to_audiofeedback = indata_raw.copy()
+                            asyncio.run_coroutine_threadsafe(
+                                self.wurb_audiofeedback.add_buffer(
+                                    indata_to_audiofeedback
+                                ),
+                                loop,
+                            )
                 except Exception as e:
                     print("DEBUG: Failed to call wurb_audiofeedback.add_buffer: ", e)
                     pass

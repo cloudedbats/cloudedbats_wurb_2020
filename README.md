@@ -159,6 +159,9 @@ Install software:
     sudo apt install git python3-venv python3-dev
     sudo apt install libportaudio2 libatlas-base-dev udevil
     sudo apt install python3-rpi.gpio
+    # Rhythmbox is used to add and configure drivers for audio feedback 
+    # via headphones. Will maybe be replaced later.
+    sudo apt install rhythmbox
 
 ### Pettersson M500 (500kHz)
 
