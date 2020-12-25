@@ -20,13 +20,17 @@ except:
 
 class ControlViaRaspberryPi(object):
     """For Raspberry Pi. Uses GPIO or a computer mouse to control
-       Raspberry Pi shutdown and to activate "User default mode".
+       Raspberry Pi shutdown and to activate various recording modes.
+       This module is running as a process separated from the WURB
+       recorder process. The REST API is used when sending commands
+       to the recorder.
 
     Installation:
-    - Add the launch of this module to /etc/rc.local. Will make it start at RPi startup.
+    - Add the launch of this module to /etc/rc.local.
     - Add a three way position switch. Connect ground (GPIO pin 39) to the middle pin,
       GPIO pin 36 (aka. GPIO 16) and GPIO pin 37 (aka. GPIO 26) to the two other pins.
     - Add a label for the switch: "Power off - Normal - User default mode".
+    - Connect an USB mouse.
     """
 
     def __init__(self):
@@ -35,28 +39,23 @@ class ControlViaRaspberryPi(object):
         # Set up logging.
         self.logger = logging.getLogger("WURB_RPi")
         self.logging_setup()
-        #
-        self.logger.info("")
-        self.logger.info("=== Raspberry Pi for WURB control. ===")
-        self.logger.info("")
-        #
+        self.logger.info("\n\n=== Raspberry Pi for WURB control. ===\n")
         # GPIO pin numbers 1-40.
         # GPIO pin number 34 and 39 are both Ground.
         self.gpio_pin_user_default = 36  # Also called GPIO 16.
         self.gpio_pin_shutdown = 37  # Also called GPIO 26.
 
         # Settings for mouse control.
-        self.left_and_right_time = 3.0 # Left and right buttons. 3 sec.
-        self.left_time = 1.0 # Left button. 1 sec.
-        self.middle_time = 1.0 # Left button. 1 sec.
-        self.right_time = 1.0 # Right button. 1 sec.
-        # Local.
+        self.left_and_right_time = 3.0  # Left and right buttons. 3 sec.
+        self.left_time = 1.0  # Left button. 1 sec.
+        self.middle_time = 1.0  # Left button. 1 sec.
+        self.right_time = 1.0  # Right button. 1 sec.
+        # Internals.
         self.left_and_right_start = False
         self.left_start = False
         self.middle_start = False
         self.right_start = False
-        self.last_command = ''
-
+        self.last_command = ""
 
     def raspberry_pi_shutdown(self):
         """ """
@@ -69,17 +68,36 @@ class ControlViaRaspberryPi(object):
     def send_wurb_rec_mode(self, rec_mode):
         """ """
         try:
-            self.logger.info("RPi GPIO control: WURB User default mode ON.")
+            self.logger.info("RPi GPIO control: WURB User default mode: ", rec_mode)
             # os.system("wget localhost:8000/?rec_mode=" + rec_mode)
         except:
             self.logger.error("RPi GPIO control: Command failed.")
 
+    def mouse_left_and_right_action(self):
+        """ """
+        self.raspberry_pi_shutdown()
+
+    def mouse_left_action(self):
+        """ """
+        self.send_wurb_rec_mode(rec_mode="user_default_off")
+
+    def mouse_middle_action(self):
+        """ """
+        # Not used.
+
+    def mouse_right_action(self):
+        """ """
+        self.send_wurb_rec_mode(rec_mode="user_default_on")
+
+    # === Internals. ===
     async def setup_gpio(self):
         """ """
-        GPIO.setmode(GPIO.BOARD)  # Use pin numbers, 1-40.
-        # Activate and use the built in pull-up resistors.
-        GPIO.setup(self.gpio_pin_user_default, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.gpio_pin_shutdown, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        global gpio_available
+        if gpio_available:
+            GPIO.setmode(GPIO.BOARD)  # Use pin numbers, 1-40.
+            # Activate and use the built in pull-up resistors.
+            GPIO.setup(self.gpio_pin_user_default, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(self.gpio_pin_shutdown, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     async def run_gpio_check(self):
         """ """
@@ -87,7 +105,7 @@ class ControlViaRaspberryPi(object):
         global gpio_available
         if not gpio_available:
             self.logger.warning("RPi GPIO control: GPIO not available.")
-            # return
+            return
         # Wait here if the switch is in wrong (= RPi-off) position.
         # Used to avoid accidental shutdown at startup.
         while not GPIO.input(self.gpio_pin_shutdown):
@@ -148,8 +166,7 @@ class ControlViaRaspberryPi(object):
                             self.logger.info(
                                 "Mouse control: Left and right buttons pressed."
                             )
-                            # self.left_and_right_action()
-                            self.gpio_pin_shutdown()
+                            self.mouse_left_and_right_action()
                         except:
                             pass
                         self.last_command = "left_and_right"
@@ -162,8 +179,7 @@ class ControlViaRaspberryPi(object):
                     if self.last_command != "left":
                         try:
                             self.logger.info("Mouse control: Left button pressed.")
-                            # self.left_action()
-                            self.user_default_mode_off()
+                            self.mouse_left_action()
                         except:
                             pass
                         self.last_command = "left"
@@ -176,7 +192,7 @@ class ControlViaRaspberryPi(object):
                     if self.last_command != "middle":
                         try:
                             self.logger.info("Mouse control: Middle button pressed.")
-                            # self.middle_action() # Not used.
+                            self.mouse_middle_action()
                         except:
                             pass
                         self.last_command = "middle"
@@ -189,8 +205,7 @@ class ControlViaRaspberryPi(object):
                     if self.last_command != "right":
                         try:
                             self.logger.info("Mouse control: Right button pressed.")
-                            # self.right_action()
-                            self.user_default_mode_on()
+                            self.mouse_right_action()
                         except:
                             pass
                         self.last_command = "right"
@@ -200,18 +215,18 @@ class ControlViaRaspberryPi(object):
         except Exception as e:
             self.logger.error("Mouse control: Failed to check actions: " + str(e))
 
-    async def run_mouse_device_reader(self):
-        """ """
+    def mouse_device_reader(self):
+        """ Contains blocking io. Running inside executor. """
         # Open 'file' for reading mouse actions.
         try:
             with open("/dev/input/mice", "rb") as mice_file:
                 # Loop and check mouse buttons.
                 while True:
-                    await asyncio.sleep(0.01)  # Should be short.
+                    time.sleep(0.01)  # Should be short.
 
                     # The read command waits until next mouse action.
                     mouse_buffer = mice_file.read(3)  # Note: This is blocking.
-                    buttons = mouse_buffer[0]  # Python 3.
+                    buttons = mouse_buffer[0]
                     button_left = (buttons & 0x1) > 0
                     button_right = (buttons & 0x2) > 0
                     button_middle = (buttons & 0x4) > 0
@@ -272,7 +287,7 @@ class ControlViaRaspberryPi(object):
         log_file_name = "wurb_rpi_log.txt"
         log_file_path = pathlib.Path(dir_path, log_file_dir, log_file_name)
         if not pathlib.Path(dir_path, log_file_dir).exists():
-            pathlib.Path(dir_path, log_file_dir).mkdir()
+            pathlib.Path(dir_path, log_file_dir).mkdir(parents=True)
         #
         log_handler = logging.handlers.RotatingFileHandler(
             str(log_file_path), maxBytes=128 * 1024, backupCount=4
@@ -288,16 +303,15 @@ class ControlViaRaspberryPi(object):
 async def main():
     """ """
     control = ControlViaRaspberryPi()
-    await control.setup_gpio()
-    _gpio_task = asyncio.create_task(control.run_gpio_check())
-    _mouse_task = asyncio.create_task(control.run_mouse_check())
-    _mouse_device_task = asyncio.create_task(control.run_mouse_device_reader())
-
-    # For test.
-    # await asyncio.sleep(100.0)
-    # _gpio_task.cancel()
-    # _mouse_task.cancel()
-    # _mouse_device_task.cancel()
+    # GPIO.
+    # await control.setup_gpio()
+    # Run GPIO and mouse checkers as tasks.
+    asyncio.create_task(control.run_gpio_check())
+    asyncio.create_task(control.run_mouse_check())
+    # The mouse device reader contains blocking io. Use executor.
+    loop = asyncio.get_running_loop()
+    mouse_device = loop.run_in_executor(None, control.mouse_device_reader)
+    await mouse_device
 
 
 if __name__ == "__main__":
