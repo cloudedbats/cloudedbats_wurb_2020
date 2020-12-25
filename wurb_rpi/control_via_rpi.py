@@ -61,14 +61,14 @@ class ControlViaRaspberryPi(object):
         """ """
         try:
             self.logger.info("RPi GPIO control: Raspberry Pi shutdown.")
-            # os.system("sudo shutdown -h now")
+            os.system("sudo shutdown -h now")
         except:
             self.logger.error("RPi GPIO control: Shutdown failed.")
 
     def send_wurb_rec_mode(self, rec_mode):
         """ """
         try:
-            self.logger.info("RPi GPIO control: WURB User default mode: ", rec_mode)
+            self.logger.info("RPi GPIO control: WURB User default mode: " + rec_mode)
             # os.system("wget localhost:8000/?rec_mode=" + rec_mode)
         except:
             self.logger.error("RPi GPIO control: Command failed.")
@@ -79,7 +79,7 @@ class ControlViaRaspberryPi(object):
 
     def mouse_left_action(self):
         """ """
-        self.send_wurb_rec_mode(rec_mode="user_default_off")
+        self.send_wurb_rec_mode(rec_mode="user_default_on")
 
     def mouse_middle_action(self):
         """ """
@@ -87,7 +87,7 @@ class ControlViaRaspberryPi(object):
 
     def mouse_right_action(self):
         """ """
-        self.send_wurb_rec_mode(rec_mode="user_default_on")
+        self.send_wurb_rec_mode(rec_mode="user_default_off")
 
     # === Internals. ===
     async def setup_gpio(self):
@@ -112,6 +112,7 @@ class ControlViaRaspberryPi(object):
             # Low = active.
             await asyncio.sleep(0.8)
         # Start check loop.
+        self.user_default_state_on = False
         while True:
             # Wait.
             await asyncio.sleep(0.8)
@@ -134,22 +135,20 @@ class ControlViaRaspberryPi(object):
                     # High = inactive.
                     await asyncio.sleep(0.1)  # Check if stable, not bouncing.
                     if GPIO.input(self.gpio_pin_user_default):
-                        if self.user_default_mode_state == True:
+                        if self.user_default_state_on == True:
                             # Perform action.
-                            self.send_wurb_rec_mode(rec_mode="user_default_on")
-                            self.user_default_mode_state = False
+                            self.send_wurb_rec_mode(rec_mode="user_default_off")
+                            self.user_default_state_on = False
                 else:
                     # Low = active.
                     await asyncio.sleep(0.1)  # Check if stable, not bouncing.
                     if not GPIO.input(self.gpio_pin_user_default):
-                        if self.user_default_mode_state == False:
+                        if self.user_default_state_on == False:
                             # Perform action.
-                            self.send_wurb_rec_mode(rec_mode="user_default_off")
-                            self.user_default_mode_state = True
-                    else:
-                        self.user_default_mode_count += 1
-            except:
-                pass
+                            self.send_wurb_rec_mode(rec_mode="user_default_on")
+                            self.user_default_state_on = True
+            except Exception as e:
+                self.logger.error("GPIO control: Failed to check actions: " + str(e))
 
     async def run_mouse_check(self):
         """ Check for mouse actions. """
@@ -304,7 +303,7 @@ async def main():
     """ """
     control = ControlViaRaspberryPi()
     # GPIO.
-    # await control.setup_gpio()
+    await control.setup_gpio()
     # Run GPIO and mouse checkers as tasks.
     asyncio.create_task(control.run_gpio_check())
     asyncio.create_task(control.run_mouse_check())
