@@ -10,12 +10,12 @@ numpy
 scipy
 psutil
 pyusb
-# GPS
+# GPS and date/time.
 pyserial
 pyserial-asyncio
 pytz
 python-dateutil
-# Raspberry Pi
+# Raspberry Pi.
 RPi.GPIO
 # Visual Studio Code.
 pylint

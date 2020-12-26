@@ -55,7 +55,7 @@ Notes from a developers perspective:
 - Ultrasonic microphone. Tested with Pettersson u256, u384, M500, M500-384 and 
 Dodotronic UltraMic 192K, 250K, 384K BLE.
 
-**Note:** For some strange reason both M500 and M500-384 has problems if connected directly to a 
+**Note:** For some strange reason both M500 and M500-384 have problems if connected directly to a 
 Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
 or attach the M500 or M500-384 microphone after startup.
 
@@ -159,10 +159,11 @@ Install software:
     sudo apt install git python3-venv python3-dev
     sudo apt install libportaudio2 libatlas-base-dev udevil
     
+    ### Moved to requirements.txt:
     ### sudo apt install python3-rpi.gpio
     
-    # Rhythmbox is used to add and configure drivers for audio feedback 
-    # via headphones. Will maybe be replaced later.
+    # Rhythmbox is used to add and configure drivers for audio 
+    # feedback via headphones. Will maybe be replaced later.
     sudo apt install rhythmbox
 
 ### Pettersson M500 (500kHz)
@@ -201,8 +202,9 @@ Please uninstall it if that's the case.
 
     # Add this before the "exit" row in rc.local:
 
-    ( sleep 5 && sudo -u pi devmon ) &
     sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
+
+    sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/python3 /home/pi/cloudedbats_wurb_2020/wurb_rpi/control_via_rpi.py &
 
 And finally restart the detector:
 
@@ -214,11 +216,12 @@ If the detector does not start properly, the cause may be incompatible releases
 of the software packages used. Try to start the detector in the development mode 
 to check for error messages.
 
-    cd cloudedbats_wurb_2020
-    /home/pi/cloudedbats_wurb_2020/venv/bin/python3 wurb_rec_start.py
+    cd /home/pi/cloudedbats_wurb_2020
+    source venv/bin/activate
+    python3 wurb_rec_start.py
    
 Please contact me if this happens. Most of the time the solution is to avoid 
-the latest relese of the library that causes the error.
+the latest release of the library that causes the error.
 
 ### CloudedBats software - latest stable version
 
@@ -235,6 +238,7 @@ If you want to run the latest stable version, then replace the git clone line in
 - Open a web browser and go to http://10.3.141.1:8000
 - Check "Geographic location" and "Settings". 
 - Press "Start recording".
+- Connect headphones (3.5 mm connection on the Raspberry Pi) and listen to the bats.
 - Record some bats.
 - Press "Stop recording".
 
@@ -264,8 +268,8 @@ anyway.
 
 ## The MIT license
 
-The code is released under the MIT license that means that you are free to use it as you want; 
-use it, share it, cut it into pieces, extend it or even sell it for money. 
+This software is released under the MIT license that means that you are free to use it as you want; 
+use it, share it, cut it into pieces, extend it, or even sell it for money. 
 But you are not allowed to remove the MIT license clause 
 (just change my name to yours in the copyright row for modified code files), 
 and it comes "as-is" with no warranties at all.
