@@ -4,7 +4,7 @@
 # when using the udevil utility.
 ###( sleep 5 && sudo -u pi devmon ) &
 sleep 5
-sudo -u pi devmon
+sudo -u pi devmon &
 
 # Activate the virtual environment (venv) for Python.
 cd /home/pi/cloudedbats_wurb_2020

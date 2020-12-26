@@ -101,11 +101,12 @@ Make some configurations:
 
 Change this (example for Swedish users):
 
-- Password: chiroptera
-- Network options-Hostname: wurb 
-- Localisation Options-Timezone: Europe - Stockholm
-- Localisation Options-WLAN Country: SE
-- Advanced Options-Expand Filesystem.
+- System Options - Password: chiroptera
+- System Options - Hostname: wurb 
+- System Options - Network at boot: No 
+- Localisation Options - Timezone: Europe - Stockholm
+- Localisation Options - WLAN Country: SE
+- Advanced Options - Expand Filesystem.
 
 Reboot and reconnect. Remember to use the new password.:
 
@@ -144,7 +145,7 @@ When running the detector as a standalone unit and the Ethernet cable is not con
 the Raspberry Pi, then Internet is not available. 
 That's ok if you only want to control the detector. If you have to, for example, 
 upgrade the Raspberry Pi, then you must connect an Ethernet cable to it to reach Internet.
-For advanced users there are a wide range of opportunities to set up networks with 
+For advanced users there are many possible ways to set up networks with 
 multiple collaborating Raspberry Pi units.
 
 ### Install packages
@@ -158,13 +159,6 @@ Install software:
 
     sudo apt install git python3-venv python3-dev
     sudo apt install libportaudio2 libatlas-base-dev udevil
-    
-    ### Moved to requirements.txt:
-    ### sudo apt install python3-rpi.gpio
-    
-    # Rhythmbox is used to add and configure drivers for audio 
-    # feedback via headphones. Will maybe be replaced later.
-    sudo apt install rhythmbox
 
 ### Pettersson M500 (500kHz)
 
@@ -201,13 +195,11 @@ Please uninstall it if that's the case.
     sudo nano /etc/rc.local 
 
     # Add this before the "exit" row in rc.local:
-
     sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
 
-    sudo -u pi /home/pi/cloudedbats_wurb_2020/venv/bin/python3 /home/pi/cloudedbats_wurb_2020/wurb_rpi/control_via_rpi.py &
+And finally, set the headphone volume and restart the detector:
 
-And finally restart the detector:
-
+    amixer set 'Headphone' 100%
     sudo reboot
     
 ### Start problems
