@@ -1,0 +1,236 @@
+
+// Generic functions.
+function hideDivision(div_id) {
+  if (div_id != 'undefined') {
+    div_id.style.visibility = "hidden";
+    div_id.style.overflow = "hidden";
+    div_id.style.height = "0";
+    div_id.style.width = "0";
+  }
+};
+
+function showDivision(div_id) {
+  if (div_id != 'undefined') {
+    div_id.style.visibility = null;
+    div_id.style.overflow = null;
+    div_id.style.height = null;
+    div_id.style.width = null;
+  }
+};
+
+// For detector mode.
+function modeSelectOnChange(update_detector) {
+  let selected_value = detector_mode_select_id.options[detector_mode_select_id.selectedIndex].value
+  hideDivision(div_manual_triggering_id);
+  hideDivision(div_detector_power_off_id);
+  if (selected_value == "mode-off") {
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "mode-on") {
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "mode-auto") {
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "mode-manual") {
+    showDivision(div_manual_triggering_id);
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "mode-scheduler-on") {
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "mode-scheduler-auto") {
+    if (update_detector) {
+      saveSettings()
+    }
+  }
+  else if (selected_value == "load-user-default") {
+    getDefaultSettings()
+  }
+  else if (selected_value == "load-start-up") {
+    getDefaultSettings()
+  }
+  else if (selected_value == "load-factory-default") {
+    getDefaultSettings()
+  }
+  else if (selected_value == "detector-power-off") {
+    getManualLocation();
+    showDivision(div_detector_power_off_id);
+  }
+}
+
+// For the geographic location tile.
+function geoLocationSourceOnChange(update_detector) {
+  let selected_value = location_source_select_id.options[location_source_select_id.selectedIndex].value
+  location_button_text_id.innerHTML = "Save"
+  if (selected_value == "geo-not-used") {
+    latitude_dd_id.value = "0.0";
+    longitude_dd_id.value = "0.0";
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    location_button_id.disabled = true;
+    if (update_detector) {
+      saveLocationSource()
+    }
+  }
+  else if (selected_value == "geo-manual") {
+    getManualLocation();
+    location_button_text_id.innerHTML = "Save lat/long"
+    latitude_dd_id.disabled = false;
+    longitude_dd_id.disabled = false;
+    location_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
+  }
+  // Disabled, HTTPS is needed.
+  // else if (selected_value == "geo-client-gps") {
+  //   activateGeoLocation()
+  //   latitude_dd_id.disabled = true;
+  //   longitude_dd_id.disabled = true;
+  //   location_button_id.disabled = false;
+  //   if (update_detector) {
+  //     saveLocationSource()
+  //   }
+  // }
+  else if (selected_value == "geo-usb-gps") {
+    location_button_text_id.innerHTML = "Use as manually entered location"
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    location_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
+  }
+  else if (selected_value == "geo-auto-gps-or-manual") {
+    location_button_text_id.innerHTML = "Use as manually entered location"
+    latitude_dd_id.disabled = true;
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    location_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
+  }
+  else if (selected_value == "geo-auto-last-gps") {
+    location_button_text_id.innerHTML = "Use as manually entered location"
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    location_button_id.disabled = false;
+    if (update_detector) {
+      saveLocationSource()
+    }
+  }
+  else {
+    latitude_dd_id.disabled = true;
+    longitude_dd_id.disabled = true;
+    location_button_id.disabled = true;
+  }
+}
+
+// Disabled, HTTPS is needed.
+// function activateGeoLocation() {
+//   if (navigator.geolocation) {
+//     navigator.geolocation.getCurrentPosition(showPosition, errorCallback, { timeout: 10000 });
+//     // navigator.geolocation.getCurrentPosition(showLocation);
+//     // navigator.geolocation.watchPosition(showLocation);
+//     // navigator.geolocation.clearWatch(showLocation);
+//   } else {
+//     alert(`Geo location from client:\nNot supported by this browser.`);
+//   };
+// };
+// function showPosition(location) {
+//   latitude_id.value = location.coords.latitude;
+//   longitude_id.value = location.coords.longitude;
+// };
+// function errorCallback(error) {
+//   alert(`Geo location from client:\nERROR(${error.code}): ${error.message}`);
+// };
+
+// Used for the main tabs in the settings tile.
+function hideShowSettingsTabs(tab_name) {
+  tab_settings_basic_id.classList.remove("is-active");
+  tab_settings_more_id.classList.remove("is-active");
+  tab_settings_scheduler_id.classList.remove("is-active");
+  hideDivision(div_settings_basic_id)
+  hideDivision(div_settings_more_id)
+  hideDivision(div_settings_scheduler_id)
+
+  if (tab_name == "basic") {
+    tab_settings_basic_id.classList.add("is-active");
+    showDivision(div_settings_basic_id)
+  } else if (tab_name == "more") {
+    tab_settings_more_id.classList.add("is-active");
+    showDivision(div_settings_more_id)
+  } else if (tab_name == "scheduler") {
+    tab_settings_scheduler_id.classList.add("is-active");
+    showDivision(div_settings_scheduler_id)
+  };
+};
+// Functions used to updates fields based on response contents.
+function updateStatus(status) {
+  detector_status_id.innerHTML = status.rec_status;
+  // rec_info_id.innerHTML = status.device_name;
+  detector_time_id.innerHTML = status.detector_time;
+  location_status_id.innerHTML = status.location_status;
+}
+
+function updateLocation(location) {
+  location_source_select_id.value = location.geo_source_option
+  if (location.geo_source_option == "geo-manual") {
+    latitude_dd_id.value = location.manual_latitude_dd
+    longitude_dd_id.value = location.manual_longitude_dd
+  } else {
+    latitude_dd_id.value = location.latitude_dd
+    longitude_dd_id.value = location.longitude_dd
+  }
+  // Check geolocation:
+  geoLocationSourceOnChange(update_detector = false);
+}
+
+function updateLatLong(latlong) {
+  latitude_dd_id.value = latlong.latitude_dd
+  longitude_dd_id.value = latlong.longitude_dd
+}
+
+function updateSettings(settings) {
+
+  last_used_settings = settings
+
+  detector_mode_select_id.value = settings.rec_mode
+  settings_filename_prefix_id.value = settings.filename_prefix
+  settings_detection_limit_id.value = settings.detection_limit
+  settings_detection_sensitivity_id.value = settings.detection_sensitivity
+  settings_file_directory_id.value = settings.file_directory
+  settings_detection_algorithm_id.value = settings.detection_algorithm
+  settings_rec_length_id.value = settings.rec_length_s
+  settings_rec_type_id.value = settings.rec_type
+  settings_scheduler_start_event_id.value = settings.scheduler_start_event
+  settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
+  settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
+  settings_scheduler_stop_adjust_id.value = settings.scheduler_stop_adjust
+  settings_scheduler_post_action_id.value = settings.scheduler_post_action
+  settings_scheduler_post_action_delay_id.value = settings.scheduler_post_action_delay
+
+  modeSelectOnChange(update_detector=false)
+}
+
+function updateLogTable(log_rows) {
+  html_table_rows = ""
+  for (row_index in log_rows) {
+    html_table_rows += "<tr><td>"
+    html_table_rows += log_rows[row_index]
+    html_table_rows += "</tr></td>"
+  }
+  document.getElementById("detector_log_table_id").innerHTML = html_table_rows
+}

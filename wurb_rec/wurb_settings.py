@@ -39,8 +39,8 @@ class WurbSettings(object):
     def define_default_settings(self):
         """ """
         self.default_settings = {
-            "rec_mode": "rec-mode-manual",
-            "file_directory": "recorded_files",
+            "rec_mode": "mode-off",
+            "file_directory": "Station-1",
             "filename_prefix": "wurb",
             "detection_limit": "17.0",
             "detection_sensitivity": "-50",
