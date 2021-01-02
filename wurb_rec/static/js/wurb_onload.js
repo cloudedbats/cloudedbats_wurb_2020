@@ -3,6 +3,8 @@ window.onload = function () {
 
   define_global_variables()
 
+  audio_feedback_sliders()
+
   // Update stored location and settings.
   getLocation()
   getSettings()

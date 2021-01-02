@@ -61,13 +61,13 @@ async function saveLocation() {
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
-    if (location_source_select_id.value == "geo-usb-gps") {
+    if (location_source_select_id.value == "geo-gps") {
       location["geo_source_option"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
-    if (location_source_select_id.value == "geo-usb-gps") {
-      location["geo_source_option"] = "geo-auto-gps-or-manual"
+    if (location_source_select_id.value == "geo-auto-gps-or-manual") {
+      location["geo_source_option"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
@@ -125,14 +125,19 @@ async function setDetectorTime() {
 async function saveSettings() {
   try {
     let settings = {
+
       rec_mode: detector_mode_select_id.value,
-      filename_prefix: settings_filename_prefix_id.value,
-      detection_limit: settings_detection_limit_id.value,
-      detection_sensitivity: settings_detection_sensitivity_id.value,
       file_directory: settings_file_directory_id.value,
+      date_in_file_directory: settings_date_in_dirname.value,
+      filename_prefix: settings_filename_prefix_id.value,
+      detection_limit_khz: settings_detection_limit_id.value,
+      detection_sensitivity_dbfs: settings_detection_sensitivity_id.value,
       detection_algorithm: settings_detection_algorithm_id.value,
       rec_length_s: settings_rec_length_id.value,
       rec_type: settings_rec_type_id.value,
+      feedback_filter_low_khz: settings_feedback_filter_low_id.value,
+      feedback_filter_high_khz: settings_feedback_filter_high_id.value,
+      startup_option: settings_startup_option_id.value,
       scheduler_start_event: settings_scheduler_start_event_id.value,
       scheduler_start_adjust: settings_scheduler_start_adjust_id.value,
       scheduler_stop_event: settings_scheduler_stop_event_id.value,
@@ -173,6 +178,17 @@ async function getDefaultSettings() {
   };
 };
 
+async function set_audio_feedback() {
+  try {
+    alert("Not implemented...");
+    //       let url_string = `/set_audio_feedback/`;
+    //       await fetch(url_string);
+  } catch (err) {
+    alert(`ERROR manualTrigger: ${err}`);
+    console.log(err);
+  };
+};
+
 async function manualTrigger() {
   try {
     alert("Not implemented...");
@@ -187,38 +203,19 @@ async function manualTrigger() {
 async function raspberryPiControl(command) {
   try {
     if (command == "rpi_cancel") {
-
-
       detector_mode_select_id.value = last_used_settings.rec_mode
-      modeSelectOnChange(update_detector=true)
-
-
-    // // if (command == "rpi_clear_sd") {
-    // //   showDivision(div_settings_clear_sd_confirm_id)
-    // // } else {
-    // //   hideDivision(div_settings_clear_sd_confirm_id)
-    // //   if (command != "rpi_clear_sd") { // 
-    // //     let url_string = `/rpi-control/?command=${command}`;
-    // //     await fetch(url_string);
-    // //   }
-    // // }
-    // if (command == "rpi_sw_update_dialog") {
-    //   showDivision(div_settings_software_update_id)
+      modeSelectOnChange(update_detector = true)
     } else {
-      // hideDivision(div_settings_software_update_id)
-      if (command != "rpi_sw_update_dialog") {
-        if (command != "rpi_sw_update_cancel") {
-          let url_string = `/rpi-control/?command=${command}`;
-          await fetch(url_string);
-        }
-      }
+      detector_mode_select_id.value = last_used_settings.rec_mode
+      modeSelectOnChange(update_detector = true)
+      let url_string = `/rpi-control/?command=${command}`;
+      await fetch(url_string);
     }
   } catch (err) {
     alert(`ERROR raspberryPiControl: ${err}`);
     console.log(err);
   };
 };
-
 
 function startWebsocket(ws_url) {
   // let ws = new WebSocket("ws://localhost:8000/ws");

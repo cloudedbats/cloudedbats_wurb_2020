@@ -84,8 +84,8 @@ class SoundDetectionSimple(SoundDetectionBase):
     def config(self):
         """ """
         sampling_freq = self.wurb_recorder.sampling_freq_hz
-        filter_min_khz = self.wurb_settings.get_setting("detection_limit")
-        threshold_dbfs = self.wurb_settings.get_setting("detection_sensitivity")
+        filter_min_khz = self.wurb_settings.get_setting("detection_limit_khz")
+        threshold_dbfs = self.wurb_settings.get_setting("detection_sensitivity_dbfs")
 
         self.sampling_freq = float(sampling_freq)
         self.filter_min_hz = float(filter_min_khz) * 1000.0

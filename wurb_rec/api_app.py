@@ -38,14 +38,33 @@ class LocationSettings(BaseModel):
 
 
 class DetectorSettings(BaseModel):
+    # rec_mode: str = None
+    # file_directory: str = None
+    # filename_prefix: str = None
+    # detection_limit_khz: float = None
+    # detection_sensitivity_dbfs: float = None
+    # detection_algorithm: str = None
+    # rec_length_s: str = None
+    # rec_type: str = None
+    # scheduler_start_event: str = None
+    # scheduler_start_adjust: float = None
+    # scheduler_stop_event: str = None
+    # scheduler_stop_adjust: float = None
+    # scheduler_post_action: str = None
+    # scheduler_post_action_delay: float = None
+
     rec_mode: str = None
     file_directory: str = None
+    date_in_file_directory: str = None
     filename_prefix: str = None
-    detection_limit: float = None
-    detection_sensitivity: float = None
+    detection_limit_khz: float = None
+    detection_sensitivity_dbfs: float = None
     detection_algorithm: str = None
     rec_length_s: str = None
     rec_type: str = None
+    feedback_filter_low_khz: float = None
+    feedback_filter_high_khz: float = None
+    startup_option: str = None
     scheduler_start_event: str = None
     scheduler_start_adjust: float = None
     scheduler_stop_event: str = None

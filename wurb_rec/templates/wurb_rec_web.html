@@ -16,10 +16,10 @@
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', path='css/wurb_slider.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0017') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0017') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0017') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0017') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0022') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0022') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0022') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0022') }}"></script>
 </head>
 
 <body>
@@ -167,7 +167,7 @@
                                                     <option value="geo-manual">Manually entered location</option>
                                                     <!-- <option value="geo-client-gps">Location from client unit -->
                                                     <!-- </option> -->
-                                                    <option value="geo-usb-gps">USB GPS receiver
+                                                    <option value="geo-gps">USB GPS receiver
                                                     <option value="geo-auto-gps-or-manual">Automatic (GPS or manually
                                                         entered)
                                                     </option>
@@ -269,7 +269,7 @@
                             </div>
                             <div class="field">
                                 <div class="field-label is-normal has-text-left">
-                                    <label class="label">Audio&nbsp;feedback&nbsp;-&nbsp;pitch&nbsp;shifting&nbsp;
+                                    <label class="label">Audio&nbsp;feedback&nbsp;-&nbsp;pitch&nbsp;
                                         <span id="feedback_pitch_id"></span>
                                     </label>
                                 </div>
@@ -277,35 +277,13 @@
                                     <div class="field">
                                         <div class="control">
                                             <div class="slidecontainer">
-                                                <input type="range" min="10" max="50" value="10" class="slider"
+                                                <input type="range" min="10" max="50" value="30" class="slider"
                                                     id="feedback_pitch_slider_id">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Javascript for sliders.  -->
-                            <script>
-                                // Update slider values.
-                                feedback_volume_id.innerHTML = "[" + feedback_volume_slider_id.value + "%]";
-                                feedback_pitch_id.innerHTML = "[divided " + feedback_pitch_slider_id.value + " times]";
-                                // On changes.
-                                feedback_volume_slider_id.oninput = function () {
-                                    feedback_volume_id.innerHTML = "[" + this.value + "%]";
-                                }
-                                feedback_volume_slider_id.onchange = function () {
-                                    // Send to server.
-                                    feedback_volume_id.innerHTML = "[" + this.value + "%]";
-                                }
-                                feedback_pitch_slider_id.oninput = function () {
-                                    feedback_pitch_id.innerHTML = "[divided " + this.value + " times]";
-                                }
-                                feedback_pitch_slider_id.onchange = function () {
-                                    // Send to server.
-                                    feedback_pitch_id.innerHTML = "[divided " + this.value + " times]";
-                                }
-                            </script>
-
                             <div class="tabs is-fullwidth is-medium">
                                 <ul>
                                     <li id="tab_settings_basic_id" class="is-active"
@@ -342,7 +320,7 @@
                                 </div>
                                 <div class="field is-narrow">
                                     <label
-                                        class="label">Automatic&nbsp;date&nbsp;in&nbsp;directory&nbsp;name&nbsp;(ISO-format)</label>
+                                        class="label">Automatic&nbsp;date&nbsp;in&nbsp;directory&nbsp;name</label>
                                     <div class="control is-narrow">
                                         <div class="select is-narrow">
                                             <select id="settings_date_in_dirname">
@@ -407,8 +385,6 @@
                                         The value -60 gives more files and -40 less.
                                     </p>
                                 </div>
-
-
                             </div>
 
                             <!-- Settings: Tab - More. -->
@@ -478,6 +454,9 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <p class="help is-info">
+                                        Mainly used to remove low frequency noise.
+                                    </p>
                                 </div>
                                 <div class="field">
                                     <div class="field-label label is-normal has-text-left">
@@ -500,9 +479,9 @@
                                         <div class="control">
                                             <div class="select">
                                                 <select id="settings_startup_option_id">
-                                                    <option value="startup-1">Start-up with same settings as last
+                                                    <option value="as-last-session">Start-up with same settings as last
                                                         session</option>
-                                                    <option value="startup-2">Start-up with "Start-up" settings
+                                                    <option value="startup-settings">Start-up with "Start-up" settings
                                                     </option>
                                                 </select>
                                             </div>
@@ -516,7 +495,7 @@
                                     <div class="field-body">
                                         <div class="control">
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="saveUser saveUserDefaultSettings()">
+                                                onclick="saveUserDefaultSettings()">
                                                 Save as "User default"
                                             </button>
                                             <button style="margin:5px;" class="button is-info is-rounded is-small"

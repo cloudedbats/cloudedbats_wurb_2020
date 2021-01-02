@@ -39,14 +39,33 @@ class WurbSettings(object):
     def define_default_settings(self):
         """ """
         self.default_settings = {
+        #     "rec_mode": "mode-off",
+        #     "file_directory": "Station-1",
+        #     "filename_prefix": "wurb",
+        #     "detection_limit": "17.0",
+        #     "detection_sensitivity": "-50",
+        #     "detection_algorithm": "detection-simple",
+        #     "rec_length_s": "6",
+        #     "rec_type": "FS",
+        #     "scheduler_start_event": "on-sunset",
+        #     "scheduler_start_adjust": "-15",
+        #     "scheduler_stop_event": "off-sunrise",
+        #     "scheduler_stop_adjust": "15",
+        #     "scheduler_post_action": "post-none",
+        #     "scheduler_post_action_delay": "5",
+        # }
             "rec_mode": "mode-off",
             "file_directory": "Station-1",
+            "date_in_file_directory": "",
             "filename_prefix": "wurb",
-            "detection_limit": "17.0",
-            "detection_sensitivity": "-50",
+            "detection_limit_khz": "17.0",
+            "detection_sensitivity_dbfs": "-50",
             "detection_algorithm": "detection-simple",
             "rec_length_s": "6",
             "rec_type": "FS",
+            "feedback_filter_low_khz": "15",
+            "feedback_filter_high_khz": "150",
+            "startup_option": "as-last-session",
             "scheduler_start_event": "on-sunset",
             "scheduler_start_adjust": "-15",
             "scheduler_stop_event": "off-sunrise",
@@ -54,6 +73,7 @@ class WurbSettings(object):
             "scheduler_post_action": "post-none",
             "scheduler_post_action_delay": "5",
         }
+
 
     def define_default_location(self):
         """ """
@@ -63,12 +83,14 @@ class WurbSettings(object):
             "longitude_dd": "0.0",
             "manual_latitude_dd": "0.0",
             "manual_longitude_dd": "0.0",
+            "last_gps_latitude_dd": "0.0",
+            "last_gps_longitude_dd": "0.0",
         }
 
     async def startup(self):
         """ """
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        if self.current_location["geo_source_option"] == "geo-gps":
             await self.save_latlong(0.0, 0.0)
             await self.wurb_manager.wurb_gps.startup()
         else:
@@ -160,7 +182,7 @@ class WurbSettings(object):
                 "manual_longitude_dd"
             ]
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        if self.current_location["geo_source_option"] == "geo-gps":
             self.current_location["latitude_dd"] = 0.0
             self.current_location["longitude_dd"] = 0.0
 
@@ -172,7 +194,7 @@ class WurbSettings(object):
             old_location_event.set()
 
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        if self.current_location["geo_source_option"] == "geo-gps":
             await self.wurb_manager.wurb_gps.startup()
         else:
             await self.wurb_manager.wurb_gps.shutdown()

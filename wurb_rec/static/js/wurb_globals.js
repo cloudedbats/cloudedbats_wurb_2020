@@ -54,5 +54,6 @@ function define_global_variables() {
   const feedback_pitch_slider_id = document.getElementById("feedback_pitch_slider_id");
   const feedback_pitch_id = document.getElementById("feedback_pitch_id");
 
+  // Used to save last used settings.
   var last_used_settings;
 };

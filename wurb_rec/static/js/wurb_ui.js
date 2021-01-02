@@ -64,7 +64,6 @@ function modeSelectOnChange(update_detector) {
     getDefaultSettings()
   }
   else if (selected_value == "detector-power-off") {
-    getManualLocation();
     showDivision(div_detector_power_off_id);
   }
 }
@@ -103,8 +102,8 @@ function geoLocationSourceOnChange(update_detector) {
   //     saveLocationSource()
   //   }
   // }
-  else if (selected_value == "geo-usb-gps") {
-    location_button_text_id.innerHTML = "Use as manually entered location"
+  else if (selected_value == "geo-gps") {
+    location_button_text_id.innerHTML = "Use as manually entered"
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
     location_button_id.disabled = false;
@@ -113,7 +112,7 @@ function geoLocationSourceOnChange(update_detector) {
     }
   }
   else if (selected_value == "geo-auto-gps-or-manual") {
-    location_button_text_id.innerHTML = "Use as manually entered location"
+    location_button_text_id.innerHTML = "Use as manually entered"
     latitude_dd_id.disabled = true;
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
@@ -123,7 +122,7 @@ function geoLocationSourceOnChange(update_detector) {
     }
   }
   else if (selected_value == "geo-auto-last-gps") {
-    location_button_text_id.innerHTML = "Use as manually entered location"
+    location_button_text_id.innerHTML = "Use as manually entered"
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
     location_button_id.disabled = false;
@@ -157,6 +156,29 @@ function geoLocationSourceOnChange(update_detector) {
 //   alert(`Geo location from client:\nERROR(${error.code}): ${error.message}`);
 // };
 
+function audio_feedback_sliders() {
+  // Update slider values.
+  feedback_volume_id.innerHTML = "[" + feedback_volume_slider_id.value + "%]";
+  feedback_pitch_id.innerHTML = "[1/" + feedback_pitch_slider_id.value + "]";
+  // On changes.
+  feedback_volume_slider_id.oninput = function () {
+    feedback_volume_id.innerHTML = "[" + this.value + "%]";
+  }
+  feedback_volume_slider_id.onchange = function () {
+    // Send to server.
+    feedback_volume_id.innerHTML = "[" + this.value + "%]";
+    set_audio_feedback()
+  }
+  feedback_pitch_slider_id.oninput = function () {
+    feedback_pitch_id.innerHTML = "[1/" + this.value + "]";
+  }
+  feedback_pitch_slider_id.onchange = function () {
+    // Send to server.
+    feedback_pitch_id.innerHTML = "[1/" + this.value + "]";
+    set_audio_feedback()
+  }
+}
+
 // Used for the main tabs in the settings tile.
 function hideShowSettingsTabs(tab_name) {
   tab_settings_basic_id.classList.remove("is-active");
@@ -180,7 +202,10 @@ function hideShowSettingsTabs(tab_name) {
 // Functions used to updates fields based on response contents.
 function updateStatus(status) {
   detector_status_id.innerHTML = status.rec_status;
+
   // rec_info_id.innerHTML = status.device_name;
+  detector_status_id.innerHTML = status.device_name;
+  
   detector_time_id.innerHTML = status.detector_time;
   location_status_id.innerHTML = status.location_status;
 }
@@ -208,13 +233,17 @@ function updateSettings(settings) {
   last_used_settings = settings
 
   detector_mode_select_id.value = settings.rec_mode
-  settings_filename_prefix_id.value = settings.filename_prefix
-  settings_detection_limit_id.value = settings.detection_limit
-  settings_detection_sensitivity_id.value = settings.detection_sensitivity
   settings_file_directory_id.value = settings.file_directory
+  settings_date_in_dirname.value = settings.date_in_file_directory
+  settings_filename_prefix_id.value = settings.filename_prefix
+  settings_detection_limit_id.value = settings.detection_limit_khz
+  settings_detection_sensitivity_id.value = settings.detection_sensitivity_dbfs
   settings_detection_algorithm_id.value = settings.detection_algorithm
   settings_rec_length_id.value = settings.rec_length_s
   settings_rec_type_id.value = settings.rec_type
+  settings_feedback_filter_low_id.value = settings.feedback_filter_low_khz
+  settings_feedback_filter_high_id.value = settings.feedback_filter_high_khz
+  settings_startup_option_id.value = settings.startup_option
   settings_scheduler_start_event_id.value = settings.scheduler_start_event
   settings_scheduler_start_adjust_id.value = settings.scheduler_start_adjust
   settings_scheduler_stop_event_id.value = settings.scheduler_stop_event
