@@ -2,8 +2,8 @@
 async function startRecording() {
   try {
     document.getElementById("detector_status_id").innerHTML = "Waiting...";
-    // Save settings before recording starts.
-    saveSettings()
+    // // Save settings before recording starts.
+    // saveSettings()
     await fetch('/start-rec/');
   } catch (err) {
     alert(`ERROR startRecording: ${err}`);
@@ -178,22 +178,22 @@ async function getDefaultSettings() {
   };
 };
 
-async function set_audio_feedback() {
+async function setAudioFeedback() {
   try {
-    alert("Not implemented...");
-    //       let url_string = `/set_audio_feedback/`;
-    //       await fetch(url_string);
+    let volume = feedback_volume_slider_id.value;
+    let pitch = feedback_pitch_slider_id.value;
+    let url_string = `/set-audio-feedback/?volume=${volume}&pitch=${pitch}`;
+    await fetch(url_string);
   } catch (err) {
-    alert(`ERROR manualTrigger: ${err}`);
+    alert(`ERROR setAudioFeedback: ${err}`);
     console.log(err);
   };
 };
 
 async function manualTrigger() {
   try {
-    alert("Not implemented...");
-    //       let url_string = `/rec-manual-trigger/`;
-    //       await fetch(url_string);
+    let url_string = `/rec-manual-trigger/`;
+    await fetch(url_string);
   } catch (err) {
     alert(`ERROR manualTrigger: ${err}`);
     console.log(err);

@@ -33,8 +33,8 @@ class WurbPitchShifting(object):
         """ """
         self.device_name = None
         self.sampling_freq_in = None
-        self.pitch_div_factor = None
-        self.volume = None
+        self.pitch_div_factor = 30
+        self.volume = 0.75
         self.filter_low_limit_hz = None
         self.filter_high_limit_hz = None
         self.filter_order = None
@@ -48,6 +48,17 @@ class WurbPitchShifting(object):
         self.to_outbuffer_limit = None
         self.out_buffer = None
 
+    async def set_volume(self, volume):
+        """ """
+        self.volume = 0.5 + (int(volume) / 100.0)
+
+    async def set_pitch_factor(self, pitch_factor):
+        """ """
+        self.pitch_div_factor = int(pitch_factor)
+        await self.shutdown()
+        await self.setup()
+        await self.startup()
+
     def is_audio_feedback_active(self):
         """ """
         return self.audio_callback_active
@@ -56,8 +67,8 @@ class WurbPitchShifting(object):
         self,
         device_name="Headphones",  # RPi 3.5mm connection when using rhythmbox.
         sampling_freq=384000,
-        pitch_div_factor=10,
-        volume=1.0,
+        # pitch_div_factor=10,
+        # volume=1.0,
         filter_low_limit_hz=15000,
         filter_high_limit_hz=120000,
         filter_order=10,
@@ -67,23 +78,23 @@ class WurbPitchShifting(object):
         try:
             self.device_name = device_name
             self.sampling_freq_in = sampling_freq
-            self.pitch_div_factor = pitch_div_factor
-            self.volume = volume
+            # self.pitch_div_factor = pitch_div_factor
+            # self.volume = volume
             self.filter_low_limit_hz = filter_low_limit_hz
             self.filter_high_limit_hz = filter_high_limit_hz
             self.filter_order = filter_order
             self.max_buffer_size_s = max_buffer_size_s
             # Calculated parameters.
-            self.sampling_freq_out = int(self.sampling_freq_in / pitch_div_factor)
-            self.hop_out_length = int(self.sampling_freq_in / 1000 / pitch_div_factor)
-            self.hop_in_length = int(self.hop_out_length * pitch_div_factor)
+            self.sampling_freq_out = int(self.sampling_freq_in / self.pitch_div_factor)
+            self.hop_out_length = int(self.sampling_freq_in / 1000 / self.pitch_div_factor)
+            self.hop_in_length = int(self.hop_out_length * self.pitch_div_factor)
             # Buffers.
             buffer_in_overlap_factor = 1.5
             kaiser_beta = int(self.pitch_div_factor * 0.8)
             self.window_size = int(self.hop_in_length * buffer_in_overlap_factor)
             self.window_function = numpy.kaiser(self.window_size, beta=kaiser_beta)
             self.in_buffer = numpy.array([], dtype=numpy.float32)
-            pitchshifting_buffer_length = int(self.sampling_freq_out / pitch_div_factor)
+            pitchshifting_buffer_length = int(self.sampling_freq_out / self.pitch_div_factor)
             self.pitchshifting_buffer = numpy.zeros(
                 pitchshifting_buffer_length, dtype=numpy.float32
             )  # 1 sec buffer length.
@@ -240,8 +251,8 @@ async def main():
                 # device_name="Headphones",  # RPi 3.5mm connection when using rhythmbox.
                 device_name="Built-in Output",  # For test on Mac.
                 sampling_freq=fs,
-                pitch_div_factor=10,
-                volume=1.0,
+                # pitch_div_factor=10,
+                # volume=1.0,
                 # filter_low_limit_hz=15000,
                 # filter_high_limit_hz=120000,
             )

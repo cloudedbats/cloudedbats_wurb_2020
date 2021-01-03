@@ -213,3 +213,7 @@ class WurbRecManager(object):
             # Logging error.
             message = "Manager update status terminated."
             self.wurb_logging.debug(message=message)
+
+    async def manual_trigger(self):
+        """ """
+        print("TODO: manual_trigger")

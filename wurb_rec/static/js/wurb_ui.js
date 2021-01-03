@@ -24,6 +24,7 @@ function modeSelectOnChange(update_detector) {
   hideDivision(div_manual_triggering_id);
   hideDivision(div_detector_power_off_id);
   if (selected_value == "mode-off") {
+    stopRecording()
     if (update_detector) {
       saveSettings()
     }
@@ -32,35 +33,43 @@ function modeSelectOnChange(update_detector) {
     if (update_detector) {
       saveSettings()
     }
+    startRecording()
   }
   else if (selected_value == "mode-auto") {
     if (update_detector) {
       saveSettings()
     }
+    startRecording()
   }
   else if (selected_value == "mode-manual") {
     showDivision(div_manual_triggering_id);
     if (update_detector) {
       saveSettings()
     }
+    startRecording()
   }
   else if (selected_value == "mode-scheduler-on") {
+    stopRecording()
     if (update_detector) {
       saveSettings()
     }
   }
   else if (selected_value == "mode-scheduler-auto") {
+    stopRecording()
     if (update_detector) {
       saveSettings()
     }
   }
   else if (selected_value == "load-user-default") {
+    stopRecording()
     getDefaultSettings()
   }
   else if (selected_value == "load-start-up") {
+    stopRecording()
     getDefaultSettings()
   }
   else if (selected_value == "load-factory-default") {
+    stopRecording()
     getDefaultSettings()
   }
   else if (selected_value == "detector-power-off") {
@@ -156,7 +165,7 @@ function geoLocationSourceOnChange(update_detector) {
 //   alert(`Geo location from client:\nERROR(${error.code}): ${error.message}`);
 // };
 
-function audio_feedback_sliders() {
+function audioFeedbackSliders() {
   // Update slider values.
   feedback_volume_id.innerHTML = "[" + feedback_volume_slider_id.value + "%]";
   feedback_pitch_id.innerHTML = "[1/" + feedback_pitch_slider_id.value + "]";
@@ -167,7 +176,7 @@ function audio_feedback_sliders() {
   feedback_volume_slider_id.onchange = function () {
     // Send to server.
     feedback_volume_id.innerHTML = "[" + this.value + "%]";
-    set_audio_feedback()
+    setAudioFeedback()
   }
   feedback_pitch_slider_id.oninput = function () {
     feedback_pitch_id.innerHTML = "[1/" + this.value + "]";
@@ -175,7 +184,7 @@ function audio_feedback_sliders() {
   feedback_pitch_slider_id.onchange = function () {
     // Send to server.
     feedback_pitch_id.innerHTML = "[1/" + this.value + "]";
-    set_audio_feedback()
+    setAudioFeedback()
   }
 }
 

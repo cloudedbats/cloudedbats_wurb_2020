@@ -268,6 +268,35 @@ async def rpi_control(command: str):
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
 
 
+@app.get("/rec-manual-trigger/")
+async def rec_manual_trigger():
+    try:
+        global wurb_rec_manager
+        # Logging debug.
+        message = "API called: manual-trigger."
+        wurb_rec_manager.wurb_logging.debug(message=message)
+        await wurb_rec_manager.manual_trigger()
+    except Exception as e:
+        # Logging error.
+        message = "Called: rec_manual_trigger: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+
+
+@app.get("/set-audio-feedback/")
+async def set_audio_feedback(volume: str, pitch: str):
+    try:
+        global wurb_rec_manager
+        # Logging debug.
+        message = "API called: set-audio-feedback."
+        wurb_rec_manager.wurb_logging.debug(message=message)
+        await wurb_rec_manager.wurb_audiofeedback.set_volume(volume)
+        await wurb_rec_manager.wurb_audiofeedback.set_pitch_factor(pitch)
+    except Exception as e:
+        # Logging error.
+        message = "Called: set_audio_feedback: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: fastapi.WebSocket):
     try:
