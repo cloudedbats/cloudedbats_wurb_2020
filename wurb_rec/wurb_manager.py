@@ -34,6 +34,7 @@ class WurbRecManager(object):
             self.wurb_gps = None
             self.wurb_scheduler = None
             self.wurb_audiofeedback = None
+            self.manual_trigger_activated = False
 
         except Exception as e:
             print("Exception: ", e)
@@ -54,6 +55,7 @@ class WurbRecManager(object):
             await self.wurb_settings.startup()
             # await self.wurb_scheduler.startup()
             # await self.wurb_audiofeedback.startup()
+            self.manual_trigger_activated = False
             # Logging.
             message = "Detector started."
             self.wurb_logging.info(message, short_message=message)
@@ -107,6 +109,7 @@ class WurbRecManager(object):
                 await self.wurb_audiofeedback.startup()
                 await self.wurb_audiofeedback.setup(sampling_freq=sampling_freq_hz)
                 # Rec.
+                self.manual_trigger_activated = False
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
@@ -216,4 +219,9 @@ class WurbRecManager(object):
 
     async def manual_trigger(self):
         """ """
-        print("TODO: manual_trigger")
+        # Will be checked and resetted in wurb_sound_detection.py
+        self.manual_trigger_activated = True
+        # Logging.
+        message = "Manually triggered."
+        self.wurb_logging.info(message, short_message=message)
+

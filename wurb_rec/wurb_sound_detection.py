@@ -53,6 +53,19 @@ class SoundDetectionBase:
         # Returns "is sound", "freq. at peak", "dBFS at peak".
         return True, None, None  # Should be overridden.
 
+    def manual_triggering_check(self, sound_detected):
+        """ """
+        rec_mode = self.wurb_settings.get_setting("rec_mode")
+        if rec_mode == "mode-manual":
+            if self.wurb_manager.manual_trigger_activated:
+                # Reset value.
+                self.wurb_manager.manual_trigger_activated = False
+                return True
+            else:
+                return False
+        else:
+            return sound_detected
+
 
 class SoundDetectionNone(SoundDetectionBase):
     """ Used for continuous recordings, including silence. """
@@ -67,9 +80,11 @@ class SoundDetectionNone(SoundDetectionBase):
 
     def check_for_sound(self, time_and_data):
         """ """
-        # Always true.
+        # Always true, except when running in manual triggering mode.
         # Returns "is sound", "freq. at peak", "dBFS at peak".
-        return (True, None, None) 
+        sound_detected = True
+        sound_detected = self.manual_triggering_check(sound_detected)
+        return (sound_detected, None, None)
 
 
 class SoundDetectionSimple(SoundDetectionBase):
@@ -175,5 +190,8 @@ class SoundDetectionSimple(SoundDetectionBase):
             #
         except Exception as e:
             print("DEBUG: xception in check_for_sound: ", e)
+
+        # Check if running in manual triggering mode.
+        sound_detected = self.manual_triggering_check(sound_detected)
 
         return sound_detected, peak_frequency_hz, peak_dbfs_at_max
