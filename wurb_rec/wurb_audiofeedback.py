@@ -33,8 +33,8 @@ class WurbPitchShifting(object):
         """ """
         self.device_name = None
         self.sampling_freq_in = None
-        self.pitch_div_factor = 30
-        self.volume = 0.75
+        self.pitch_div_factor = 10
+        self.volume = 1.0
         self.filter_low_limit_hz = None
         self.filter_high_limit_hz = None
         self.filter_order = None
@@ -50,7 +50,7 @@ class WurbPitchShifting(object):
 
     async def set_volume(self, volume):
         """ """
-        self.volume = 0.5 + (int(volume) / 100.0)
+        self.volume = (int(volume) / 100.0) * 2.0
 
     async def set_pitch_factor(self, pitch_factor):
         """ """
@@ -70,7 +70,7 @@ class WurbPitchShifting(object):
         # pitch_div_factor=10,
         # volume=1.0,
         filter_low_limit_hz=15000,
-        filter_high_limit_hz=120000,
+        filter_high_limit_hz=150000,
         filter_order=10,
         max_buffer_size_s=0.5,
     ):
