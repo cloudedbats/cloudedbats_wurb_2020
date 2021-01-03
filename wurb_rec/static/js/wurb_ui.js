@@ -24,7 +24,7 @@ function modeSelectOnChange(update_detector) {
   hideDivision(div_manual_triggering_id);
   hideDivision(div_detector_power_off_id);
   if (selected_value == "mode-off") {
-    stopRecording()
+    // stopRecording()
     if (update_detector) {
       saveSettings()
     }
@@ -33,29 +33,29 @@ function modeSelectOnChange(update_detector) {
     if (update_detector) {
       saveSettings()
     }
-    startRecording()
+    // startRecording()
   }
   else if (selected_value == "mode-auto") {
     if (update_detector) {
       saveSettings()
     }
-    startRecording()
+    // startRecording()
   }
   else if (selected_value == "mode-manual") {
     showDivision(div_manual_triggering_id);
     if (update_detector) {
       saveSettings()
     }
-    startRecording()
+    // startRecording()
   }
   else if (selected_value == "mode-scheduler-on") {
-    stopRecording()
+    // stopRecording()
     if (update_detector) {
       saveSettings()
     }
   }
   else if (selected_value == "mode-scheduler-auto") {
-    stopRecording()
+    // stopRecording()
     if (update_detector) {
       saveSettings()
     }

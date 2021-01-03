@@ -56,6 +56,10 @@ class SoundDetectionBase:
     def manual_triggering_check(self, sound_detected):
         """ """
         rec_mode = self.wurb_settings.get_setting("rec_mode")
+        # Check if "record everyting" mode.
+        if rec_mode in ["mode-on", "mode-scheduler-on"]:
+            return True
+        # Check manual mode triggering.
         if rec_mode == "mode-manual":
             if self.wurb_manager.manual_trigger_activated:
                 # Reset value.

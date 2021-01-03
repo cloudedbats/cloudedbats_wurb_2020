@@ -39,21 +39,6 @@ class WurbSettings(object):
     def define_default_settings(self):
         """ """
         self.default_settings = {
-        #     "rec_mode": "mode-off",
-        #     "file_directory": "Station-1",
-        #     "filename_prefix": "wurb",
-        #     "detection_limit": "17.0",
-        #     "detection_sensitivity": "-50",
-        #     "detection_algorithm": "detection-simple",
-        #     "rec_length_s": "6",
-        #     "rec_type": "FS",
-        #     "scheduler_start_event": "on-sunset",
-        #     "scheduler_start_adjust": "-15",
-        #     "scheduler_stop_event": "off-sunrise",
-        #     "scheduler_stop_adjust": "15",
-        #     "scheduler_post_action": "post-none",
-        #     "scheduler_post_action_delay": "5",
-        # }
             "rec_mode": "mode-off",
             "file_directory": "Station-1",
             "date_in_file_directory": "date-post-before",
@@ -73,7 +58,6 @@ class WurbSettings(object):
             "scheduler_post_action": "post-none",
             "scheduler_post_action_delay": "5",
         }
-
 
     def define_default_location(self):
         """ """
@@ -97,7 +81,14 @@ class WurbSettings(object):
             await self.wurb_manager.wurb_gps.shutdown()
         # Rec. mode. Scheduler, rec-on or rec-off.
         rec_mode = self.current_settings["rec_mode"]
-        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
+        if rec_mode in [
+            "mode-off",
+            "mode-on",
+            "mode-auto",
+            "mode-manual",
+            "mode-scheduler-on",
+            "mode-scheduler-auto",
+        ]:
             await self.wurb_manager.wurb_scheduler.startup()
         else:
             await self.wurb_manager.wurb_scheduler.shutdown()
@@ -106,30 +97,6 @@ class WurbSettings(object):
         """ """
         # GPS.
         await self.wurb_manager.wurb_gps.shutdown()
-
-    async def save_rec_mode(self, rec_mode):
-        """ """
-        self.current_settings["rec_mode"] = rec_mode
-        self.save_settings_to_file()
-        # Activate directly if on or off.
-        if rec_mode == "rec-mode-on":
-            await self.wurb_manager.start_rec()
-        if rec_mode == "rec-mode-off":
-            await self.wurb_manager.stop_rec()
-        # Rec. mode: Scheduler, rec-on or rec-off.
-        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
-            await self.wurb_manager.wurb_scheduler.startup()
-        else:
-            await self.wurb_manager.wurb_scheduler.shutdown()
-        # Create a new event and release all from the old event.
-        old_settings_event = self.settings_event
-        self.settings_event = asyncio.Event()
-        if old_settings_event:
-            old_settings_event.set()
-        # Logging.
-        rec_mode_str = rec_mode.replace("rec-mode-", "").capitalize()
-        message = "Rec. mode: " + rec_mode_str
-        self.wurb_logging.info(message, short_message=message)
 
     async def save_settings(self, settings_dict={}):
         """ """
@@ -141,6 +108,25 @@ class WurbSettings(object):
                     value = value.replace("_", "-")
                 self.current_settings[key] = value
         self.save_settings_to_file()
+
+        # Active modes.
+        rec_mode = self.current_settings["rec_mode"]
+        if rec_mode in ["mode-on", "mode-auto", "mode-manual"]:
+            await self.wurb_manager.start_rec()
+        if rec_mode in ["mode-off"]:
+            await self.wurb_manager.stop_rec()
+        # Passive modes, and monitoring active.
+        if rec_mode in [
+            "mode-off",
+            "mode-on",
+            "mode-auto",
+            "mode-manual",
+            "mode-scheduler-on",
+            "mode-scheduler-auto",
+        ]:
+            await self.wurb_manager.wurb_scheduler.startup()
+        else:
+            await self.wurb_manager.wurb_scheduler.shutdown()
 
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
@@ -290,4 +276,3 @@ class WurbSettings(object):
                 settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
                 settings_file.write(key + ": " + str(value) + "\n")
-
