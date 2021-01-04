@@ -120,7 +120,7 @@ function geoLocationSourceOnChange(update_detector) {
       saveLocationSource()
     }
   }
-  else if (selected_value == "geo-auto-gps-or-manual") {
+  else if (selected_value == "geo-gps-or-manual") {
     location_button_text_id.innerHTML = "Use as manually entered"
     latitude_dd_id.disabled = true;
     latitude_dd_id.disabled = true;
@@ -130,7 +130,7 @@ function geoLocationSourceOnChange(update_detector) {
       saveLocationSource()
     }
   }
-  else if (selected_value == "geo-auto-last-gps") {
+  else if (selected_value == "geo-last-gps-or-manual") {
     location_button_text_id.innerHTML = "Use as manually entered"
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
@@ -220,8 +220,8 @@ function updateStatus(status) {
 }
 
 function updateLocation(location) {
-  location_source_select_id.value = location.geo_source_option
-  if (location.geo_source_option == "geo-manual") {
+  location_source_select_id.value = location.geo_source
+  if (location.geo_source == "geo-manual") {
     latitude_dd_id.value = location.manual_latitude_dd
     longitude_dd_id.value = location.manual_longitude_dd
   } else {

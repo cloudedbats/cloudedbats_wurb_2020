@@ -141,10 +141,27 @@ class WurbScheduler(object):
 
     async def get_solartime_data(self, print_new=True):
         """ """
-
         location_dict = self.wurb_settings.get_location_dict()
         latitude = float(location_dict.get("latitude_dd", "0.0"))
         longitude = float(location_dict.get("longitude_dd", "0.0"))
+        manual_latitude = float(location_dict.get("manual_latitude_dd", "0.0"))
+        manual_longitude = float(location_dict.get("manual_longitude_dd", "0.0"))
+        last_gps_latitude = float(location_dict.get("last_gps_latitude_dd", "0.0"))
+        last_gps_longitude = float(location_dict.get("last_gps_longitude_dd", "0.0"))
+        geo_source = location_dict.get("geo_source", "")
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-gps-or-manual"]:
+                if (manual_latitude== 0.0) or (manual_longitude == 0.0):
+                    latitude = manual_latitude
+                    longitude = manual_longitude
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-last-gps-or-manual"]:
+                if (last_gps_latitude == 0.0) or (last_gps_longitude == 0.0):
+                    latitude = last_gps_latitude
+                    longitude = last_gps_longitude
+            if (latitude == 0.0) or (longitude == 0.0):
+                latitude = manual_latitude
+                longitude = manual_longitude
         if (latitude == 0.0) or (longitude == 0.0):
             # No lat/long found.
             return None

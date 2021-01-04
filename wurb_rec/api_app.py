@@ -30,7 +30,7 @@ wurb_rec_manager = None
 
 # Schemas.
 class LocationSettings(BaseModel):
-    geo_source_option: str = None
+    geo_source: str = None
     latitude_dd: float = None
     longitude_dd: float = None
     manual_latitude_dd: float = None

@@ -16,10 +16,10 @@
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', path='css/wurb_slider.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0025') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0025') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0025') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0025') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0026') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0026') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0026') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0026') }}"></script>
 </head>
 
 <body>
@@ -164,15 +164,14 @@
                                                 <select id="location_source_select_id"
                                                     onchange="geoLocationSourceOnChange(update_detector=true)">
                                                     <option value="geo-not-used">Not used</option>
-                                                    <option value="geo-manual">Manually entered location</option>
+                                                    <option value="geo-manual">Manually entered</option>
                                                     <!-- <option value="geo-client-gps">Location from client unit -->
                                                     <!-- </option> -->
-                                                    <option value="geo-gps">USB GPS receiver
-                                                    <option value="geo-auto-gps-or-manual">Automatic (GPS or manually
-                                                        entered)
+                                                    <option value="geo-gps">GPS
+                                                    <option value="geo-gps-or-manual">GPS or Manually entered
                                                     </option>
-                                                    <option value="geo-auto-last-gps">Automatic (Last found GPS
-                                                        position)
+                                                    <option value="geo-last-gps-or-manual">Last found GPS or Manually
+                                                        entered
                                                     </option>
                                                     </option>
                                                 </select>
@@ -319,8 +318,7 @@
                                     </p>
                                 </div>
                                 <div class="field is-narrow">
-                                    <label
-                                        class="label">Automatic&nbsp;date&nbsp;in&nbsp;directory&nbsp;name</label>
+                                    <label class="label">Automatic&nbsp;date&nbsp;in&nbsp;directory&nbsp;name</label>
                                     <div class="control is-narrow">
                                         <div class="select is-narrow">
                                             <select id="settings_date_in_dirname">

@@ -35,7 +35,7 @@ async function recModeOnChange() {
 async function saveLocationSource() {
   try {
     let location = {
-      geo_source_option: location_source_select_id.value,
+      geo_source: location_source_select_id.value,
       latitude_dd: latitude_dd_id.value,
       longitude_dd: longitude_dd_id.value,
     }
@@ -53,7 +53,7 @@ async function saveLocationSource() {
 async function saveLocation() {
   try {
     let location = {
-      geo_source_option: location_source_select_id.value,
+      geo_source: location_source_select_id.value,
       latitude_dd: latitude_dd_id.value,
       longitude_dd: longitude_dd_id.value,
     }
@@ -62,17 +62,17 @@ async function saveLocation() {
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
     if (location_source_select_id.value == "geo-gps") {
-      location["geo_source_option"] = "geo-manual"
+      location["geo_source"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
-    if (location_source_select_id.value == "geo-auto-gps-or-manual") {
-      location["geo_source_option"] = "geo-manual"
+    if (location_source_select_id.value == "geo-gps-or-manual") {
+      location["geo_source"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }
-    if (location_source_select_id.value == "geo-auto-last-gps") {
-      location["geo_source_option"] = "geo-manual"
+    if (location_source_select_id.value == "geo-last-gps-or-manual") {
+      location["geo_source"] = "geo-manual"
       location["manual_latitude_dd"] = latitude_dd_id.value
       location["manual_longitude_dd"] = longitude_dd_id.value
     }

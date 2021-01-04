@@ -62,7 +62,7 @@ class WurbSettings(object):
     def define_default_location(self):
         """ """
         self.default_location = {
-            "geo_source_option": "geo-not-used",
+            "geo_source": "geo-not-used",
             "latitude_dd": "0.0",
             "longitude_dd": "0.0",
             "manual_latitude_dd": "0.0",
@@ -74,7 +74,7 @@ class WurbSettings(object):
     async def startup(self):
         """ """
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-gps":
+        if self.current_location["geo_source"] == "geo-gps":
             await self.save_latlong(0.0, 0.0)
             await self.wurb_manager.wurb_gps.startup()
         else:
@@ -159,8 +159,9 @@ class WurbSettings(object):
             if value is not None:
                 self.current_location[key] = value
 
+        geo_source = self.current_location["geo_source"]
         # Manual.
-        if self.current_location["geo_source_option"] == "geo-manual":
+        if geo_source == "geo-manual":
             self.current_location["latitude_dd"] = self.current_location[
                 "manual_latitude_dd"
             ]
@@ -168,7 +169,7 @@ class WurbSettings(object):
                 "manual_longitude_dd"
             ]
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-gps":
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             self.current_location["latitude_dd"] = 0.0
             self.current_location["longitude_dd"] = 0.0
 
@@ -180,7 +181,7 @@ class WurbSettings(object):
             old_location_event.set()
 
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-gps":
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             await self.wurb_manager.wurb_gps.startup()
         else:
             await self.wurb_manager.wurb_gps.shutdown()
@@ -189,6 +190,9 @@ class WurbSettings(object):
         """ """
         self.current_location["latitude_dd"] = latitude_dd
         self.current_location["longitude_dd"] = longitude_dd
+        if (latitude_dd > 0.0) and (longitude_dd > 0.0):
+            self.current_location["last_gps_latitude_dd"] = latitude_dd
+            self.current_location["last_gps_longitude_dd"] = longitude_dd
         self.save_settings_to_file()
         # Create a new event and release all from the old event.
         old_latlong_event = self.latlong_event
