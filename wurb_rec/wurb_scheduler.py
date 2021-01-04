@@ -159,9 +159,9 @@ class WurbScheduler(object):
                 if (last_gps_latitude == 0.0) or (last_gps_longitude == 0.0):
                     latitude = last_gps_latitude
                     longitude = last_gps_longitude
-            if (latitude == 0.0) or (longitude == 0.0):
-                latitude = manual_latitude
-                longitude = manual_longitude
+                if (latitude == 0.0) or (longitude == 0.0):
+                    latitude = manual_latitude
+                    longitude = manual_longitude
         if (latitude == 0.0) or (longitude == 0.0):
             # No lat/long found.
             return None
