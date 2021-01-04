@@ -74,7 +74,8 @@ class WurbSettings(object):
     async def startup(self):
         """ """
         # GPS.
-        if self.current_location["geo_source"] == "geo-gps":
+        geo_source = self.current_location["geo_source"]
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             await self.save_latlong(0.0, 0.0)
             await self.wurb_manager.wurb_gps.startup()
         else:
@@ -188,11 +189,14 @@ class WurbSettings(object):
 
     async def save_latlong(self, latitude_dd, longitude_dd):
         """ """
-        self.current_location["latitude_dd"] = latitude_dd
-        self.current_location["longitude_dd"] = longitude_dd
-        if (latitude_dd > 0.0) and (longitude_dd > 0.0):
-            self.current_location["last_gps_latitude_dd"] = latitude_dd
-            self.current_location["last_gps_longitude_dd"] = longitude_dd
+        geo_source = self.current_location["geo_source"]
+        # Manual.
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
+            self.current_location["latitude_dd"] = latitude_dd
+            self.current_location["longitude_dd"] = longitude_dd
+            if (latitude_dd > 0.0) and (longitude_dd > 0.0):
+                self.current_location["last_gps_latitude_dd"] = latitude_dd
+                self.current_location["last_gps_longitude_dd"] = longitude_dd
         self.save_settings_to_file()
         # Create a new event and release all from the old event.
         old_latlong_event = self.latlong_event
