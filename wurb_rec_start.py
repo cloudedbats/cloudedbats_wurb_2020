@@ -4,6 +4,7 @@
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
+import os
 import uvicorn
 import wurb_rec
 
@@ -17,8 +18,8 @@ if __name__ == "__main__":
     uvicorn.run(
         "wurb_rec.api_app:app",
         loop="asyncio",
-        host="0.0.0.0",
-        port=8000,
-        log_level="info",
+        host= os.getenv("WURB_HOST", "0.0.0.0"),
+        port=int(os.getenv("WURB_PORT", "8000")),
+        log_level=os.getenv("WURB_LOG_LEVEL", "info"),
         # log_level="debug",
     )
