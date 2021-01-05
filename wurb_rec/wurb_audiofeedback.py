@@ -94,7 +94,7 @@ class WurbPitchShifting(object):
             self.window_size = int(self.hop_in_length * buffer_in_overlap_factor)
             self.window_function = numpy.kaiser(self.window_size, beta=kaiser_beta)
             self.in_buffer = numpy.array([], dtype=numpy.float32)
-            pitchshifting_buffer_length = int(self.sampling_freq_out / self.pitch_div_factor)
+            pitchshifting_buffer_length = int(self.sampling_freq_out)
             self.pitchshifting_buffer = numpy.zeros(
                 pitchshifting_buffer_length, dtype=numpy.float32
             )  # 1 sec buffer length.
