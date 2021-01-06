@@ -108,13 +108,15 @@ async def webpage(request: fastapi.Request):
         # Logging debug.
         wurb_rec_manager.wurb_logging.debug(message="API called: webpage.")
         status_dict = await wurb_rec_manager.get_status_dict()
+        location_status = wurb_rec_manager.wurb_settings.get_location_status()
         return templates.TemplateResponse(
             "wurb_rec_web.html",
             {
                 "request": request,
                 "rec_status": status_dict.get("rec_status", ""),
+                "location_status": location_status,
                 "device_name": status_dict.get("device_name", ""),
-                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "wurb_version": wurb_rec.__version__,
             },
         )
@@ -157,10 +159,12 @@ async def get_status():
         # Logging debug.
         wurb_rec_manager.wurb_logging.debug(message="API called: get-status.")
         status_dict = await wurb_rec_manager.get_status_dict()
+        location_status = wurb_rec_manager.wurb_settings.get_location_status()
         return {
             "rec_status": status_dict.get("rec_status", ""),
+            "location_status": location_status,
             "device_name": status_dict.get("device_name", ""),
-            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
     except Exception as e:
         # Logging error.
@@ -318,10 +322,12 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         # Update client.
         ws_json = {}
         status_dict = await wurb_rec_manager.get_status_dict()
+        location_status = wurb_settings.get_location_status()
         ws_json["status"] = {
             "rec_status": status_dict.get("rec_status", ""),
+            "location_status": location_status,
             "device_name": status_dict.get("device_name", ""),
-            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+            "detector_time": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         ws_json["location"] = await wurb_settings.get_location()
         ws_json["latlong"] = await wurb_settings.get_location()
@@ -345,10 +351,12 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
             # Prepare message to client.
             ws_json = {}
             status_dict = await wurb_rec_manager.get_status_dict()
+            location_status = wurb_settings.get_location_status()
             ws_json["status"] = {
                 "rec_status": status_dict.get("rec_status", ""),
+                "location_status": location_status,
                 "device_name": status_dict.get("device_name", ""),
-                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S%z"),
+                "detector_time": time.strftime("%Y-%m-%d %H:%M:%S"),
             }
             rec_manager_notification = await wurb_rec_manager.get_notification_event()
             if location_changed_notification.is_set():

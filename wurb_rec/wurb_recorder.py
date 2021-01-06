@@ -762,16 +762,15 @@ class WaveFileWriter:
         """ """
         latlongstring = ""
         try:
-            location_dict = self.wurb_settings.get_location_dict()
-            latitude_dd = float(location_dict.get("latitude_dd", "0.0"))
-            longitude_dd = float(location_dict.get("longitude_dd", "0.0"))
-            if latitude_dd >= 0:
+            latitude_dd, longitude_dd = self.wurb_settings.get_valid_location()
+
+            if latitude_dd >= 0.0:
                 latlongstring += "N"
             else:
                 latlongstring += "S"
             latlongstring += str(abs(latitude_dd))
             #
-            if longitude_dd >= 0:
+            if longitude_dd >= 0.0:
                 latlongstring += "E"
             else:
                 latlongstring += "W"

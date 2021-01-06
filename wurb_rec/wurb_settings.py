@@ -204,6 +204,46 @@ class WurbSettings(object):
         if old_latlong_event:
             old_latlong_event.set()
 
+    def get_valid_location(self):
+        """ """
+        latitude = 0.0
+        longitude = 0.0
+        location_dict = self.get_location_dict()
+        latitude = float(location_dict.get("latitude_dd", "0.0"))
+        longitude = float(location_dict.get("longitude_dd", "0.0"))
+        manual_latitude = float(location_dict.get("manual_latitude_dd", "0.0"))
+        manual_longitude = float(location_dict.get("manual_longitude_dd", "0.0"))
+        last_gps_latitude = float(location_dict.get("last_gps_latitude_dd", "0.0"))
+        last_gps_longitude = float(location_dict.get("last_gps_longitude_dd", "0.0"))
+        geo_source = location_dict.get("geo_source", "")
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-gps-or-manual"]:
+                latitude = manual_latitude
+                longitude = manual_longitude
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-last-gps-or-manual"]:
+                latitude = last_gps_latitude
+                longitude = last_gps_longitude
+                if (latitude == 0.0) or (longitude == 0.0):
+                    latitude = manual_latitude
+                    longitude = manual_longitude
+        # Result.
+        return latitude, longitude
+
+    def get_location_status(self):
+        """ """
+        lat, long = self.get_valid_location()
+        if (lat == 0.0) and (long == 0.0):
+            return "Not valid. Scheduler not started."
+        else:
+            geo_source = self.get_location_dict().get("geo_source", "")
+            if geo_source == "geo-gps":
+                if self.wurb_manager.wurb_gps:
+                    no_of_satellites = self.wurb_manager.wurb_gps.get_number_of_satellites()
+                    return "Number of satellites: " + str(no_of_satellites)
+            else:
+                return "Lat: " + str(lat) + " Long: " + str(long)
+
     def get_location_dict(self):
         """ """
         return self.current_location

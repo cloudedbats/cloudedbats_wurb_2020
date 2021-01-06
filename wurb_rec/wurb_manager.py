@@ -175,9 +175,14 @@ class WurbRecManager(object):
     async def get_status_dict(self):
         """ """
         try:
+            # Avoid too long device names in the user interface.
+            device_name = self.ultrasound_devices.device_name
+            device_name = device_name.replace("USB Ultrasound Microphone", "")
+            if len(device_name) > 25:
+                device_name = device_name[:24] + "..."
             status_dict = {
                 "rec_status": self.wurb_recorder.rec_status,
-                "device_name": self.ultrasound_devices.device_name,
+                "device_name": device_name,
                 "sample_rate": str(self.ultrasound_devices.sampling_freq_hz),
             }
             return status_dict

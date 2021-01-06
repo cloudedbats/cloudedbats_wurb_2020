@@ -121,20 +121,20 @@ function geoLocationSourceOnChange(update_detector) {
     }
   }
   else if (selected_value == "geo-gps-or-manual") {
-    location_button_text_id.innerHTML = "Use as manually entered"
+    location_button_text_id.innerHTML = "Save"
     latitude_dd_id.disabled = true;
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
-    location_button_id.disabled = false;
+    location_button_id.disabled = true;
     if (update_detector) {
       saveLocationSource()
     }
   }
   else if (selected_value == "geo-last-gps-or-manual") {
-    location_button_text_id.innerHTML = "Use as manually entered"
+    location_button_text_id.innerHTML = "Save"
     latitude_dd_id.disabled = true;
     longitude_dd_id.disabled = true;
-    location_button_id.disabled = false;
+    location_button_id.disabled = true;
     if (update_detector) {
       saveLocationSource()
     }
@@ -211,10 +211,10 @@ function hideShowSettingsTabs(tab_name) {
 // Functions used to updates fields based on response contents.
 function updateStatus(status) {
   detector_status_id.innerHTML = status.rec_status;
-
-  // rec_info_id.innerHTML = status.device_name;
-  detector_status_id.innerHTML = status.device_name;
-  
+  if (status.device_name != "") {
+    detector_status_id.innerHTML += "<br>"
+    detector_status_id.innerHTML += status.device_name;
+  }
   detector_time_id.innerHTML = status.detector_time;
   location_status_id.innerHTML = status.location_status;
 }

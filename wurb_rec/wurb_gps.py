@@ -35,6 +35,7 @@ class WurbGps(object):
         self.serial_protocol = None
         #
         self.is_gps_quality_ok = False
+        self.number_of_satellites = 0
         # Config.
         self.max_time_diff_s = 60  # Unit: sec.
         self.min_number_of_satellites = 3
@@ -46,6 +47,7 @@ class WurbGps(object):
         self.first_gps_time_counter = 30
         self.last_used_lat_dd = 0.0
         self.last_used_long_dd = 0.0
+        self.number_of_satellites = 0
         self.asyncio_loop = asyncio.get_event_loop()
         self.gps_control_task = asyncio.create_task(self.gps_control_loop())
 
@@ -77,6 +79,10 @@ class WurbGps(object):
     async def get_latitude_longitude(self):
         """ """
         return (self.gps_latitude, self.gps_longitude)
+
+    def get_number_of_satellites(self):
+        """ """
+        return self.number_of_satellites
 
     async def gps_control_loop(self):
         """ """
@@ -120,6 +126,7 @@ class WurbGps(object):
             self.is_gps_quality_ok = False
             self.last_used_lat_dd = 0.0
             self.last_used_long_dd = 0.0
+            self.number_of_satellites = 0
             asyncio.run_coroutine_threadsafe(
                 self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
             )
@@ -163,6 +170,7 @@ class WurbGps(object):
                 self.is_gps_quality_ok = False
                 return
             number_of_satellites = parts[7]
+            self.number_of_satellites = number_of_satellites
             if int(number_of_satellites) < self.min_number_of_satellites:
                 # More satellites needed.
                 self.is_gps_quality_ok = False
@@ -190,6 +198,7 @@ class WurbGps(object):
             else:
                 self.last_used_lat_dd = 0.0
                 self.last_used_long_dd = 0.0
+                self.number_of_satellites = 0
                 asyncio.run_coroutine_threadsafe(
                     self.wurb_settings.save_latlong(0.0, 0.0), self.asyncio_loop,
                 )
