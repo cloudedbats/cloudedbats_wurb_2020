@@ -28,13 +28,21 @@ class WurbSettings(object):
         # self.os_raspbian = None
         #
         self.settings_file_name = "wurb_rec_settings.txt"
+        self.settings_user_file_name = "wurb_rec_settings_user.txt"
+        self.settings_startup_file_name = "wurb_rec_settings_startup.txt"
         self.settings_dir_path = self.wurb_rpi.get_settings_dir_path()
         #
         self.define_default_settings()
         self.current_settings = self.default_settings.copy()
         self.define_default_location()
         self.current_location = self.default_location.copy()
+        # Select settings for startup.
         self.load_settings_from_file()
+        startup_option = self.current_settings.get("startup_option", "")
+        if startup_option == "startup-settings":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_startup_file_name
+            )
 
     def define_default_settings(self):
         """ """
@@ -99,7 +107,7 @@ class WurbSettings(object):
         # GPS.
         await self.wurb_manager.wurb_gps.shutdown()
 
-    async def save_settings(self, settings_dict={}):
+    async def save_settings(self, settings_dict={}, settings_type=None):
         """ """
         for key, value in settings_dict.items():
             if value is not None:
@@ -109,6 +117,17 @@ class WurbSettings(object):
                     value = value.replace("_", "-")
                 self.current_settings[key] = value
         self.save_settings_to_file()
+        if settings_type is not None:
+            if settings_type == "user-default":
+                self.save_settings_to_file(
+                    settings_file_name=self.settings_user_file_name,
+                    skip_keys=["startup_option"],
+                )
+            if settings_type == "startup":
+                self.save_settings_to_file(
+                    settings_file_name=self.settings_startup_file_name,
+                    skip_keys=["startup_option"],
+                )
 
         # Active modes.
         rec_mode = self.current_settings["rec_mode"]
@@ -239,7 +258,9 @@ class WurbSettings(object):
             geo_source = self.get_location_dict().get("geo_source", "")
             if geo_source == "geo-gps":
                 if self.wurb_manager.wurb_gps:
-                    no_of_satellites = self.wurb_manager.wurb_gps.get_number_of_satellites()
+                    no_of_satellites = (
+                        self.wurb_manager.wurb_gps.get_number_of_satellites()
+                    )
                     return "Number of satellites: " + str(no_of_satellites)
             else:
                 return "Lat: " + str(lat) + " Long: " + str(long)
@@ -285,11 +306,35 @@ class WurbSettings(object):
             message = "Logging: get_latlong_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    def load_settings_from_file(self):
+    async def load_settings(self, settings):
+        """ """
+        if settings == "user-default":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_user_file_name
+            )
+        elif settings == "start-up":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_startup_file_name
+            )
+        elif settings == "factory-default":
+            self.current_settings = self.default_settings.copy()
+            self.current_location = self.default_location.copy()
+        # Create a new event and release all from the old event.
+        old_settings_event = self.settings_event
+        self.settings_event = asyncio.Event()
+        if old_settings_event:
+            old_settings_event.set()
+        # Create a new event and release all from the old event.
+        old_location_event = self.location_event
+        self.location_event = asyncio.Event()
+        if old_location_event:
+            old_location_event.set()
+
+    def load_settings_from_file(self, settings_file_name=None):
         """ Load from file. """
-        settings_file_path = pathlib.Path(
-            self.settings_dir_path, self.settings_file_name
-        )
+        if settings_file_name is None:
+            settings_file_name = self.settings_file_name
+        settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
@@ -305,11 +350,11 @@ class WurbSettings(object):
                         if key in self.default_location.keys():
                             self.current_location[key] = value
 
-    def save_settings_to_file(self):
+    def save_settings_to_file(self, settings_file_name=None, skip_keys=[]):
         """ Save to file. """
-        settings_file_path = pathlib.Path(
-            self.settings_dir_path, self.settings_file_name
-        )
+        if settings_file_name is None:
+            settings_file_name = self.settings_file_name
+        settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
         with settings_file_path.open("w") as settings_file:
             settings_file.write("# CloudedBats, http://cloudedbats.org" + "\n")
             settings_file.write("# Settings for the WURB bat detector." + "\n")
@@ -321,6 +366,8 @@ class WurbSettings(object):
             settings_file.write("# " + "\n")
             #
             for key, value in self.current_location.items():
-                settings_file.write(key + ": " + str(value) + "\n")
+                if key not in skip_keys:
+                    settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
-                settings_file.write(key + ": " + str(value) + "\n")
+                if key not in skip_keys:
+                    settings_file.write(key + ": " + str(value) + "\n")

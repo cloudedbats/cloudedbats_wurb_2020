@@ -96,7 +96,7 @@ class WurbRecManager(object):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 return  # Already running.
 
             # await self.ultrasound_devices.stop_checking_devices()
@@ -129,7 +129,7 @@ class WurbRecManager(object):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 # Logging.
                 message = "Rec. stopped."
                 self.wurb_logging.info(message, short_message=message)
@@ -149,7 +149,7 @@ class WurbRecManager(object):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 # Logging.
                 message = "Rec. restart initiated."
                 self.wurb_logging.info(message, short_message=message)

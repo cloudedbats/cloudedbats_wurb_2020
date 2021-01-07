@@ -264,7 +264,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             # Logging.
             message = "Recorder: M500 started."
             self.wurb_manager.wurb_logging.info(message, short_message=message)
-            await self.set_rec_status("Recording.")
+            await self.set_rec_status("Microphone is on.")
             try:
                 await loop.run_in_executor(
                     None,
@@ -378,7 +378,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 callback=audio_callback,
             )
 
-            await self.set_rec_status("Recording.")
+            await self.set_rec_status("Microphone is on.")
 
             with stream:
                 await sound_source_event.wait()

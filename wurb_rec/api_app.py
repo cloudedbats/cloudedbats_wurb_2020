@@ -242,6 +242,38 @@ async def save_settings(settings: DetectorSettings):
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
 
 
+@app.post("/save-settings-user/")
+async def save_settings_user(settings: DetectorSettings):
+    try:
+        global wurb_rec_manager
+        # Logging debug.
+        wurb_rec_manager.wurb_logging.debug(message="API called: save-settings-user.")
+        await wurb_rec_manager.wurb_settings.save_settings(
+            settings.dict(), settings_type="user-default"
+        )
+    except Exception as e:
+        # Logging error.
+        message = "Called: save-settings-user: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+
+
+@app.post("/save-settings-startup/")
+async def save_settings_startup(settings: DetectorSettings):
+    try:
+        global wurb_rec_manager
+        # Logging debug.
+        wurb_rec_manager.wurb_logging.debug(
+            message="API called: save-settings-startup."
+        )
+        await wurb_rec_manager.wurb_settings.save_settings(
+            settings.dict(), settings_type="startup"
+        )
+    except Exception as e:
+        # Logging error.
+        message = "Called: save-settings-startup: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+
+
 @app.get("/get-settings/")
 async def get_settings(default: bool = False):
     try:
@@ -255,6 +287,19 @@ async def get_settings(default: bool = False):
     except Exception as e:
         # Logging error.
         message = "Called: get_settings: " + str(e)
+        wurb_rec_manager.wurb_logging.error(message, short_message=message)
+
+
+@app.get("/load-settings/")
+async def load_settings(settings: str):
+    try:
+        global wurb_rec_manager
+        # Logging debug.
+        wurb_rec_manager.wurb_logging.debug(message="API called: load-settings.")
+        await wurb_rec_manager.wurb_settings.load_settings(settings)
+    except Exception as e:
+        # Logging error.
+        message = "Called: load_settings: " + str(e)
         wurb_rec_manager.wurb_logging.error(message, short_message=message)
 
 

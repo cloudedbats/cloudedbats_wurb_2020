@@ -62,15 +62,15 @@ function modeSelectOnChange(update_detector) {
   }
   else if (selected_value == "load-user-default") {
     stopRecording()
-    getDefaultSettings()
+    loadSettings(settings="user-default")
   }
   else if (selected_value == "load-start-up") {
     stopRecording()
-    getDefaultSettings()
+    loadSettings(settings="start-up")
   }
   else if (selected_value == "load-factory-default") {
     stopRecording()
-    getDefaultSettings()
+    loadSettings(settings="factory-default")
   }
   else if (selected_value == "detector-power-off") {
     showDivision(div_detector_power_off_id);
@@ -261,6 +261,14 @@ function updateSettings(settings) {
   settings_scheduler_post_action_delay_id.value = settings.scheduler_post_action_delay
 
   modeSelectOnChange(update_detector=false)
+}
+
+function saveUserDefaultSettings() {
+  saveSettings(settings_type="user-defined")
+}
+
+function saveStartupSettings() {
+  saveSettings(settings_type="startup")
 }
 
 function updateLogTable(log_rows) {

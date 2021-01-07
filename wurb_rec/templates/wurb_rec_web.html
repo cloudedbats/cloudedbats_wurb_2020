@@ -16,10 +16,10 @@
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', path='css/wurb_slider.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0030') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0030') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0030') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0030') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0031') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0031') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0031') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0031') }}"></script>
 </head>
 
 <body>
@@ -471,23 +471,6 @@
                                 </div>
                                 <div class="field">
                                     <div class="field-label label is-normal has-text-left">
-                                        Define start-up configuration
-                                    </div>
-                                    <div class="field-body">
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_startup_option_id">
-                                                    <option value="as-last-session">Start-up with same settings as last
-                                                        session</option>
-                                                    <option value="startup-settings">Start-up with "Start-up" settings
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="field">
-                                    <div class="field-label label is-normal has-text-left">
                                         Save current settings as "User default" or "Start-up"
                                     </div>
                                     <div class="field-body">
@@ -503,9 +486,23 @@
                                         </div>
                                     </div>
                                 </div>
-
-
-
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Define start-up configuration
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="settings_startup_option_id">
+                                                    <option value="as-last-session">Start-up with same settings as last
+                                                        session</option>
+                                                    <option value="startup-settings">Start-up with "Start-up" settings
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Settings: Tab - Scheduler. -->

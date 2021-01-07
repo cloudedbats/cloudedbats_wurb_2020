@@ -11,7 +11,7 @@ async function startRecording() {
   };
 };
 
-async function stopRecording(action) {
+async function stopRecording() {
   try {
     document.getElementById("detector_status_id").innerHTML = "Waiting...";
     await fetch('/stop-rec/');
@@ -122,10 +122,16 @@ async function setDetectorTime() {
   };
 };
 
-async function saveSettings() {
+async function saveSettings(settings_type) {
   try {
+    let url_string = "/save-settings/";
+    if (settings_type == "user-defined") {
+      url_string = "/save-settings-user/";
+    } 
+    else if (settings_type == "startup") {
+      url_string = "/save-settings-startup/";
+    } 
     let settings = {
-
       rec_mode: detector_mode_select_id.value,
       file_directory: settings_file_directory_id.value,
       date_in_file_directory: settings_date_in_dirname.value,
@@ -145,7 +151,7 @@ async function saveSettings() {
       scheduler_post_action: settings_scheduler_post_action_id.value,
       scheduler_post_action_delay: settings_scheduler_post_action_delay_id.value,
     }
-    await fetch("/save-settings/",
+    await fetch(url_string,
       {
         method: "POST",
         body: JSON.stringify(settings)
@@ -174,6 +180,16 @@ async function getDefaultSettings() {
     updateSettings(data);
   } catch (err) {
     alert(`ERROR getDefaultSettings: ${err}`);
+    console.log(err);
+  };
+};
+
+async function loadSettings(settings) {
+  try {
+    let response = await fetch("/load-settings/?settings=" + settings);
+    await response.json();
+  } catch (err) {
+    alert(`ERROR getSettings: ${err}`);
     console.log(err);
   };
 };

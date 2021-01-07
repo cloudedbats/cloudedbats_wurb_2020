@@ -195,7 +195,7 @@ class WurbRaspberryPi(object):
         """ """
         # Mic.
         rec_status = await self.wurb_manager.wurb_recorder.get_rec_status()
-        if rec_status != "Recording.":
+        if rec_status != "Microphone is on.":
             await self.wurb_manager.ultrasound_devices.check_devices()
             device_name = self.wurb_manager.ultrasound_devices.device_name
             sampling_freq_hz = self.wurb_manager.ultrasound_devices.sampling_freq_hz

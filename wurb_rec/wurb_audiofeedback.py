@@ -33,7 +33,7 @@ class WurbPitchShifting(object):
         """ """
         self.device_name = None
         self.sampling_freq_in = None
-        self.pitch_div_factor = 10
+        self.pitch_div_factor = 25
         self.volume = 1.0
         self.filter_low_limit_hz = None
         self.filter_high_limit_hz = None
