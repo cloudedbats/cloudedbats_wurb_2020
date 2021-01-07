@@ -89,6 +89,23 @@ class WurbRaspberryPi(object):
     def get_wavefile_target_dir_path(self):
         """ """
         file_directory = self.wurb_manager.wurb_settings.get_setting("file_directory")
+        # Add date to file directory.
+        date_option = self.wurb_manager.wurb_settings.get_setting("file_directory_date_option")
+        used_date_str = ""
+        if date_option in ["date-pre-true", "date-post-true"]:
+            used_date = datetime.datetime.now()
+            used_date_str = used_date.strftime("%Y-%m-%d")
+        if date_option in ["date-pre-after", "date-post-after"]:
+            used_date = datetime.datetime.now() + datetime.timedelta(hours=12)
+            used_date_str = used_date.strftime("%Y-%m-%d")
+        if date_option in ["date-pre-before", "date-post-before"]:
+            used_date = datetime.datetime.now() - datetime.timedelta(hours=12)
+            used_date_str = used_date.strftime("%Y-%m-%d")
+        if date_option in ["date-pre-true", "date-pre-after", "date-pre-before"]:
+            file_directory = used_date_str + "_" + file_directory
+        if date_option in ["date-post-true", "date-post-after", "date-post-before"]:
+            file_directory = file_directory + "_" + used_date_str
+        # Defaults for RPi.
         target_rpi_media_path = "/media/pi/"  # For RPi USB.
         target_rpi_internal_path = "/home/pi/"  # For RPi SD card with user 'pi'.
         dir_path = None

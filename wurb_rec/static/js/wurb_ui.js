@@ -243,7 +243,7 @@ function updateSettings(settings) {
 
   detector_mode_select_id.value = settings.rec_mode
   settings_file_directory_id.value = settings.file_directory
-  settings_date_in_dirname.value = settings.date_in_file_directory
+  settings_file_directory_date_option_id.value = settings.file_directory_date_option
   settings_filename_prefix_id.value = settings.filename_prefix
   settings_detection_limit_id.value = settings.detection_limit_khz
   settings_detection_sensitivity_id.value = settings.detection_sensitivity_dbfs

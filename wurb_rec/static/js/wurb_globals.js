@@ -27,7 +27,7 @@ function define_global_variables() {
 
   // Fields and buttons.
   const settings_file_directory_id = document.getElementById("settings_file_directory_id");
-  const settings_date_in_dirname = document.getElementById("settings_date_in_dirname");
+  const settings_file_directory_date_option_id = document.getElementById("settings_file_directory_date_option_id");
   const settings_filename_prefix_id = document.getElementById("settings_filename_prefix_id");
   const settings_detection_limit_id = document.getElementById("settings_detection_limit_id");
   const settings_detection_sensitivity_id = document.getElementById("settings_detection_sensitivity_id");

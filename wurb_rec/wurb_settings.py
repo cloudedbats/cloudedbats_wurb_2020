@@ -49,7 +49,7 @@ class WurbSettings(object):
         self.default_settings = {
             "rec_mode": "mode-off",
             "file_directory": "Station-1",
-            "date_in_file_directory": "date-post-before",
+            "file_directory_date_option": "date-post-before",
             "filename_prefix": "wurb",
             "detection_limit_khz": "17.0",
             "detection_sensitivity_dbfs": "-50",

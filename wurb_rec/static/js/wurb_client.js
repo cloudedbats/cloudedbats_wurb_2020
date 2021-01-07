@@ -134,7 +134,7 @@ async function saveSettings(settings_type) {
     let settings = {
       rec_mode: detector_mode_select_id.value,
       file_directory: settings_file_directory_id.value,
-      date_in_file_directory: settings_date_in_dirname.value,
+      file_directory_date_option: settings_file_directory_date_option_id.value,
       filename_prefix: settings_filename_prefix_id.value,
       detection_limit_khz: settings_detection_limit_id.value,
       detection_sensitivity_dbfs: settings_detection_sensitivity_id.value,
