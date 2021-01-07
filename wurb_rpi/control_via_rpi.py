@@ -26,10 +26,9 @@ class ControlViaRaspberryPi(object):
        to the recorder.
 
     Installation:
-    - Add the launch of this module to /etc/rc.local.
     - Add a three way position switch. Connect ground (GPIO pin 39) to the middle pin,
       GPIO pin 36 (aka. GPIO 16) and GPIO pin 37 (aka. GPIO 26) to the two other pins.
-    - Add a label for the switch: "Power off - Normal - User default mode".
+    - Add a label for the switch: "Power off - Normal - User defined".
     - Connect an USB mouse.
     """
 
@@ -62,16 +61,16 @@ class ControlViaRaspberryPi(object):
         try:
             self.logger.info("RPi GPIO control: Raspberry Pi shutdown.")
             os.system("sudo shutdown -h now")
-        except:
-            self.logger.error("RPi GPIO control: Shutdown failed.")
+        except Exception as e:
+            self.logger.error("RPi GPIO control: Shutdown failed: ", e)
 
-    def send_wurb_rec_mode(self, rec_mode):
+    def call_wurb_rec_api(self, api_get_str):
         """ """
         try:
-            self.logger.info("RPi GPIO control: WURB User default mode: " + rec_mode)
-            # os.system("wget localhost:8000/?rec_mode=" + rec_mode)
-        except:
-            self.logger.error("RPi GPIO control: Command failed.")
+            self.logger.info("RPi GPIO control: Command: " + api_get_str)
+            os.system("wget http://localhost:8000/" + api_get_str)
+        except Exception as e:
+            self.logger.error("RPi GPIO control: Command failed: ", e)
 
     def mouse_left_and_right_action(self):
         """ """
@@ -79,7 +78,7 @@ class ControlViaRaspberryPi(object):
 
     def mouse_left_action(self):
         """ """
-        self.send_wurb_rec_mode(rec_mode="user_default_on")
+        self.call_wurb_rec_api(api_get_str="load-settings/?settings_type=start-up")
 
     def mouse_middle_action(self):
         """ """
@@ -87,7 +86,7 @@ class ControlViaRaspberryPi(object):
 
     def mouse_right_action(self):
         """ """
-        self.send_wurb_rec_mode(rec_mode="user_default_off")
+        self.call_wurb_rec_api(api_get_str="load-settings/?settings_type=user-default")
 
     # === Internals. ===
     async def setup_gpio(self):
@@ -137,7 +136,7 @@ class ControlViaRaspberryPi(object):
                     if GPIO.input(self.gpio_pin_user_default):
                         if self.user_default_state_on == True:
                             # Perform action.
-                            self.send_wurb_rec_mode(rec_mode="user_default_off")
+                            self.call_wurb_rec_api(api_get_str="load-settings/?settings_type=start-up")
                             self.user_default_state_on = False
                 else:
                     # Low = active.
@@ -145,7 +144,7 @@ class ControlViaRaspberryPi(object):
                     if not GPIO.input(self.gpio_pin_user_default):
                         if self.user_default_state_on == False:
                             # Perform action.
-                            self.send_wurb_rec_mode(rec_mode="user_default_on")
+                            self.call_wurb_rec_api(api_get_str="load-settings/?settings_type=user-default")
                             self.user_default_state_on = True
             except Exception as e:
                 self.logger.error("GPIO control: Failed to check actions: " + str(e))
@@ -281,12 +280,9 @@ class ControlViaRaspberryPi(object):
         log = logging.getLogger("WURB_RPi")
         log.setLevel(logging.INFO)
         # Define rotation log files.
-        dir_path = os.path.dirname(os.path.abspath(__file__))
-        log_file_dir = "../wurb_files"
+        dir_path = self.get_logging_dir_path()
         log_file_name = "wurb_rpi_log.txt"
-        log_file_path = pathlib.Path(dir_path, log_file_dir, log_file_name)
-        if not pathlib.Path(dir_path, log_file_dir).exists():
-            pathlib.Path(dir_path, log_file_dir).mkdir(parents=True)
+        log_file_path = pathlib.Path(dir_path, log_file_name)
         #
         log_handler = logging.handlers.RotatingFileHandler(
             str(log_file_path), maxBytes=128 * 1024, backupCount=4
@@ -296,6 +292,19 @@ class ControlViaRaspberryPi(object):
         )
         log_handler.setLevel(logging.DEBUG)
         log.addHandler(log_handler)
+
+    def get_logging_dir_path(self):
+        """ """
+        rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
+        # Default for not Raspberry Pi.
+        dir_path = pathlib.Path("wurb_logging")
+        if pathlib.Path(rpi_dir_path).exists():
+            dir_path = pathlib.Path(rpi_dir_path, "wurb_logging")
+        # Create directories.
+        if not dir_path.exists():
+            dir_path.mkdir(parents=True)
+        return dir_path
+
 
 
 # === MAIN Asyncio ===

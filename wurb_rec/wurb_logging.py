@@ -120,9 +120,9 @@ class WurbLogging(object):
         """ """
         rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
         # Default for not Raspberry Pi.
-        dir_path = pathlib.Path("wurb_files", "wurb_rec_log_files")
+        dir_path = pathlib.Path("wurb_logging")
         if pathlib.Path(rpi_dir_path).exists():
-            dir_path = pathlib.Path(rpi_dir_path, "wurb_files", "wurb_rec_log_files")
+            dir_path = pathlib.Path(rpi_dir_path, "wurb_logging")
         # Create directories.
         if not dir_path.exists():
             dir_path.mkdir(parents=True)

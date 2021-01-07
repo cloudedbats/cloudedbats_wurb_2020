@@ -184,9 +184,9 @@ async function getDefaultSettings() {
   };
 };
 
-async function loadSettings(settings) {
+async function loadSettings(settings_type) {
   try {
-    let response = await fetch("/load-settings/?settings=" + settings);
+    let response = await fetch("/load-settings/?settings_type=" + settings_type);
     await response.json();
   } catch (err) {
     alert(`ERROR getSettings: ${err}`);

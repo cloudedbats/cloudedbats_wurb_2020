@@ -37,10 +37,6 @@ class WurbRaspberryPi(object):
             # elif command == "rpi_clear_sd_ok":
             elif command == "rpi_clear_sd":
                 await self.rpi_clear_sd()
-            # elif command == "rpi_status":
-            #     await self.rpi_status()
-            elif command == "rpi_sw_update":
-                await self.rpi_sw_update()
             else:
                 # Logging.
                 message = "Raspberry Pi command failed. Not a valid command: " + command
@@ -82,9 +78,9 @@ class WurbRaspberryPi(object):
         """ """
         rpi_dir_path = "/home/pi/"  # For RPi SD card with user 'pi'.
         # Default for not Raspberry Pi.
-        dir_path = pathlib.Path("wurb_files")
+        dir_path = pathlib.Path("wurb_settings")
         if pathlib.Path(rpi_dir_path).exists():
-            dir_path = pathlib.Path(rpi_dir_path, "wurb_files")
+            dir_path = pathlib.Path(rpi_dir_path, "wurb_settings")
         # Create directories.
         if not dir_path.exists():
             dir_path.mkdir(parents=True)
@@ -126,7 +122,7 @@ class WurbRaspberryPi(object):
             hdd = psutil.disk_usage(str(rpi_internal_path))
             free_disk = hdd.free / (2 ** 20)  # To MB.
             if free_disk >= 500.0:  # 500 MB.
-                return pathlib.Path(rpi_internal_path, "wurb_files", file_directory)
+                return pathlib.Path(rpi_internal_path, "wurb_recordings", file_directory)
             else:
                 # Logging error.
                 message = "RPi Not enough space left on RPi SD card."
@@ -134,7 +130,7 @@ class WurbRaspberryPi(object):
                 return None  # Not enough space left on RPi SD card.
 
         # Default for not Raspberry Pi.
-        dir_path = pathlib.Path("wurb_files", file_directory)
+        dir_path = pathlib.Path("wurb_recordings", file_directory)
         return dir_path
 
     def is_os_raspbian(self):
@@ -236,56 +232,3 @@ class WurbRaspberryPi(object):
             # Logging. 
             message = "Can't calculate solartime. Lat/long is missing."
             self.wurb_manager.wurb_logging.info(message, short_message=message)
-
-
-    async def rpi_sw_update_stable(self):
-        """ """
-
-        # https://github.com/cloudedbats/cloudedbats_wurb_2020/releases/latest
-
-        # # Logging.
-        # message = "The Raspberry Pi command 'Software update' is activated. Please wait."
-        # self.wurb_manager.wurb_logging.info(message, short_message=message)
-        # await asyncio.sleep(1.0)
-        # #
-        # command_string = "cd /home/pi/cloudedbats_wurb_2020"
-        # command_string += " && git pull"
-        # command_string += " && source venv/bin/activate"
-        # command_string += " && pip install -r requirements.txt "
-        # await asyncio.sleep(1.0)
-        # #
-        # os.system(command_string)
-
-        # # Logging.
-        # message = "Software update is finished. A restart (reboot) of the detector is needed."
-        # self.wurb_manager.wurb_logging.info(message, short_message=message)
-        # asyncio.sleep(1.0)
-        # #
-
-    async def rpi_sw_update(self):
-        """ """
-        # Logging.
-        message = "The Raspberry Pi command 'Software update' "
-        message += "is activated. Please wait."
-        self.wurb_manager.wurb_logging.info(message, short_message=message)
-
-        await asyncio.sleep(1.0)
-        #
-        # Logging debug.
-        self.wurb_manager.wurb_logging.debug("Software update started.")
-
-        command_string = "cd /home/pi/cloudedbats_wurb_2020"
-        command_string += " && git pull"
-        command_string += " && source venv/bin/activate"
-        command_string += " && pip install -r requirements.txt "
-        os.system(command_string)
-
-        await asyncio.sleep(30.0) # Dummy time.
-
-        # Logging.
-        message = "Software update is finished, but can't be verified. "
-        message += "A restart of the detector is needed."
-        self.wurb_manager.wurb_logging.info(message, short_message=message)
-        asyncio.sleep(1.0)
-        #
-

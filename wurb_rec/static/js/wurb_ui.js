@@ -62,15 +62,15 @@ function modeSelectOnChange(update_detector) {
   }
   else if (selected_value == "load-user-default") {
     stopRecording()
-    loadSettings(settings="user-default")
+    loadSettings(settings_type="user-default")
   }
   else if (selected_value == "load-start-up") {
     stopRecording()
-    loadSettings(settings="start-up")
+    loadSettings(settings_type="start-up")
   }
   else if (selected_value == "load-factory-default") {
     stopRecording()
-    loadSettings(settings="factory-default")
+    loadSettings(settings_type="factory-default")
   }
   else if (selected_value == "detector-power-off") {
     showDivision(div_detector_power_off_id);

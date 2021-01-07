@@ -306,19 +306,23 @@ class WurbSettings(object):
             message = "Logging: get_latlong_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    async def load_settings(self, settings):
+    async def load_settings(self, settings_type):
         """ """
-        if settings == "user-default":
+        # Keep startup_option.
+        startup_option = self.current_settings.get("startup_option", "")
+        if settings_type == "user-default":
             self.load_settings_from_file(
                 settings_file_name=self.settings_user_file_name
             )
-        elif settings == "start-up":
+        elif settings_type == "start-up":
             self.load_settings_from_file(
                 settings_file_name=self.settings_startup_file_name
             )
-        elif settings == "factory-default":
+        elif settings_type == "factory-default":
             self.current_settings = self.default_settings.copy()
             self.current_location = self.default_location.copy()
+        # Keep startup_option.
+        self.current_settings["startup_option"] = startup_option
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
         self.settings_event = asyncio.Event()

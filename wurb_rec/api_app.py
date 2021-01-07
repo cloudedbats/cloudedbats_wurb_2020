@@ -291,12 +291,12 @@ async def get_settings(default: bool = False):
 
 
 @app.get("/load-settings/")
-async def load_settings(settings: str):
+async def load_settings(settings_type: str):
     try:
         global wurb_rec_manager
         # Logging debug.
         wurb_rec_manager.wurb_logging.debug(message="API called: load-settings.")
-        await wurb_rec_manager.wurb_settings.load_settings(settings)
+        await wurb_rec_manager.wurb_settings.load_settings(settings_type)
     except Exception as e:
         # Logging error.
         message = "Called: load_settings: " + str(e)
