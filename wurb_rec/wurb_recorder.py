@@ -67,8 +67,8 @@ class UltrasoundDevices(object):
                     sampling_freq_hz = self.recorder_m500.get_sampling_freq_hz()
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
-                settings_device_name_part = os.getenv("WURB_INPUT_DEVICE", "HiFiBerry")
-                settings_sampling_freq_hz = int(os.getenv("WURB_INPUT_DEVICE_FREQ_HZ", "0"))
+                settings_device_name_part = os.getenv("WURB_REC_INPUT_DEVICE", "")
+                settings_sampling_freq_hz = int(os.getenv("WURB_REC_INPUT_DEVICE_FREQ_HZ", "0"))
                 if settings_device_name_part:
                     device_dict = None
                     device_name = ""
