@@ -4,6 +4,7 @@
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
+import os
 import asyncio
 import time
 import wave
@@ -11,7 +12,6 @@ import pathlib
 import psutil
 from collections import deque
 import sounddevice
-
 
 # CloudedBats.
 import wurb_rec
@@ -67,9 +67,8 @@ class UltrasoundDevices(object):
                     sampling_freq_hz = self.recorder_m500.get_sampling_freq_hz()
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
-                settings_device_name_part = "GoMic"  # TODO: From settings.
-                settings_sampling_freq_hz = 0  # TODO: From settings.
-                # settings_sampling_freq_hz = 44100  # TODO: From settings.
+                settings_device_name_part = os.getenv("WURB_INPUT_DEVICE", "HiFiBerry")
+                settings_sampling_freq_hz = int(os.getenv("WURB_INPUT_DEVICE_FREQ_HZ", "0"))
                 if settings_device_name_part:
                     device_dict = None
                     device_name = ""
