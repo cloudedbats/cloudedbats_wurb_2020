@@ -4,6 +4,7 @@ uvicorn
 jinja2
 aiofiles
 websockets
+requests
 # Sound, etc.
 sounddevice
 numpy

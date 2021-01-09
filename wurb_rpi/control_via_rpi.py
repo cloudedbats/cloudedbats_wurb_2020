@@ -8,6 +8,7 @@ import asyncio
 import os
 import time
 import pathlib
+import requests
 import logging.handlers
 
 # Check if GPIO is available.
@@ -68,7 +69,10 @@ class ControlViaRaspberryPi(object):
         """ """
         try:
             self.logger.info("RPi GPIO control: Command: " + api_get_str)
-            os.system("wget http://localhost:8000/" + api_get_str)
+            url = "http://127.0.0.1:"
+            url += os.getenv("WURB_REC_PORT", "8000")
+            url += "/" + api_get_str
+            requests.get(url)
         except Exception as e:
             self.logger.error("RPi GPIO control: Command failed: ", e)
 

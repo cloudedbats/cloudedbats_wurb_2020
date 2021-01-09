@@ -10,16 +10,16 @@ sudo -u pi devmon &
 cd /home/pi/cloudedbats_wurb_2020
 source venv/bin/activate
 
-# Launch control by GPIO and/or computer mouse.
-# It is running in it's own process.
-python3 wurb_rpi/control_via_rpi.py &
-
-# Environment variables.
+# Defined environment variables.
 # export WURB_REC_HOST=0.0.0.0
 # export WURB_REC_PORT=8000
 # export WURB_REC_LOG_LEVEL=info
 # export WURB_REC_INPUT_DEVICE=HiFiBerry
 # export WURB_REC_INPUT_DEVICE_FREQ_HZ=192000
+
+# Launch control by GPIO and/or computer mouse.
+# It is running in it's own process.
+python3 wurb_rpi/control_via_rpi.py &
 
 # Launch the WURB detector.
 python3 wurb_rec_start.py
