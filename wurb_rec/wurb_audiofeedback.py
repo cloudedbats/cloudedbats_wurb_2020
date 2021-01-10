@@ -21,8 +21,8 @@ class WurbPitchShifting(object):
     def __init__(self, wurb_manager):
         """ """
         self.wurb_manager = wurb_manager
-        # self.wurb_settings = wurb_manager.wurb_settings
-        # self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_settings = wurb_manager.wurb_settings
+        self.wurb_logging = wurb_manager.wurb_logging
         self.asyncio_loop = None
         self.audio_task = None
         self.audio_callback_active = False
@@ -56,6 +56,14 @@ class WurbPitchShifting(object):
         """ """
         self.pitch_div_factor = int(pitch_factor)
         await self.shutdown()
+        if self.sampling_freq_in > 0:
+            await self.setup()
+            await self.startup()
+
+    async def set_sampling_freq(self, sampling_freq):
+        """ """
+        self.sampling_freq_in = int(sampling_freq)
+        await self.shutdown()
         await self.setup()
         await self.startup()
 
@@ -65,19 +73,19 @@ class WurbPitchShifting(object):
 
     async def setup(
         self,
-        device_name="Headphones",  # RPi 3.5mm connection when using rhythmbox.
-        sampling_freq=384000,
-        # pitch_div_factor=10,
-        # volume=1.0,
-        filter_low_limit_hz=15000,
-        filter_high_limit_hz=150000,
+        device_name="Headphones",  # RPi 3.5mm jack.
         filter_order=10,
         max_buffer_size_s=0.5,
     ):
         """ """
         try:
+            settings_dict = await self.wurb_settings.get_settings()
+            filter_low_khz = settings_dict.get("feedback_filter_low_khz", "15.0")
+            filter_high_khz = settings_dict.get("feedback_filter_high_khz", "150.0")
+            filter_low_limit_hz = int(float(filter_low_khz) * 1000.0)
+            filter_high_limit_hz = int(float(filter_high_khz) * 1000.0)
+            #
             self.device_name = device_name
-            self.sampling_freq_in = sampling_freq
             # self.pitch_div_factor = pitch_div_factor
             # self.volume = volume
             self.filter_low_limit_hz = filter_low_limit_hz
@@ -86,7 +94,9 @@ class WurbPitchShifting(object):
             self.max_buffer_size_s = max_buffer_size_s
             # Calculated parameters.
             self.sampling_freq_out = int(self.sampling_freq_in / self.pitch_div_factor)
-            self.hop_out_length = int(self.sampling_freq_in / 1000 / self.pitch_div_factor)
+            self.hop_out_length = int(
+                self.sampling_freq_in / 1000 / self.pitch_div_factor
+            )
             self.hop_in_length = int(self.hop_out_length * self.pitch_div_factor)
             # Buffers.
             buffer_in_overlap_factor = 1.5
@@ -108,6 +118,8 @@ class WurbPitchShifting(object):
 
     async def startup(self):
         """ """
+        # Shutdown if already running.
+        await self.shutdown()
         # Start audio
         self.asyncio_loop = asyncio.get_event_loop()
         self.audio_task = asyncio.create_task(self.stream_audio())

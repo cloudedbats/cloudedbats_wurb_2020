@@ -106,8 +106,7 @@ class WurbRecManager(object):
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
                 # Audio feedback.
-                await self.wurb_audiofeedback.startup()
-                await self.wurb_audiofeedback.setup(sampling_freq=sampling_freq_hz)
+                await self.wurb_audiofeedback.set_sampling_freq(sampling_freq=sampling_freq_hz)
                 # Rec.
                 self.manual_trigger_activated = False
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
@@ -142,7 +141,7 @@ class WurbRecManager(object):
             await self.ultrasound_devices.reset_devices()
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: stop_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def restart_rec(self):
@@ -158,7 +157,7 @@ class WurbRecManager(object):
                 await self.start_rec()
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: restart_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def get_notification_event(self):
@@ -169,7 +168,7 @@ class WurbRecManager(object):
             return self.notification_event
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: get_notification_event: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def get_status_dict(self):
@@ -188,7 +187,7 @@ class WurbRecManager(object):
             return status_dict
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: get_status_dict: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def update_status(self):
@@ -215,11 +214,11 @@ class WurbRecManager(object):
                     exit
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: update_status: " + str(e)
             self.wurb_logging.error(message, short_message=message)
         finally:
             # Logging error.
-            message = "Manager update status terminated."
+            message = "Manager update_status terminated."
             self.wurb_logging.debug(message=message)
 
     async def manual_trigger(self):
