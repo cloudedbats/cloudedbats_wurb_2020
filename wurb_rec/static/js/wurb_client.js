@@ -257,6 +257,15 @@ function startWebsocket(ws_url) {
   ws.onclose = function () {
     // Try to reconnect in 5th seconds. Will continue...
     ws = null;
+
+    let status_when_disconnected = {
+      rec_status: "Waiting for response from detector...",
+      device_name: "",
+      detector_time: "",
+      location_status: ""
+    }
+    updateStatus(status_when_disconnected)
+
     setTimeout(function () { startWebsocket(ws_url) }, 5000);
   };
 };
