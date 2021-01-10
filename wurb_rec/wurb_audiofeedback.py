@@ -85,9 +85,8 @@ class WurbPitchShifting(object):
             filter_low_limit_hz = int(float(filter_low_khz) * 1000.0)
             filter_high_limit_hz = int(float(filter_high_khz) * 1000.0)
             #
+            # device_name="Built-in Output" # For debug on MacOS.
             self.device_name = device_name
-            # self.pitch_div_factor = pitch_div_factor
-            # self.volume = volume
             self.filter_low_limit_hz = filter_low_limit_hz
             self.filter_high_limit_hz = filter_high_limit_hz
             self.filter_order = filter_order
@@ -135,60 +134,66 @@ class WurbPitchShifting(object):
 
     async def add_buffer(self, buffer_int16):
         """ """
-        if self.audio_task is None:
-            return
-        if self.audio_callback_active == False:
-            return
-        # Reset before next check. Callback will set to true.
-        self.audio_callback_active = False
-        # Skip buffer to avoid too long delay before audio feedback.
-        if (len(self.out_buffer) / self.sampling_freq_out) > self.max_buffer_size_s:
-            print("DEBUG: Out buffer too long: ", len(self.out_buffer))
-            return
-        # Buffer delivered as int16. Transform to intervall -1 to 1.
-        buffer = buffer_int16 / 32768.0
-        # Filter buffer. Butterworth bandpass.
-        sos = scipy.signal.butter(
-            self.filter_order,
-            [self.filter_low_limit_hz, self.filter_high_limit_hz],
-            btype="bandpass",
-            fs=self.sampling_freq_in,
-            output="sos",
-        )
-        filtered = scipy.signal.sosfilt(sos, buffer)
-        # Concatenate with old buffer.
-        self.in_buffer = numpy.concatenate((self.in_buffer, filtered))
-        # Add overlaps on pitchshifting_buffer. Window function is applied on "part".
-        insert_pos = 0
-        while len(self.in_buffer) > self.window_size:
-            part = self.in_buffer[: self.window_size] * self.window_function
-            self.in_buffer = self.in_buffer[self.hop_in_length :]
-            self.pitchshifting_buffer[
-                insert_pos : insert_pos + self.window_size
-            ] += part
-            insert_pos += self.hop_out_length
-            if insert_pos > self.to_outbuffer_limit:
-                self.out_buffer = numpy.concatenate(
-                    (self.out_buffer, self.pitchshifting_buffer[:insert_pos])
-                )
+        try:
+            if self.audio_task is None:
+                return
+            if self.audio_callback_active == False:
+                return
+            # Reset before next check. Callback will set to true.
+            self.audio_callback_active = False
+            # Skip buffer to avoid too long delay before audio feedback.
+            if (len(self.out_buffer) / self.sampling_freq_out) > self.max_buffer_size_s:
+                print("DEBUG: Out buffer too long: ", len(self.out_buffer))
+                return
+            # Buffer delivered as int16. Transform to intervall -1 to 1.
+            buffer = buffer_int16 / 32768.0
+            # Filter buffer. Butterworth bandpass.
+            high_limit_hz = self.filter_high_limit_hz
+            low_limit_hz =self.filter_low_limit_hz
+            if (high_limit_hz + 1000) >= (self.sampling_freq_in / 2):
+                high_limit_hz = self.sampling_freq_in / 2 - 1000
+            sos = scipy.signal.butter(
+                self.filter_order,
+                [low_limit_hz, high_limit_hz],
+                btype="bandpass",
+                fs=self.sampling_freq_in,
+                output="sos",
+            )
+            filtered = scipy.signal.sosfilt(sos, buffer)
+            # Concatenate with old buffer.
+            self.in_buffer = numpy.concatenate((self.in_buffer, filtered))
+            # Add overlaps on pitchshifting_buffer. Window function is applied on "part".
+            insert_pos = 0
+            while len(self.in_buffer) > self.window_size:
+                part = self.in_buffer[: self.window_size] * self.window_function
+                self.in_buffer = self.in_buffer[self.hop_in_length :]
                 self.pitchshifting_buffer[
-                    : self.window_size
-                ] = self.pitchshifting_buffer[
                     insert_pos : insert_pos + self.window_size
-                ]
-                self.pitchshifting_buffer[self.window_size :] = 0.0
-                insert_pos = 0
-        # Flush.
-        self.out_buffer = numpy.concatenate(
-            (self.out_buffer, self.pitchshifting_buffer[:insert_pos])
-        )
-        self.pitchshifting_buffer[: self.window_size] = self.pitchshifting_buffer[
-            insert_pos : insert_pos + self.window_size
-        ]
-        self.pitchshifting_buffer[self.window_size :] = 0.0
-        insert_pos = 0
-
-        # print("DEBUG: Max/min amp: ", max(self.out_buffer), "   ", min(self.out_buffer))
+                ] += part
+                insert_pos += self.hop_out_length
+                if insert_pos > self.to_outbuffer_limit:
+                    self.out_buffer = numpy.concatenate(
+                        (self.out_buffer, self.pitchshifting_buffer[:insert_pos])
+                    )
+                    self.pitchshifting_buffer[
+                        : self.window_size
+                    ] = self.pitchshifting_buffer[
+                        insert_pos : insert_pos + self.window_size
+                    ]
+                    self.pitchshifting_buffer[self.window_size :] = 0.0
+                    insert_pos = 0
+            # Flush.
+            self.out_buffer = numpy.concatenate(
+                (self.out_buffer, self.pitchshifting_buffer[:insert_pos])
+            )
+            self.pitchshifting_buffer[: self.window_size] = self.pitchshifting_buffer[
+                insert_pos : insert_pos + self.window_size
+            ]
+            self.pitchshifting_buffer[self.window_size :] = 0.0
+            insert_pos = 0
+            # print("DEBUG: Max/min amp: ", max(self.out_buffer), "   ", min(self.out_buffer))
+        except Exception as e:
+            print("Exception: WurbPitchShifting: add_buffer: ", e)
 
     async def stream_audio(self):
         """ """
@@ -216,9 +221,8 @@ class WurbPitchShifting(object):
                 else:
                     # Send zeroes if out buffer is empty.
                     outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float32)
-
             except Exception as e:
-                print("Exception stream_audio-callback: ", e)
+                print("Exception: WurbPitchShifting: stream_audio-callback: ", e)
                 loop.call_soon_threadsafe(audio_event.set)
 
         # End of locally defined callback.
@@ -239,7 +243,7 @@ class WurbPitchShifting(object):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print("Exception stream_audio: ", e)
+            print("Exception: WurbPitchShifting: stream_audio: ", e)
 
 
 # === MAIN - for test ===
