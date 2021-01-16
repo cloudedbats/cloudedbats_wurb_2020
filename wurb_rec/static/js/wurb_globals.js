@@ -34,6 +34,7 @@ function define_global_variables() {
   const settings_detection_algorithm_id = document.getElementById("settings_detection_algorithm_id");
   const settings_rec_length_id = document.getElementById("settings_rec_length_id");
   const settings_rec_type_id = document.getElementById("settings_rec_type_id");
+  const settings_feedback_on_off_id = document.getElementById("settings_feedback_on_off_id");
   const settings_feedback_filter_low_id = document.getElementById("settings_feedback_filter_low_id");
   const settings_feedback_filter_high_id = document.getElementById("settings_feedback_filter_high_id");
   const settings_startup_option_id = document.getElementById("settings_startup_option_id");

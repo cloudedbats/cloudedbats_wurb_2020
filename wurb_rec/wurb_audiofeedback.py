@@ -56,24 +56,30 @@ class WurbPitchShifting(object):
         self.max_buffer_size_s = 1.5
         # self.min_adjust_buffer_s = 0.5
 
-
     async def set_volume(self, volume):
         """ """
+        print("AUDIO FEEDBACK VOLUME: ", volume)
         self.volume = (int(volume) / 100.0) * 2.0
+        self.wurb_settings.set_setting_without_saving("feedback_volume", volume)
 
     async def set_pitch_factor(self, pitch_factor):
         """ """
+        print("AUDIO FEEDBACK PITCH: ", pitch_factor)
         self.pitch_div_factor = int(pitch_factor)
-        await self.shutdown()
-        if self.sampling_freq_in:
-            if self.sampling_freq_in > 0:
-                await self.setup()
-                await self.startup()
+        self.wurb_settings.set_setting_without_saving("feedback_pitch", pitch_factor)
+        # await self.shutdown()
+        # await asyncio.sleep(0.2)
+        # if self.sampling_freq_in:
+        #     if self.sampling_freq_in > 0:
+        #         await self.setup()
+        #         await self.startup()
+        await self.setup()
 
     async def set_sampling_freq(self, sampling_freq):
         """ """
         self.sampling_freq_in = int(sampling_freq)
         await self.shutdown()
+        await asyncio.sleep(0.2)
         await self.setup()
         await self.startup()
 
@@ -93,7 +99,9 @@ class WurbPitchShifting(object):
             # From environment variables.
             # - Device "Headphones" is for RPi 3.5mm jack.
             self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
-            self.device_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
+            self.device_freq_hz = int(
+                os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000")
+            )
             # - WURB_REC_OUTPUT_DEVICE_FREQ_HZ
             # Calculated parameters.
             self.sampling_freq_out = int(self.sampling_freq_in / self.pitch_div_factor)
@@ -124,9 +132,11 @@ class WurbPitchShifting(object):
         """ """
         # Shutdown if already running.
         await self.shutdown()
-        # Start audio
-        self.asyncio_loop = asyncio.get_event_loop()
-        self.audio_task = asyncio.create_task(self.stream_audio())
+        feedback_on_off = self.wurb_settings.get_setting(key="feedback_on_off")
+        if feedback_on_off == "feedback-on":
+            # Start audio
+            self.asyncio_loop = asyncio.get_event_loop()
+            self.audio_task = asyncio.create_task(self.stream_audio())
 
     async def shutdown(self):
         """ """
@@ -154,14 +164,14 @@ class WurbPitchShifting(object):
                 # print("DEBUG: Out buffer too long: ", self.out_buffer.size)
                 return
             # if out_buffer_size_s > self.min_adjust_buffer_s:
-            #     frame_cut_nr  = int(buffer_int16.size / 20) # Cut 5%. 
+            #     frame_cut_nr  = int(buffer_int16.size / 20) # Cut 5%.
             #     buffer_int16 = buffer_int16[:-frame_cut_nr]
             # Buffer delivered as int16. Transform to intervall -1 to 1.
             buffer = buffer_int16 / 32768.0
             # Filter buffer. Butterworth bandpass.
             filtered = buffer
             try:
-                low_limit_hz =self.filter_low_limit_hz
+                low_limit_hz = self.filter_low_limit_hz
                 high_limit_hz = self.filter_high_limit_hz
                 if (high_limit_hz + 100) >= (self.sampling_freq_in / 2):
                     high_limit_hz = self.sampling_freq_in / 2 - 100
@@ -220,7 +230,7 @@ class WurbPitchShifting(object):
 
     def resample(self, x, kind="linear"):
         """ Resample to 48000 Hz, in most cases, to match output devices. """
-        if x.size > 0: 
+        if x.size > 0:
             n = int(numpy.ceil(x.size / self.resample_factor))
             f = scipy.interpolate.interp1d(numpy.linspace(0, 1, x.size), x, kind)
             return f(numpy.linspace(0, 1, n))
@@ -257,6 +267,7 @@ class WurbPitchShifting(object):
             except Exception as e:
                 print("Exception: WurbPitchShifting: stream_audio-callback: ", e)
                 loop.call_soon_threadsafe(audio_event.set)
+
         # End of locally defined callback.
 
         try:

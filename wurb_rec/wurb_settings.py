@@ -56,6 +56,9 @@ class WurbSettings(object):
             "detection_algorithm": "detection-simple",
             "rec_length_s": "6",
             "rec_type": "FS",
+            "feedback_on_off": "feedback-on",
+            "feedback_volume": "50",
+            "feedback_pitch": "30",
             "feedback_filter_low_khz": "15",
             "feedback_filter_high_khz": "150",
             "startup_option": "as-last-session",
@@ -166,6 +169,11 @@ class WurbSettings(object):
         if key:
             return self.current_settings.get(key, "")
         return ""
+
+    def set_setting_without_saving(self, key=None, value=""):
+        """ """
+        if key:
+            self.current_settings[key] = value
 
     async def get_settings(self, default=False):
         """ """

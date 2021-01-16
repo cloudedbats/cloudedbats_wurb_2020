@@ -75,6 +75,9 @@ function modeSelectOnChange(update_detector) {
   else if (selected_value == "detector-power-off") {
     showDivision(div_detector_power_off_id);
   }
+  // Trigging Audio feedback sliders
+  feedback_volume_slider_id.oninput()
+  feedback_pitch_slider_id.oninput()
 }
 
 // For the geographic location tile.
@@ -250,6 +253,9 @@ function updateSettings(settings) {
   settings_detection_algorithm_id.value = settings.detection_algorithm
   settings_rec_length_id.value = settings.rec_length_s
   settings_rec_type_id.value = settings.rec_type
+  settings_feedback_on_off_id.value = settings.feedback_on_off
+  feedback_volume_slider_id.value = settings.feedback_volume
+  feedback_pitch_slider_id.value = settings.feedback_pitch
   settings_feedback_filter_low_id.value = settings.feedback_filter_low_khz
   settings_feedback_filter_high_id.value = settings.feedback_filter_high_khz
   settings_startup_option_id.value = settings.startup_option
@@ -261,6 +267,12 @@ function updateSettings(settings) {
   settings_scheduler_post_action_delay_id.value = settings.scheduler_post_action_delay
 
   modeSelectOnChange(update_detector=false)
+
+  // Trigging Audio feedback sliders
+  feedback_volume_slider_id.oninput()
+  feedback_pitch_slider_id.oninput()
+  setAudioFeedback()
+
 }
 
 function saveUserDefaultSettings() {

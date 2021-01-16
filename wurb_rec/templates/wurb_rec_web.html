@@ -16,10 +16,10 @@
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', path='css/wurb_slider.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=0035') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=0035') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_client.js/?v=0035') }}"></script>
-    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=0035') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_client.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=14') }}"></script>
 </head>
 
 <body>
@@ -436,6 +436,17 @@
                                                 </option>
                                                 <option value="TE">Time Expansion (TE), 10x
                                                 </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Audio&nbsp;feedback</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_feedback_on_off_id">
+                                                <option value="feedback-off">Off</option>
+                                                <option value="feedback-on">On</option>
                                             </select>
                                         </div>
                                     </div>

@@ -47,6 +47,9 @@ class DetectorSettings(BaseModel):
     detection_algorithm: str = None
     rec_length_s: str = None
     rec_type: str = None
+    feedback_on_off: str = None
+    feedback_volume: float = None
+    feedback_pitch: float = None
     feedback_filter_low_khz: float = None
     feedback_filter_high_khz: float = None
     startup_option: str = None
