@@ -233,6 +233,8 @@ async function raspberryPiControl(command) {
   };
 };
 
+let wait_text_nr = 0
+
 function startWebsocket(ws_url) {
   // let ws = new WebSocket("ws://localhost:8000/ws");
   let ws = new WebSocket(ws_url);
@@ -258,8 +260,20 @@ function startWebsocket(ws_url) {
     // Try to reconnect in 5th seconds. Will continue...
     ws = null;
 
+    if (wait_text_nr == 0) { 
+      wait_text = "Waiting for response from detector..."
+    } else if (wait_text_nr == 1) {
+      wait_text = "Waiting for response from detector."
+    } else if (wait_text_nr == 2) {
+      wait_text = "Waiting for response from detector.."
+    }
+    wait_text_nr += 1
+    if (wait_text_nr >= 3) {
+      wait_text_nr = 0
+    }
+
     let status_when_disconnected = {
-      rec_status: "Waiting for response from detector...",
+      rec_status: wait_text,
       device_name: "",
       detector_time: "",
       location_status: ""

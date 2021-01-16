@@ -16,6 +16,8 @@ source venv/bin/activate
 # export WURB_REC_LOG_LEVEL=info
 # export WURB_REC_INPUT_DEVICE=HiFiBerry
 # export WURB_REC_INPUT_DEVICE_FREQ_HZ=192000
+# export WURB_REC_OUTPUT_DEVICE=Headphones
+# export WURB_REC_OUTPUT_DEVICE_FREQ_HZ=48000
 
 # Launch control by GPIO and/or computer mouse.
 # It is running in it's own process.
