@@ -53,7 +53,7 @@ class WurbPitchShifting(object):
         self.out_buffer = None
         # Params.
         self.filter_order = 10
-        self.max_buffer_size_s = 1.5
+        self.max_buffer_size_s = 2.5
         # self.min_adjust_buffer_s = 0.5
 
     async def set_volume(self, volume):
@@ -277,7 +277,7 @@ class WurbPitchShifting(object):
                 device=self.device_name,
                 samplerate=int(self.device_freq_hz),
                 channels=1,
-                blocksize=0,  # Automatically by ALSA.
+                blocksize=8192, # 0 = Automatically by ALSA.
                 callback=audio_out_callback,  # Locally defined above.
             )
             with stream:
