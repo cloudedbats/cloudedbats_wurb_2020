@@ -11,600 +11,779 @@
     <!-- Bulma -->
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
     <!-- <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
-    <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.8-min.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bulma-0.9.1-min.css') }}">
     <!-- CloudedBats -->
     <link href="{{ url_for('static', path='css/wurb_styles.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', path='js/wurb_javascript.js/?v=10') }}"></script>
+    <link href="{{ url_for('static', path='css/wurb_slider.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', path='js/wurb_globals.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_ui.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_client.js/?v=14') }}"></script>
+    <script src="{{ url_for('static', path='js/wurb_onload.js/?v=14') }}"></script>
 </head>
 
 <body>
-    <section class="section has-background-grey-dark">
-        <div class="container">
-            <div class="tile is-ancestor">
-                <div class="tile is-vertical">
-                    <div class="tile">
-                        <div class="tile is-parent is-vertical">
-
-                            <!-- Tile: Ultrasonic recorder -->
-                            <article class="tile is-child box has-background-grey-lighter">
-                                <p class="title">CloudedBats-WURB</p>
-                                <p class="subtitle">The DIY Bat Detector</p>
-                                <div class="buttons is-centered">
-                                    <button style="margin:5px;" id="rec_start_button_id"
-                                        class="button is-info is-rounded is-medium" onclick="startRecording()">
-                                        <!-- Start recording -->
-                                        Start rec.
-                                    </button>
-                                    <button style="margin:5px;" id="rec_stop_button_id"
-                                        class="button is-info is-rounded is-medium" onclick="stopRecording()">
-                                        <!-- Stop recording -->
-                                        Stop rec.
-                                    </button>
-                                </div>
-                                <div class="content">
-                                    <p class="subtitle">
-                                        Status: <strong>
-                                            <span id="rec_status_id">Waiting...</span>
-                                        </strong>
-                                        <br>
-                                        <!-- Microphone: -->
-                                        <span id="rec_info_id"></span>
-                                        <br>
-                                        Detector time:
-                                        <span id="rec_detector_time_id"></span>
-                                    </p>
-                                </div>
-
-                                <!-- <div class="content" style="height: 10em; overflow: auto;"> -->
-                                <div class="table-container" style="height: 10em; overflow: auto;">
-                                    <table id="rec_log_table_id"
-                                        class="table is-fullwidth is-bordered is-striped has-background-white-ter">
-                                        <tr>
-                                            <td>&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp;</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </article>
-
-                            <!-- Tile: Geographic location -->
-                            <article class="tile is-child box has-background-grey-lighter">
-                                <!-- Content. -->
-                                <p class="title">Geographic location</p>
-                                <p class="subtitle">Used in file names, and for scheduler.</p>
-                                <div class="field is-horizontal">
-                                    <div class="field-label is-normal">
-                                        <label class="label">Source</label>
-                                    </div>
-                                    <div class="field-body">
-                                        <div class="field is-narrow">
-                                            <div class="control">
-                                                <div class="select">
-                                                    <select id="geo_source_option_id"
-                                                        onchange="geoLocationSourceOnChange(update_detector=true)">
-                                                        <option value="geo-not-used">Not used</option>
-                                                        <option value="geo-manual">Manually entered location</option>
-                                                        <!-- <option value="geo-client-gps">Location from client unit -->
-                                                        <!-- </option> -->
-                                                        <option value="geo-usb-gps">USB GPS receiver
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="field is-horizontal">
-                                    <div class="field-label is-normal">
-                                        <label class="label">Latitude&nbsp;&nbsp&nbsp;</label>
-                                    </div>
-                                    <div class="field-body">
-                                        <div class="field is-narrow">
-                                            <div class="control">
-                                                <input id="latitude_dd_id" class="input" type="number" step="0.0001"
-                                                    min="-90.0" max="90.0" placeholder="15.6789">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="field is-horizontal">
-                                    <div class="field-label is-normal">
-                                        <label class="label">Longitude</label>
-                                    </div>
-                                    <div class="field-body">
-                                        <div class="field is-narrow">
-                                            <div class="control">
-                                                <input id="longitude_dd_id" class="input" type="number" step="0.0001"
-                                                    min="-180.0" max="180.0" placeholder="12.3456">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="buttons is-centered">
-                                    <button style="margin:5px;" id="geo_set_pos_button_id"
-                                        class="button is-info is-rounded" onclick="saveLocation()">
-                                        <span id="save_location_button_text_id">Save</span>
-                                    </button>
-                                    <button style="margin:5px;" id="geo_set_time_button_id"
-                                        class="button is-info is-rounded" onclick="setDetectorTime()">
-                                        Set time
-                                    </button>
-                                </div>
-                            </article>
-                        </div>
-                        <div class="tile is-parent">
-
-                            <!-- Tile: Settings -->
-                            <article class="tile is-child box has-background-grey-lighter">
-                                <!-- Content. -->
-                                <p class="title">Settings</p>
-                                <p class="subtitle">Settings for the recording unit.</p>
-
-                                <div class="field is-horizontal">
-                                    <div class="field-label is-normal">
-                                        <label class="label">Rec.&nbsp;mode</label>
-                                    </div>
-                                    <div class="field-body">
-                                        <div class="field is-narrow">
-                                            <div class="control">
-                                                <div class="select">
-                                                    <select id="settings_rec_mode_id" onchange="recModeOnChange()">
-                                                        <option value="rec-mode-manual">Manually controlled</option>
-                                                        <option value="rec-mode-on">Rec. always on</option>
-                                                        <option value="rec-mode-off">Rec. always off</option>
-                                                        <option value="rec-mode-scheduler">Based on scheduler</option>
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="tabs is-fullwidth is-medium">
-                                    <ul>
-                                        <li id="tab_settings_basic_id" class="is-active"
-                                            onclick="hideShowSettingsTabs('basic');">
-                                            <a>
-                                                <span><strong>Basic</strong></span>
-                                            </a>
-                                        </li>
-                                        <li id="tab_settings_more_id" class="" onclick="hideShowSettingsTabs('more');">
-                                            <a>
-                                                <span><strong>More</strong></span>
-                                            </a>
-                                        </li>
-                                        <li id="tab_settings_scheduler_id" class=""
-                                            onclick="hideShowSettingsTabs('scheduler');">
-                                            <a>
-                                                <span><strong>Scheduler</strong></span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Settings: Basic. -->
-                                <div id="div_settings_basic_id">
-                                    <div class="field">
-                                        <label class="label">Directory&nbsp;for&nbsp;sound&nbsp;files</label>
-                                        <div class="control">
-                                            <input id="settings_file_directory_id" class="input"
-                                                placeholder="recorded_files" value="recorded_files">
-                                        </div>
-                                        <p class="help is-info">
-                                            On USB memory if available, otherwise internally on SD card.
-                                        </p>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">File&nbsp;name&nbsp;prefix</label>
-                                        <div class="control">
-                                            <input id="settings_filename_prefix_id" class="input" placeholder="wurb"
-                                                value="wurb">
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label
-                                            class="label">Sound&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)</label>
-                                        <div class="control">
-                                            <input id="settings_detection_limit_id" class="input" type="number"
-                                                placeholder="15.0" value="15.0">
-                                        </div>
-                                        <p class="help is-info">
-                                            Sound above this frequency limit is checked.
-                                        </p>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Sound&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)</label>
-                                        <div class="control">
-                                            <input id="settings_detection_sensitivity_id" class="input" type="number"
-                                                placeholder="-50" value="-50">
-                                        </div>
-                                        <p class="help is-info">
-                                            The value -60 gives more files and -40 less.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Settings: more. -->
-                                <div id="div_settings_more_id"
-                                    style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
-                                    <div class="field">
-                                        <label class="label">Sound&nbsp;detection&nbsp;algorithm</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_detection_algorithm_id">
-                                                    <option value="detection-none">None (everything is recorded)
-                                                    </option>
-                                                    <option value="detection-simple">Simple (single trigging event)
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Length of the recordings</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_rec_length_id">
-                                                    <option value="4">4 seconds</option>
-                                                    <option value="5">5 seconds</option>
-                                                    <option value="6">6 seconds</option>
-                                                    <option value="7">7 seconds</option>
-                                                    <option value="8">8 seconds</option>
-                                                    <option value="9">9 seconds</option>
-                                                    <option value="10">10 seconds</option>
-                                                    <option value="12">12 seconds</option>
-                                                    <option value="15">15 seconds</option>
-                                                    <option value="20">20 seconds</option>
-                                                    <option value="60">1 minute</option>
-                                                    <option value="120">2 minutes</option>
-                                                    <option value="300">5 minutes</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <p class="help is-info">
-                                            Up to 2 sec. before the detected sound is recorded.
-                                        </p>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Wave file type, FS or TE</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_rec_type_id">
-                                                    <option value="FS">Full Spectrum (FS)
-                                                    </option>
-                                                    <option value="TE">Time Expansion (TE), 10x
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Raspberry Pi control</label>
-                                        <div class="control">
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_shutdown')">
-                                                Shutdown
-                                            </button>
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_reboot')">
-                                                Restart
-                                            </button>
-                                        </div>
-                                        <!-- <div class="control">
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_sd_to_usb')">
-                                                Copy SD to USB
-                                            </button>
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_clear_sd')">
-                                                Clear SD card...
-                                            </button>
-                                        </div>
-                                        <div id="div_settings_clear_sd_confirm_id"
-                                            style="visibility:hidden; overflow:hidden; height:0; width:0;">
-                                            <div style="border:1px solid white; margin: 0px; padding: 25px;">
-                                                <div class="control">
-                                                    <label class="label">Do you want to remove sound
-                                                        files from the internal SD card?</label>
-                                                    <button style="margin:5px;"
-                                                        class="button is-info is-rounded is-small"
-                                                        onclick="raspberryPiControl('rpi_clear_sd_cancel')">
-                                                        Cancel
-                                                    </button>
-                                                    <button style="margin:5px;"
-                                                        class="button is-info is-rounded is-small"
-                                                        onclick="raspberryPiControl('rpi_clear_sd_ok')">
-                                                        Remove sound files
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div> -->
-                                        <div class="control">
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_status')">
-                                                Detector status
-                                            </button>
-                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                onclick="raspberryPiControl('rpi_sw_update_dialog')">
-                                                Software update...
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div id="div_settings_software_update_id"
-                                        style="visibility:hidden; overflow:hidden; height:0; width:0;">
-                                        <div style="border:1px solid white; margin: 0px; padding: 25px;">
-                                            <div class="control">
-                                                <label class="label">Please connect your detector to Internet before you
-                                                    continue, for example by connecting an Ethernet cable.</label>
-                                                <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                    onclick="raspberryPiControl('rpi_sw_update_cancel')">
-                                                    Cancel
-                                                </button>
-                                                <!-- <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                    onclick="raspberryPiControl('rpi_sw_update_stable')">
-                                                    Latest stable version
-                                                </button> -->
-                                                <button style="margin:5px;" class="button is-info is-rounded is-small"
-                                                    onclick="raspberryPiControl('rpi_sw_update')">
-                                                    Update
-                                                </button>
-                                                <!-- <label class="label"> -->
-                                                <p class="help is-info"></p>
-                                                Not all software updates can be done by
-                                                using this methods.
-                                                If it doesn't work as expected, then follow the installation
-                                                instruction that can be found here:
-                                                https://github.com/cloudedbats/cloudedbats_wurb_2020
-                                                </p>
-                                                <!-- </label> -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Settings: Scheduler. -->
-                                <div id="div_settings_scheduler_id"
-                                    style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
-                                    <div class="field">
-                                        <label class="label">Start&nbsp;recording&nbsp;at</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_scheduler_start_event_id">
-                                                    <option value="on-sunset">Sunset</option>
-                                                    <option value="on-dusk">Dusk</option>
-                                                    <option value="on-dawn">Dawn</option>
-                                                    <option value="on-sunrise">Sunrise</option>
-                                                    <option value="on-00">00:00</option>
-                                                    <option value="on-01">01:00</option>
-                                                    <option value="on-02">02:00</option>
-                                                    <option value="on-03">03:00</option>
-                                                    <option value="on-04">04:00</option>
-                                                    <option value="on-05">05:00</option>
-                                                    <option value="on-06">06:00</option>
-                                                    <option value="on-07">07:00</option>
-                                                    <option value="on-08">08:00</option>
-                                                    <option value="on-09">09:00</option>
-                                                    <option value="on-10">10:00</option>
-                                                    <option value="on-11">11:00</option>
-                                                    <option value="on-12">12:00</option>
-                                                    <option value="on-13">13:00</option>
-                                                    <option value="on-14">14:00</option>
-                                                    <option value="on-15">15:00</option>
-                                                    <option value="on-16">16:00</option>
-                                                    <option value="on-17">17:00</option>
-                                                    <option value="on-18">18:00</option>
-                                                    <option value="on-19">19:00</option>
-                                                    <option value="on-20">20:00</option>
-                                                    <option value="on-21">21:00</option>
-                                                    <option value="on-22">22:00</option>
-                                                    <option value="on-23">23:00</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Adjust&nbsp;start&nbsp;time&nbsp;(minutes)</label>
-                                        <div class="control">
-                                            <input id="settings_scheduler_start_adjust_id" class="input" type="number"
-                                                placeholder="-15" value="-15">
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Stop&nbsp;recording&nbsp;at</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_scheduler_stop_event_id">
-                                                    <option value="off-sunset">Sunset</option>
-                                                    <option value="off-dusk">Dusk</option>
-                                                    <option value="off-dawn">Dawn</option>
-                                                    <option value="off-sunrise">Sunrise</option>
-                                                    <option value="off-00">00:00</option>
-                                                    <option value="off-01">01:00</option>
-                                                    <option value="off-02">02:00</option>
-                                                    <option value="off-03">03:00</option>
-                                                    <option value="off-04">04:00</option>
-                                                    <option value="off-05">05:00</option>
-                                                    <option value="off-06">06:00</option>
-                                                    <option value="off-07">07:00</option>
-                                                    <option value="off-08">08:00</option>
-                                                    <option value="off-09">09:00</option>
-                                                    <option value="off-10">10:00</option>
-                                                    <option value="off-11">11:00</option>
-                                                    <option value="off-12">12:00</option>
-                                                    <option value="off-13">13:00</option>
-                                                    <option value="off-14">14:00</option>
-                                                    <option value="off-15">15:00</option>
-                                                    <option value="off-16">16:00</option>
-                                                    <option value="off-17">17:00</option>
-                                                    <option value="off-18">18:00</option>
-                                                    <option value="off-19">19:00</option>
-                                                    <option value="off-20">20:00</option>
-                                                    <option value="off-21">21:00</option>
-                                                    <option value="off-22">22:00</option>
-                                                    <option value="off-23">23:00</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)</label>
-                                        <div class="control">
-                                            <input id="settings_scheduler_stop_adjust_id" class="input" type="number"
-                                                placeholder="15" value="15">
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Post&nbsp;action</label>
-                                        <div class="control">
-                                            <div class="select">
-                                                <select id="settings_scheduler_post_action_id" disabled>
-                                                    <option value="post-none">No action</option>
-                                                    <!-- <option value="post-shutdown">Detector shutdown</option> -->
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field">
-                                        <label class="label">Post&nbsp;action&nbsp;delay&nbsp;(minutes)</label>
-                                        <div class="control">
-                                            <input id="settings_scheduler_post_action_delay_id" class="input"
-                                                type="number" placeholder="5" value="5" disabled>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <hr>
-                                <div class="field is-horizontal">
-                                    <!-- <div class="field-label is-normal">
-                                        <label class="label">Select</label>
-                                    </div> -->
-                                    <div class="field-body">
-                                        <div class="control">
-                                            <button style="margin:5px;" id="settings_save_button_id"
-                                                class="button is-info is-rounded" onclick="saveSettings()">
-                                                Save
-                                            </button>
-                                            <button style="margin:5px;" id="settings_reset_button_id"
-                                                class="button is-info is-rounded" onclick="getSettings()">
-                                                Last saved
-                                            </button>
-                                            <button style="margin:5px;" id="settings_default_button_id"
-                                                class="button is-info is-rounded" onclick="getDefaultSettings()">
-                                                Default
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </article>
-                        </div>
-                    </div>
-
+    <section class="section has-background-grey-dark is-fluid">
+        <div class="tile is-ancestor">
+            <div class="tile is-vertical">
+                <div class="tile">
                     <div class="tile is-parent is-vertical">
 
-                        <!-- Tile: Recorded files -->
-                        <!-- <article class="tile is-child box has-background-grey-lighter">
-                            <p class="title"> Recorded files</p>
+                        <!-- Article: Detector -->
+                        <article class="tile is-child box has-background-grey-lighter">
+                            <p class="title is-4">CloudedBats-WURB</p>
+                            <p class="subtitle is-6">The DIY Bat Detector</p>
+
                             <div class="field is-horizontal">
-                                <div class="field-label is-normal">
-                                    <label class="label">Filename&nbsp;filter</label>
+                                <div class="field-label label is-normal has-text-left">
+                                    Mode&nbsp;&nbsp;
                                 </div>
                                 <div class="field-body">
                                     <div class="field is-narrow">
                                         <div class="control">
-                                            <input class="input" placeholder="20200601T02">
+                                            <div class="select is-narrow">
+                                                <select id="detector_mode_select_id"
+                                                    onchange="modeSelectOnChange(update_detector=true)">
+                                                    <option value="mode-off">Microphone - Off</option>
+                                                    <option disabled>───────────</option>
+                                                    <option value="mode-on">Recording - On (continuously)</option>
+                                                    <option value="mode-auto">Recording - Auto detection</option>
+                                                    <option value="mode-manual">Recording - Manual triggering</option>
+                                                    <option disabled>───────────</option>
+                                                    <option value="mode-scheduler-on">Scheduler - Recording on</option>
+                                                    <option value="mode-scheduler-auto">Scheduler - Auto detection
+                                                    </option>
+                                                    <option disabled>───────────</option>
+                                                    <option value="load-user-default">Load "User default" settings
+                                                    </option>
+                                                    <option value="load-start-up">Load "Start-up" settings</option>
+                                                    <option value="load-factory-default">Load "Factory default" settings
+                                                    </option>
+                                                    <option disabled>───────────</option>
+                                                    <option value="detector-power-off">Detector - Power off...</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button class="button is-info is-rounded" disabled>
-                                        Update
-                                    </button>
+                                </div>
+                            </div>
+                            <div id="div_manual_triggering_id" class="field is-grouped is-grouped-centered"
+                                style="visibility:hidden; overflow:hidden; height:0; width:0;">
+                                <div style="border:1px solid white; margin: 0px; padding: 25px;">
+                                    <div class="control">
+                                        <button style="margin:5px;" class="button is-info is-rounded is-large"
+                                            onclick="manualTrigger()">
+                                            Trigger
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div_detector_power_off_id" class="field is-grouped is-grouped-centered"
+                                style="visibility:hidden; overflow:hidden; height:0; width:0;">
+                                <div style="border:1px solid white; margin: 0px; padding: 25px;">
+                                    <div class="control">
+                                        <button style="margin:5px;" class="button is-info is-rounded"
+                                            onclick="raspberryPiControl('rpi_shutdown')">
+                                            Shutdown
+                                        </button>
+                                        <button style="margin:5px;" class="button is-info is-rounded"
+                                            onclick="raspberryPiControl('rpi_reboot')">
+                                            Restart
+                                        </button>
+                                        <button style="margin:5px;" class="button is-info is-rounded"
+                                            onclick="raspberryPiControl('rpi_cancel')">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal is-grouped is-fullwidth">
+                                <div class="field-label label has-text-left">
+                                    Status&nbsp;&nbsp;
+                                </div>
+                                <div class="field-body is-fullwidth">
+                                    <span id="detector_status_id">Waiting...</span>
                                 </div>
                             </div>
 
-                            <div style="height: 15em; overflow: auto;">
-                                    <table class="table is-striped is-fullwidth">
-                                        <thead>
-                                            <tr>
-                                                <th><abbr title="Location">Row</abbr></th>
-                                                <th>Sound file</th>
-                                                <th>Download</th>
-                                                <th>Delete</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <th>1</th>
-                                                <td>WURB2_20170802T024532+0200_N43.3201W2.0054_FS384.wav</td>
-                                                <td><a ref="">download</a></td>
-                                                <td><a ref="">delete</a></td>
-                                            </tr>
-                                            <tr>
-                                                <th>2</th>
-                                                <td>WURB2_20170802T025117+0200_N43.3201W2.0054_FS384.wav</td>
-                                                <td><a ref="">download</a></td>
-                                                <td><a ref="">delete</a></td>
-                                            </tr>
-                                            <tr>
-                                                <th>3</th>
-                                                <td>WURB2_20170802T030204+0200_N43.3201W2.0054_FS384.wav</td>
-                                                <td><a ref="">download</a></td>
-                                                <td><a ref="">delete</a></td>
-                                            </tr>
-                                            <tr>
-                                                <th>4</th>
-                                                <td>WURB2_20170802T0301712+0200_N43.3201W2.0054_FS384.wav</td>
-                                                <td><a ref="">download</a></td>
-                                                <td><a ref="">delete</a></td>
-                                            </tr>
-                                            <tr>
-                                                <th>5</th>
-                                                <td>WURB2_20170802T032717+0200_N43.3201W2.0054_FS384.wav</td>
-                                                <td><a ref="">download</a></td>
-                                                <td><a ref="">delete</a></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                            <div class="field is-horizontal is-grouped is-fullwidth">
+                                <div class="field-label label has-text-left">
+                                    <!-- Detector&nbsp;time -->
+                                    Time&nbsp;&nbsp;
+                                </div>
+                                <div class="field-body is-fullwidth">
+                                    <span id="detector_time_id"></span>
+                                </div>
                             </div>
-                        </article> -->
 
-                        <!-- Tile: About -->
+
+                            <!-- <div class="content" style="height: 10em; overflow: auto;"> -->
+                            <div class="table-container" style="height: 10em; overflow: auto;">
+                                <table id="detector_log_table_id"
+                                    class="table is-fullwidth is-bordered is-striped has-background-white-ter">
+                                    <tr>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="field is-grouped is-grouped-centered">
+                                <button style="margin:5px;" class="button is-info is-rounded"
+                                    onclick="raspberryPiControl('rpi_status')">
+                                    Show status
+                                </button>
+                                <button style="margin:5px;" class="button is-info is-rounded"
+                                    onclick="setDetectorTime()">
+                                    Set time
+                                </button>
+                            </div>
+                        </article>
+
+                        <!-- Article: Location -->
                         <article class="tile is-child box has-background-grey-lighter">
                             <!-- Content. -->
-                            <p class="title">About</p>
-                            <p class="subtitle">CloudedBats - WURB 2020<br>
-                                Version: {{ wurb_version }}</p>
-                            <div class="content">
-                                <p>
-                                    This is a part of the open source
-                                    <a href="http://cloudedbats.org">CloudedBats.org</a>
-                                    software project.
-                                    <br>
-                                    More information and source code at GitHub:
-                                    <a href="https://github.com/cloudedbats/cloudedbats_wurb_2020">
-                                        cloudedbats_wurb_2020</a>.
-                                    <br>
-                                    REST API for programmatic control:
-                                    <a href="/docs">OpenAPI 3.0</a>.
-                                    <br>
-                                    (The links above only works when your detector is connected to the internet.
-                                    For example, by connecting an Ethernet cable.)
-                                </p>
-                                <p>
-                                    Developed by: Arnold&nbsp;Andreasson,&nbsp;Sweden.<br />
-                                    Contact and feedback: info@cloudedbats.org
-                                </p>
+                            <p class="title is-4">Geographic location</p>
+                            <p class="subtitle is-6">Used in file names, and for scheduler.</p>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-normal has-text-left">
+                                    <label class="label">Source</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field is-narrow">
+                                        <div class="control">
+                                            <div class="select is-narrow">
+                                                <select id="location_source_select_id"
+                                                    onchange="geoLocationSourceOnChange(update_detector=true)">
+                                                    <option value="geo-not-used">Not used</option>
+                                                    <option value="geo-manual">Manually entered</option>
+                                                    <!-- <option value="geo-client-gps">Location from client unit -->
+                                                    <!-- </option> -->
+                                                    <option value="geo-gps">GPS
+                                                    <option value="geo-gps-or-manual">GPS or Manually entered
+                                                    </option>
+                                                    <option value="geo-last-gps-or-manual">GPS or Last found GPS or Manually
+                                                        entered
+                                                    </option>
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal is-grouped is-fullwidth">
+                                <div class="field-label label has-text-left">
+                                    Status&nbsp;&nbsp;
+                                </div>
+                                <div class="field-body is-fullwidth">
+                                    <span id="location_status_id">No info...</span>
+                                </div>
+                            </div>
+                            <table class="field is-fullwidth">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="field is-horizontal is-fullwidth">
+                                                <div class="field-label label is-normal has-text-left">
+                                                    Latitude
+                                                </div>
+                                                <div class="field-body">
+                                                    <div class="field is-narrow">
+                                                        <div class="control">
+                                                            <input id="latitude_dd_id" class="input" type="number"
+                                                                step="0.0001" min="-90.0" max="90.0"
+                                                                placeholder="15.6789">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            &nbsp;&nbsp;
+                                            &nbsp;&nbsp;
+                                        </td>
+                                        <td>
+                                            <div class="field is-horizontal is-fullwidth">
+                                                <div class="field-label label is-normal has-text-left">
+                                                    Longitude
+                                                </div>
+                                                <div class="field-body">
+                                                    <div class="field is-narrow">
+                                                        <div class="control">
+                                                            <input id="longitude_dd_id" class="input" type="number"
+                                                                step="0.0001" min="-180.0" max="180.0"
+                                                                placeholder="12.3456">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="buttons is-centered">
+                                <button style="margin:5px;" id="location_button_id" class="button is-info is-rounded"
+                                    onclick="saveLocation()">
+                                    <span id="location_button_text_id">Save</span>
+                                </button>
                             </div>
                         </article>
 
                     </div>
+                    <div class="tile is-parent">
+
+                        <!-- Article: Settings -->
+                        <article class="tile is-child box has-background-grey-lighter">
+                            <!-- Content. -->
+                            <p class="title is-4">Settings</p>
+                            <p class="subtitle is-6">Settings for the detector.</p>
+
+                            <div class="field">
+                                <div class="field-label is-normal has-text-left">
+                                    <label class="label">Audio&nbsp;feedback&nbsp;-&nbsp;volume&nbsp;
+                                        <span id="feedback_volume_id"></span>
+                                    </label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field label is-normal">
+                                        <div class="control">
+                                            <div class="slidecontainer">
+                                                <input type="range" min="0" max="100" value="50" class="slider"
+                                                    id="feedback_volume_slider_id">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- </div> -->
+                                <!-- <div class="field is-horizontal is-grouped "> -->
+                            </div>
+                            <div class="field">
+                                <div class="field-label is-normal has-text-left">
+                                    <label class="label">Audio&nbsp;feedback&nbsp;-&nbsp;pitch&nbsp;
+                                        <span id="feedback_pitch_id"></span>
+                                    </label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <div class="slidecontainer">
+                                                <input type="range" min="10" max="50" value="30" class="slider"
+                                                    id="feedback_pitch_slider_id">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tabs is-fullwidth is-medium">
+                                <ul>
+                                    <li id="tab_settings_basic_id" class="is-active"
+                                        onclick="hideShowSettingsTabs('basic');">
+                                        <a>
+                                            <span><strong>Basic</strong></span>
+                                        </a>
+                                    </li>
+                                    <li id="tab_settings_more_id" class="" onclick="hideShowSettingsTabs('more');">
+                                        <a>
+                                            <span><strong>More</strong></span>
+                                        </a>
+                                    </li>
+                                    <li id="tab_settings_scheduler_id" class=""
+                                        onclick="hideShowSettingsTabs('scheduler');">
+                                        <a>
+                                            <span><strong>Scheduler</strong></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Settings: Tab - Basic. -->
+                            <div id="div_settings_basic_id">
+                                <div class="field">
+                                    <label class="label">Directory&nbsp;name&nbsp;for&nbsp;sound&nbsp;files</label>
+                                    <div class="control">
+                                        <input id="settings_file_directory_id" class="input"
+                                            placeholder="recorded_files" value="recorded_files">
+                                    </div>
+                                    <p class="help is-info">
+                                        Stored on USB memory if available, otherwise stored internally.
+                                    </p>
+                                </div>
+                                <div class="field is-narrow">
+                                    <label class="label">Automatic&nbsp;date&nbsp;in&nbsp;directory&nbsp;name</label>
+                                    <div class="control is-narrow">
+                                        <div class="select is-narrow">
+                                            <select id="settings_file_directory_date_option_id">
+                                                <option value="date-not-used">Not used</option>
+                                                <option value="date-pre-true">Add before - Use date
+                                                </option>
+                                                <option value="date-pre-before">Add before - Use date before
+                                                    midnight
+                                                </option>
+                                                <option value="date-pre-after">Add before - Use date after
+                                                    midnight
+                                                </option>
+                                                <option value="date-post-true">Add after - Use date
+                                                </option>
+                                                <option value="date-post-before">Add after - Use date before
+                                                    midnight
+                                                </option>
+                                                <option value="date-post-after">Add after - Use date after
+                                                    midnight
+                                                </option>
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Sound&nbsp;file&nbsp;name&nbsp;prefix</label>
+                                    <div class="control">
+                                        <input id="settings_filename_prefix_id" class="input" placeholder="wurb"
+                                            value="wurb">
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Automatic&nbsp;detection:&nbsp;Low&nbsp;limit&nbsp;(kHz)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_detection_limit_id" class="input is-narrow"
+                                                    type="number" placeholder="15.0" value="15.0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="help is-info">
+                                        Sound above this limit will be used for automatic detection.
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Automatic&nbsp;detection:&nbsp;Sensitivity&nbsp;(dBFS)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_detection_sensitivity_id" class="input"
+                                                    type="number" placeholder="-50" value="-50">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="help is-info">
+                                        The value -60 gives more files and -40 less.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Settings: Tab - More. -->
+                            <div id="div_settings_more_id"
+                                style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
+                                <div class="field">
+                                    <label class="label">Automatic&nbsp;detection&nbsp;algorithm</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_detection_algorithm_id">
+                                                <option value="detection-none">None (everything is recorded)
+                                                </option>
+                                                <option value="detection-simple">Simple (single trigging event)
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Length of recorded sound files</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_rec_length_id">
+                                                <option value="4">4 seconds</option>
+                                                <option value="5">5 seconds</option>
+                                                <option value="6">6 seconds</option>
+                                                <option value="7">7 seconds</option>
+                                                <option value="8">8 seconds</option>
+                                                <option value="9">9 seconds</option>
+                                                <option value="10">10 seconds</option>
+                                                <option value="12">12 seconds</option>
+                                                <option value="15">15 seconds</option>
+                                                <option value="20">20 seconds</option>
+                                                <option value="30">30 seconds</option>
+                                                <option value="40">40 seconds</option>
+                                                <option value="50">50 seconds</option>
+                                                <option value="60">1 minute</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <p class="help is-info">
+                                        Up to 2 sec. before the detected sound will be included.
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Recorded sound file type (FS or TE)</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_rec_type_id">
+                                                <option value="FS">Full Spectrum (FS)
+                                                </option>
+                                                <option value="TE">Time Expansion (TE), 10x
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Audio&nbsp;feedback</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_feedback_on_off_id">
+                                                <option value="feedback-off">Off</option>
+                                                <option value="feedback-on">On</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Audio&nbsp;feedback&nbsp;filter:&nbsp;Low&nbsp;limit&nbsp;(kHz)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_feedback_filter_low_id" class="input" type="number"
+                                                    placeholder="15.0" value="15.0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="help is-info">
+                                        Mainly used to remove low frequency noise.
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Audio&nbsp;feedback&nbsp;filter:&nbsp;High&nbsp;limit&nbsp;(kHz)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_feedback_filter_high_id" class="input" type="number"
+                                                    placeholder="120.0" value="120.0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Save current settings as:
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="control">
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                onclick="saveUserDefaultSettings()">
+                                                "User default"
+                                            </button>
+                                            <button style="margin:5px;" class="button is-info is-rounded is-small"
+                                                onclick="saveStartupSettings()">
+                                                "Start-up"
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Define start-up configuration
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="settings_startup_option_id">
+                                                    <option value="as-last-session">Start-up with same settings as last
+                                                        session</option>
+                                                    <option value="startup-settings">Start-up with "Start-up" settings
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Settings: Tab - Scheduler. -->
+                            <div id="div_settings_scheduler_id"
+                                style="visibility:hidden; overflow:hidden; height:0; width:0;" class="">
+                                <div class="field">
+                                    <label class="label">Start&nbsp;recording&nbsp;at</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_scheduler_start_event_id">
+                                                <option value="on-sunset">Sunset</option>
+                                                <option value="on-dusk">Dusk</option>
+                                                <option value="on-dawn">Dawn</option>
+                                                <option value="on-sunrise">Sunrise</option>
+                                                <option value="on-00">00:00</option>
+                                                <option value="on-01">01:00</option>
+                                                <option value="on-02">02:00</option>
+                                                <option value="on-03">03:00</option>
+                                                <option value="on-04">04:00</option>
+                                                <option value="on-05">05:00</option>
+                                                <option value="on-06">06:00</option>
+                                                <option value="on-07">07:00</option>
+                                                <option value="on-08">08:00</option>
+                                                <option value="on-09">09:00</option>
+                                                <option value="on-10">10:00</option>
+                                                <option value="on-11">11:00</option>
+                                                <option value="on-12">12:00</option>
+                                                <option value="on-13">13:00</option>
+                                                <option value="on-14">14:00</option>
+                                                <option value="on-15">15:00</option>
+                                                <option value="on-16">16:00</option>
+                                                <option value="on-17">17:00</option>
+                                                <option value="on-18">18:00</option>
+                                                <option value="on-19">19:00</option>
+                                                <option value="on-20">20:00</option>
+                                                <option value="on-21">21:00</option>
+                                                <option value="on-22">22:00</option>
+                                                <option value="on-23">23:00</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Adjust&nbsp;start&nbsp;time&nbsp;(minutes)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_scheduler_start_adjust_id" class="input"
+                                                    type="number" placeholder="-15" value="-15">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Stop&nbsp;recording&nbsp;at</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_scheduler_stop_event_id">
+                                                <option value="off-sunset">Sunset</option>
+                                                <option value="off-dusk">Dusk</option>
+                                                <option value="off-dawn">Dawn</option>
+                                                <option value="off-sunrise">Sunrise</option>
+                                                <option value="off-00">00:00</option>
+                                                <option value="off-01">01:00</option>
+                                                <option value="off-02">02:00</option>
+                                                <option value="off-03">03:00</option>
+                                                <option value="off-04">04:00</option>
+                                                <option value="off-05">05:00</option>
+                                                <option value="off-06">06:00</option>
+                                                <option value="off-07">07:00</option>
+                                                <option value="off-08">08:00</option>
+                                                <option value="off-09">09:00</option>
+                                                <option value="off-10">10:00</option>
+                                                <option value="off-11">11:00</option>
+                                                <option value="off-12">12:00</option>
+                                                <option value="off-13">13:00</option>
+                                                <option value="off-14">14:00</option>
+                                                <option value="off-15">15:00</option>
+                                                <option value="off-16">16:00</option>
+                                                <option value="off-17">17:00</option>
+                                                <option value="off-18">18:00</option>
+                                                <option value="off-19">19:00</option>
+                                                <option value="off-20">20:00</option>
+                                                <option value="off-21">21:00</option>
+                                                <option value="off-22">22:00</option>
+                                                <option value="off-23">23:00</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Adjust&nbsp;stop&nbsp;time&nbsp;(minutes)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_scheduler_stop_adjust_id" class="input"
+                                                    type="number" placeholder="15" value="15">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Post&nbsp;action</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select id="settings_scheduler_post_action_id" disabled>
+                                                <option value="post-none">No action</option>
+                                                <!-- <option value="post-shutdown">Detector shutdown</option> -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label label is-normal has-text-left">
+                                        Post&nbsp;action&nbsp;delay&nbsp;(minutes)
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-narrow">
+                                            <div class="control">
+                                                <input id="settings_scheduler_post_action_delay_id" class="input"
+                                                    type="number" placeholder="5" value="5" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="field is-horizontal">
+                                <div class="field-body">
+                                    <div class="control">
+                                        <button style="margin:5px;" id="settings_save_button_id"
+                                            class="button is-info is-rounded" onclick="saveSettings()">
+                                            Save
+                                        </button>
+                                        <button style="margin:5px;" id="settings_reset_button_id"
+                                            class="button is-info is-rounded" onclick="getSettings()">
+                                            Cancel
+                                            <!-- Last saved -->
+                                        </button>
+                                        <!-- <button style="margin:5px;" id="settings_default_button_id" -->
+                                            <!-- class="button is-info is-rounded" onclick="getDefaultSettings()"> -->
+                                            <!-- User default -->
+                                        <!-- </button> -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </article>
+
+                    </div>
+                </div>
+                <div class="tile is-parent is-vertical">
+
+                    <!-- Article: Recordings -->
+                    <!-- <article class="tile is-child box has-background-grey-lighter">
+                        <p class="title is-4"> Recordings (NOT IMPLEMENTED YET...)</p>
+                        <p class="subtitle is-6">For internally stored recordings</p>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label">Directory&nbsp;name&nbsp;filter</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field is-narrow">
+                                    <div class="control">
+                                        <input class="input" placeholder="Station">
+                                    </div>
+                                </div>
+                                <button class="button is-info is-rounded" disabled>
+                                    Update
+                                </button>
+                            </div>
+                        </div>
+                        <div style="height: 15em; overflow: auto;">
+                            <table class="table is-striped is-fullwidth">
+                                <thead>
+                                    <tr>
+                                        <th><abbr title="Location">Row</abbr></th>
+                                        <th>Directory</th>
+                                        <th>Copy</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>1</th>
+                                        <td>Station-1_2020-01-01</td>
+                                        <td><a ref="">Copy to USB</a></td>
+                                        <td><a ref="">Delete</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>2</th>
+                                        <td>Station-1_2020-01-02</td>
+                                        <td><a ref="">Copy to USB</a></td>
+                                        <td><a ref="">Delete</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>3</th>
+                                        <td>Station-2_2020-01-01</td>
+                                        <td><a ref="">Copy to USB</a></td>
+                                        <td><a ref="">Delete</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>4</th>
+                                        <td>Station-2_2020-01-02</td>
+                                        <td><a ref="">Copy to USB</a></td>
+                                        <td><a ref="">Delete</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>5</th>
+                                        <td>Station-2_2020-01-03</td>
+                                        <td><a ref="">Copy to USB</a></td>
+                                        <td><a ref="">Delete</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="field">
+                            <div class="field-label is-normal">
+                                <label class="label has-text-left">
+                                    Misc.
+                                </label>
+                            </div>
+                            <div class="field-body">
+                                <div class="control">
+                                    <button class="button is-info is-rounded" disabled>
+                                        Copy settings to USB
+                                    </button>
+                                    <button class="button is-info is-rounded" disabled>
+                                        Copy log files to USB
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </article> -->
+
+                    <!-- Article: About -->
+                    <article class="tile is-child box has-background-grey-lighter">
+                        <!-- Content. -->
+                        <p class="title is-4">About</p>
+                        <p class="subtitle is-5">CloudedBats - WURB 2020<br>
+                            Version: {{ wurb_version }}</p>
+                        <div class="content">
+                            <p>
+                                This is a part of the open source
+                                <a href="http://cloudedbats.org">CloudedBats.org</a>
+                                software project.
+                                <br>
+                                More information and source code at GitHub:
+                                <a href="https://github.com/cloudedbats/cloudedbats_wurb_2020">
+                                    cloudedbats_wurb_2020</a>.
+                                <br>
+                                REST API for programmatic control:
+                                <a href="/docs">OpenAPI 3.0</a>.
+                                <br>
+                                (The links above only works when your detector is connected to the internet.
+                                For example, by connecting an Ethernet cable.)
+                            </p>
+                            <p>
+                                Developed by: Arnold&nbsp;Andreasson,&nbsp;Sweden.<br />
+                                Contact and feedback: info@cloudedbats.org
+                            </p>
+                        </div>
+                    </article>
+
                 </div>
             </div>
         </div>

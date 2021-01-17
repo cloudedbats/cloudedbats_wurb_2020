@@ -53,6 +53,23 @@ class SoundDetectionBase:
         # Returns "is sound", "freq. at peak", "dBFS at peak".
         return True, None, None  # Should be overridden.
 
+    def manual_triggering_check(self, sound_detected):
+        """ """
+        rec_mode = self.wurb_settings.get_setting("rec_mode")
+        # Check if "record everyting" mode.
+        if rec_mode in ["mode-on", "mode-scheduler-on"]:
+            return True
+        # Check manual mode triggering.
+        if rec_mode == "mode-manual":
+            if self.wurb_manager.manual_trigger_activated:
+                # Reset value.
+                self.wurb_manager.manual_trigger_activated = False
+                return True
+            else:
+                return False
+        else:
+            return sound_detected
+
 
 class SoundDetectionNone(SoundDetectionBase):
     """ Used for continuous recordings, including silence. """
@@ -67,9 +84,11 @@ class SoundDetectionNone(SoundDetectionBase):
 
     def check_for_sound(self, time_and_data):
         """ """
-        # Always true.
+        # Always true, except when running in manual triggering mode.
         # Returns "is sound", "freq. at peak", "dBFS at peak".
-        return (True, None, None) 
+        sound_detected = True
+        sound_detected = self.manual_triggering_check(sound_detected)
+        return (sound_detected, None, None)
 
 
 class SoundDetectionSimple(SoundDetectionBase):
@@ -84,8 +103,8 @@ class SoundDetectionSimple(SoundDetectionBase):
     def config(self):
         """ """
         sampling_freq = self.wurb_recorder.sampling_freq_hz
-        filter_min_khz = self.wurb_settings.get_setting("detection_limit")
-        threshold_dbfs = self.wurb_settings.get_setting("detection_sensitivity")
+        filter_min_khz = self.wurb_settings.get_setting("detection_limit_khz")
+        threshold_dbfs = self.wurb_settings.get_setting("detection_sensitivity_dbfs")
 
         self.sampling_freq = float(sampling_freq)
         self.filter_min_hz = float(filter_min_khz) * 1000.0
@@ -122,51 +141,61 @@ class SoundDetectionSimple(SoundDetectionBase):
         sound_detected_counter = 0
         peak_frequency_hz = None
         peak_dbfs_at_max = None
-        while len(self.work_buffer) >= self.window_size:
-            # Get frame of window size.
-            data_frame = self.work_buffer[: self.window_size]
-            # Cut the first jumped size.
-            self.work_buffer = self.work_buffer[self.jump_size :]
-            # Transform to intervall -1 to 1 and apply window function.
-            signal = data_frame / 32768.0 * self.window_function
-            # From time domain to frequency domain.
-            spectrum = np.fft.rfft(signal)
-            # High pass filter. Unit Hz. Cut below 15 kHz.
-            # log10 does not like zero.
-            spectrum[self.freq_bins_hz < self.filter_min_hz] = 0.000000001
-            # Convert spectrum to dBFS (bin values related to maximal possible value).
-            dbfs_spectrum = 20 * np.log10(
-                np.abs(spectrum) / self.window_function_dbfs_max
-            )
-            # Find peak and dBFS value for the peak.
-            bin_peak_index = dbfs_spectrum.argmax()
-            peak_db = dbfs_spectrum[bin_peak_index]
-            # Treshold.
-            if peak_db > self.threshold_dbfs:
-                sound_detected_counter += 1
-                if sound_detected_counter >= self.sound_detected_counter_min:
-                    sound_detected = True
-                    if (peak_dbfs_at_max is None) or (peak_db > peak_dbfs_at_max):
-                        peak_dbfs_at_max = peak_db
-                        peak_frequency_hz = (
-                            bin_peak_index * self.sampling_freq / self.window_size
-                        )
-                        # print(
-                        #     "DEBUG: Peak freq hz: "
-                        #     + str(peak_frequency_hz)
-                        #     + "   dBFS: "
-                        #     + str(peak_db)
-                        # )
-        # # Log if sound was detected.
-        # if sound_detected:
-        #     # Logging.
-        #     message = (
-        #         "Sound peak: "
-        #         + str(round(peak_frequency_hz / 1000.0, 1))
-        #         + " kHz / "
-        #         + str(round(peak_dbfs_at_max, 1))
-        #         + " dBFS."
-        #     )
-        #     self.wurb_logging.info(message, short_message=message)
-        #
+        try:
+            while len(self.work_buffer) >= self.window_size:
+                # Get frame of window size.
+                data_frame = self.work_buffer[: self.window_size]
+                # Cut the first jumped size.
+                self.work_buffer = self.work_buffer[self.jump_size :]
+                # Transform to intervall -1 to 1 and apply window function.
+                signal = data_frame / 32768.0 * self.window_function
+                # From time domain to frequency domain.
+                spectrum = np.fft.rfft(signal)
+                # High pass filter. Unit Hz. Cut below 15 kHz.
+                # log10 does not like zero.
+                spectrum[self.freq_bins_hz < self.filter_min_hz] = 0.000000001
+                # Convert spectrum to dBFS (bin values related to maximal possible value).
+                if self.window_function_dbfs_max > 0.0:
+                    dbfs_spectrum = 20 * np.log10(
+                        np.abs(spectrum) / self.window_function_dbfs_max
+                    )
+                    # Find peak and dBFS value for the peak.
+                    bin_peak_index = dbfs_spectrum.argmax()
+                    peak_db = dbfs_spectrum[bin_peak_index]
+                else:
+                    peak_db = -500.0
+                # Treshold.
+                if peak_db > self.threshold_dbfs:
+                    sound_detected_counter += 1
+                    if sound_detected_counter >= self.sound_detected_counter_min:
+                        sound_detected = True
+                        if (peak_dbfs_at_max is None) or (peak_db > peak_dbfs_at_max):
+                            peak_dbfs_at_max = peak_db
+                            peak_frequency_hz = (
+                                bin_peak_index * self.sampling_freq / self.window_size
+                            )
+                            # print(
+                            #     "DEBUG: Peak freq hz: "
+                            #     + str(peak_frequency_hz)
+                            #     + "   dBFS: "
+                            #     + str(peak_db)
+                            # )
+            # # Log if sound was detected.
+            # if sound_detected:
+            #     # Logging.
+            #     message = (
+            #         "Sound peak: "
+            #         + str(round(peak_frequency_hz / 1000.0, 1))
+            #         + " kHz / "
+            #         + str(round(peak_dbfs_at_max, 1))
+            #         + " dBFS."
+            #     )
+            #     self.wurb_logging.info(message, short_message=message)
+            #
+        except Exception as e:
+            print("DEBUG: xception in check_for_sound: ", e)
+
+        # Check if running in manual triggering mode.
+        sound_detected = self.manual_triggering_check(sound_detected)
+
         return sound_detected, peak_frequency_hz, peak_dbfs_at_max

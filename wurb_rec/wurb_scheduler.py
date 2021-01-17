@@ -42,11 +42,11 @@ class WurbScheduler(object):
                 try:
                     await asyncio.sleep(self.main_loop_interval_s)
                     rec_mode = self.wurb_settings.get_setting("rec_mode")
-                    if rec_mode == "rec-mode-on":
+                    if rec_mode in ["mode-on", "mode-auto", "mode-manual"]:
                         await self.wurb_manager.start_rec()
-                    if rec_mode == "rec-mode-off":
+                    if rec_mode in ["mode-off"]:
                         await self.wurb_manager.stop_rec()
-                    if rec_mode == "rec-mode-scheduler":
+                    if rec_mode in ["mode-scheduler-on", "mode-scheduler-auto"]:
                         await self.check_scheduler()
                 except asyncio.CancelledError:
                     break
@@ -141,10 +141,7 @@ class WurbScheduler(object):
 
     async def get_solartime_data(self, print_new=True):
         """ """
-
-        location_dict = self.wurb_settings.get_location_dict()
-        latitude = float(location_dict.get("latitude_dd", "0.0"))
-        longitude = float(location_dict.get("longitude_dd", "0.0"))
+        latitude, longitude = self.wurb_settings.get_valid_location()
         if (latitude == 0.0) or (longitude == 0.0):
             # No lat/long found.
             return None

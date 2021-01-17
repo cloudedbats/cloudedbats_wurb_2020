@@ -4,16 +4,20 @@ uvicorn
 jinja2
 aiofiles
 websockets
+requests
 # Sound, etc.
 sounddevice
 numpy
-scipy<1.5
+scipy
 psutil
 pyusb
-# GPS
+# GPS and date/time.
 pyserial
 pyserial-asyncio
 pytz
 python-dateutil
+# Raspberry Pi.
+RPi.GPIO
 # Visual Studio Code.
 pylint
+black

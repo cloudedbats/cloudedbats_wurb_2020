@@ -1,5 +1,7 @@
 #  CloudedBats - WURB 2020
 
+Welcome to CloudedBats-WURB, the DIY bat detector.
+
 **Note: This is a new version of the WURB bat detector.
 The old version can still be found here: 
 https://github.com/cloudedbats/cloudedbats_wurb**
@@ -12,34 +14,73 @@ CloudedBats - WURB 2020. CloudedBats.org / [CC-BY](https://creativecommons.org/l
 This is what you need to build your own bat detector; an ultrasonic USB microphone, a Raspberry Pi computer 
 with SD card, power supply and this CloudedBats-WURB 2020 open source software. Optional parts that 
 are recommended are USB memory sticks, an USB GPS receiver and a Power bank for single night sessions.
+For the v0.9.0 release you will also need headphones with a 3.5 mm jack for audio feedback.
 
-**Release plan:** With this software version I will start to use Semantic versioning (https://semver.org/) and
-keep track on changes between releases. Since there are earlier WURB releases the first release here
-is named "0.8.0". Release "0.9.0" will contain at least the most important parts from the issue list.
-When it has been used for a while and seems to be stable there will be a release "1.0.0", and this 
-major release will break the backward compatibility for the REST API. 
-Since it is a spare time project there are no dates assigned for these releases.
+## Functional features, from the earlier CloudedBats-WURB:
+
+- Support for USB ultrasonic microphones from Pettersson and Dodotronic 
+  (tested with Pettersson u256, u384, M500 (the 500 kHz variant), M500-384 (384 kHz) and 
+  Dodotronic UltraMic 192K, 250K, 384K BLE).
+- Support for USB GPS receivers (tested with "Navilock NL-602U", "G-STAR IV, BU-353S4" 
+  and "GPS/GLONASS U-blox7").
+- File storage alternatives are; internally (on the SD card), USB memory or USB disc.
+- Recording modes are full spectrum or time expanded "wav" files.
+- Sound detection algorithm to avoid empty files. Buffer before the detected sound is always on.
+- Time and position from attached GPS receiver is used in filenames and for the schedulers calculations.
+- Scheduler for start and stop related to timestamps, sunset, dawn, etc. that are calculated from GPS time and position.
+- Manually controlled via switches or a computer mouse.
+- Log files for performed actions and errors.
+- This version was configured via settings files stored on the USB memory stick.
+
+## Added features in CloudedBats-WURB 2020:
+
+Release v0.8:
+
+- The detector acts as a WiFi Hotspot/AccessPoint and contains a web server. 
+- Web pages are used for configuration and control. Adaptive layout for both smartphones and computers.
+- Automatic detection of connected Ultrasonic microphones (valid for Pettersson and Dodotronic).
+- Automatic detection of connected USB GPS Receiver.
+- Sound peaks in kHz and dBFS are presented in live log and in file names.
+- Automatic check where recorded files should be stored. On USB memory (multiple can be used) or 
+  internally if no USB are found. Automatic failover to internal storage when USB memory is full.
+- Possible to run the detectors user interface over internet, and to download files via SFTP.
+
+Next release, v0.9 (available for test in the "master" branch):
+
+- Reorganized user interface with a more intuitive detector mode selector.
+- Audio feedback via the 3.5 mm audio jack for active monitoring with adjustable pitch level.
+- New alternatives for GPS sources with fallback alternatives suitable for passive monitoring.
+- Two configurable settings: "user default settings" and "start-up settings".
+- Basic control via switches or a computer mouse (reintroduced, was missing in v0.8).
+- Configurable host and port for internet traffic.
+- Possible to use other compatible sound cards (compatible with ALSA on Raspberry Pi).
+  Environment variables is used for sound card name and sampling frequency.
+
+## Other characteristics
+
+- The CloudedBats software is developed as open source software. Free to use under the terms of the MIT license.
+- The software is developed on top of modern open source code libraries and frameworks.
+- Inexpensive hardware can be used. Most of it is available where they are selling electronic things, except for the ultrasonic microphone.
+- The Raspberry Pi computer offers many options for enhancements, like adding cameras and different types of sensors.
+- Software developers can fork the code from GitHub to adjust the detector code to match their own needs.
+
+## Drawbacks
+
+- Higher power consumption compared to other passive monitoring systems. 
+- You must put together the system yourself.
+- The code is delivered "as-is" with no warranties at all. However, most software developers using Linux / Python 
+  should understand the code and system setup to correct errors if I can't help.
 
 **User manuals:** They are not written yet. Please contact me if there are any questions.
 
-## New features
+## Software notes, for developers:
 
-Some differences from a user perspective:
-
-- The detector acts as a WiFi Hotspot/AccessPoint and contains a web server. 
-- Web pages are used for configuration and control.
-- Automatic detection of connected Ultrasonic microphones.
-- Automatic detection of connected USB GPS Receiver.
-- Sound peaks, kHz and dBFS, is presented in live log and in file names.
-
-## Software
-
-Notes from a developers perspective:
+This is valid for the CloudedBats-WURB 2020 version.
 
 - Software completely rewritten. Python 3.7+ needed.
 - Raspbian Buster Lite used for Raspberry Pi 4 support.
 - RaspAP (https://raspap.com/) used to run the detector as a WiFi Hotspot/AccessPoint.
-- More modular software design by use of micro services.
+- The software design is inspired by micro services.
 - The REST API is specified as OpenAPI 3.0.
 - Asynchronous (async/await) programming both in frontend and backend.
 - WebSockets are used for fast client updates.
@@ -48,29 +89,27 @@ Notes from a developers perspective:
 - Pythons new asyncio library is used to replace all threads in the backend services. 
 - Sounddevice (https://python-sounddevice.readthedocs.io/) used instead of pyaudio.
 
-## Hardware needed
+## Hardware
 
-- Any Raspberry Pi model with WiFi. (RPi Zero W may work but is not recommended.) 
-- SD card. For example Toshiba Exceria Pro 16GB, or similar.
-- Ultrasonic microphone. Tested with Pettersson u256, u384, M500, M500-384 and 
-Dodotronic UltraMic 192K, 250K, 384K BLE.
+Any Raspberry Pi model with WiFi. (RPi Zero W works if auto detection and 
+audio feedback is turned off). Raspberry Pi 4 is recommended if you want high speed transfer
+of recorded files over internet.
 
-**Note:** For some strange reason both M500 and M500-384 has problems if connected directly to a 
-Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub, 
+Most SD cards seems to work but faster ones are recommended.
+Personally I mostly use U3 (UHS Speed Class U3), for example Toshiba Exceria Pro.
+
+**Note:** For some strange reason both M500 and M500-384 have problems if connected directly to a 
+Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub (passive is ok), 
 or attach the M500 or M500-384 microphone after startup.
 
-Optional hardware:
-
-- USB memory sticks. This is optional since the internal SD card will be used for storage if 
-no USB sticks are available. More than one memory stick can be used.
-- USB GPS Receiver using the NMEA format. Tested with "Navilock NL-602U", "G-STAR IV, BU-353S4" 
-and "GPS/GLONASS U-blox7".
 
 ## Installation
 
-Use Raspberry Pi Imager to download Raspbian Buster Lite 
+Use Raspberry Pi Imager to download "Raspbian Pi OS Lite" 
 and install it on a SD card. Raspberry Pi Imager can be found here: 
 https://www.raspberrypi.org/downloads
+
+Alternative: BalenaEtcher is an alternative to Raspberry Pi Imager.
 
 Connect the SD card to a computer and add an empty file with 
 the name "ssh" to the SD card (the SD card will have the name 
@@ -79,6 +118,9 @@ to connect to the Raspberry Pi via ssh.
 
 Insert the SD card into you Raspberry Pi, connect an Ethernet 
 cable and start it.
+
+Alternative: It is possible to connect a HDMI screen and USB keyboard as 
+an alternative to do the installation from a terminal window on another computer.
 
 ### Raspberry Pi setup:
 
@@ -101,11 +143,12 @@ Make some configurations:
 
 Change this (example for Swedish users):
 
-- Password: chiroptera
-- Network options-Hostname: wurb 
-- Localisation Options-Timezone: Europe - Stockholm
-- Localisation Options-WLAN Country: SE
-- Advanced Options-Expand Filesystem.
+- System Options - Password: chiroptera
+- System Options - Hostname: wurb 
+- System Options - Network at boot: No 
+- Localisation Options - Timezone: Europe - Stockholm
+- Localisation Options - WLAN Country: SE
+- Advanced Options - Expand Filesystem.
 
 Reboot and reconnect. Remember to use the new password.:
 
@@ -144,7 +187,7 @@ When running the detector as a standalone unit and the Ethernet cable is not con
 the Raspberry Pi, then Internet is not available. 
 That's ok if you only want to control the detector. If you have to, for example, 
 upgrade the Raspberry Pi, then you must connect an Ethernet cable to it to reach Internet.
-For advanced users there are a wide range of opportunities to set up networks with 
+For advanced users there are many possible ways to set up networks with 
 multiple collaborating Raspberry Pi units.
 
 ### Install packages
@@ -158,7 +201,6 @@ Install software:
 
     sudo apt install git python3-venv python3-dev
     sudo apt install libportaudio2 libatlas-base-dev udevil
-    sudo apt install python3-rpi.gpio
 
 ### Pettersson M500 (500kHz)
 
@@ -166,7 +208,7 @@ The Pettersson M500 microphone (the 500kHz version) differ in communication
 format compared to M500-384, u256, and u384. Some udev rules must be setup
 to allow the detector to communicate with it.
 
-    # Create a file with udv rules:
+    # Create a file with udev rules:
     sudo nano /etc/udev/rules.d/pettersson_m500_batmic.rules
     
     # Add this row in the new file. 
@@ -195,31 +237,31 @@ Please uninstall it if that's the case.
     sudo nano /etc/rc.local 
 
     # Add this before the "exit" row in rc.local:
-
-    ( sleep 5 && sudo -u pi devmon ) &
     sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
 
-And finally restart the detector:
+And finally, set the headphone volume and restart the detector:
 
+    amixer set 'Headphone' 100%
     sudo reboot
-    
+
 ### Start problems
 
 If the detector does not start properly, the cause may be incompatible releases 
 of the software packages used. Try to start the detector in the development mode 
 to check for error messages.
 
-    cd cloudedbats_wurb_2020
-    /home/pi/cloudedbats_wurb_2020/venv/bin/python3 wurb_rec_start.py
+    cd /home/pi/cloudedbats_wurb_2020
+    source venv/bin/activate
+    python3 wurb_rec_start.py
    
 Please contact me if this happens. Most of the time the solution is to avoid 
-the latest relese of the library that causes the error.
+the latest release of the library that causes the error. Together we can help other.
 
 ### CloudedBats software - latest stable version
 
 If you want to run the latest stable version, then replace the git clone line in the instruction above.
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.0
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.1
 
 ## Run the detector
 
@@ -229,15 +271,19 @@ If you want to run the latest stable version, then replace the git clone line in
 - Connect a computer or mobile phone to the WiFi network called "wifi4bats". Password: chiroptera.
 - Open a web browser and go to http://10.3.141.1:8000
 - Check "Geographic location" and "Settings". 
-- Press "Start recording".
+- Press "Set time".
+- Select "Mode", for example "Recording - Auto detection".
+- Connect headphones (3.5 mm jacket on the Raspberry Pi) and listen to the bats.
 - Record some bats.
 - Press "Stop recording".
 
 There are different ways to turn the Raspberry Pi detector off (power off only is not
 recommended since there is a small risk of corrupted SD card or USB memory sticks): 
 
-- Go to "Settings - More" and press the "Shutdown" button.
+- Select "Mode": "Detector - Power off..." and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
+- Attach an USB Computer mouse and hold down both the left end right button for 5 sec.
+- Connect a physical button to GPIO pin #37 and pin #39. Then press that button for a few seconds.
 
 More than one USB memory stick can be used. They will be filled up with wave files 
 in alphabetic order. When the last USB memory stick is full, then it will continue 
@@ -246,7 +292,7 @@ on the SD card. It will stop when there is less than 0.5 GB left on the SD card.
 If files are stored on the SD card then they can be downloaded and/or removed by 
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
-Path to files on the SD card: "/home/pi/wurb_files".
+Path to files on the SD card: "/home/pi/wurb_recordings".
 
 It is also possible to download files by using FileZilla, or similar, from the USB 
 memory stick during an ongoing recording session. The path to the USB memory is then 
@@ -259,8 +305,8 @@ anyway.
 
 ## The MIT license
 
-The code is released under the MIT license that means that you are free to use it as you want; 
-use it, share it, cut it into pieces, extend it or even sell it for money. 
+This software is released under the MIT license that means that you are free to use it as you want; 
+use it, share it, cut it into pieces, extend it, or even sell it for money. 
 But you are not allowed to remove the MIT license clause 
 (just change my name to yours in the copyright row for modified code files), 
 and it comes "as-is" with no warranties at all.

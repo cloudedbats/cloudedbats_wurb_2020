@@ -8,6 +8,7 @@ from .sound_stream_manager import SoundStreamManager
 from .wurb_rpi import WurbRaspberryPi
 from .wurb_settings import WurbSettings
 from .wurb_gps import WurbGps
+from .wurb_audiofeedback import WurbPitchShifting
 from .wurb_sound_detection import SoundDetection
 from .wurb_recorder import UltrasoundDevices
 from .wurb_recorder import WaveFileWriter

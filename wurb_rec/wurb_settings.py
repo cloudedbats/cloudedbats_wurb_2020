@@ -28,25 +28,40 @@ class WurbSettings(object):
         # self.os_raspbian = None
         #
         self.settings_file_name = "wurb_rec_settings.txt"
+        self.settings_user_file_name = "wurb_rec_settings_user.txt"
+        self.settings_startup_file_name = "wurb_rec_settings_startup.txt"
         self.settings_dir_path = self.wurb_rpi.get_settings_dir_path()
         #
         self.define_default_settings()
         self.current_settings = self.default_settings.copy()
         self.define_default_location()
         self.current_location = self.default_location.copy()
+        # Select settings for startup.
         self.load_settings_from_file()
+        startup_option = self.current_settings.get("startup_option", "")
+        if startup_option == "startup-settings":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_startup_file_name
+            )
 
     def define_default_settings(self):
         """ """
         self.default_settings = {
-            "rec_mode": "rec-mode-manual",
-            "file_directory": "recorded_files",
+            "rec_mode": "mode-off",
+            "file_directory": "Station-1",
+            "file_directory_date_option": "date-post-before",
             "filename_prefix": "wurb",
-            "detection_limit": "17.0",
-            "detection_sensitivity": "-50",
+            "detection_limit_khz": "17.0",
+            "detection_sensitivity_dbfs": "-50",
             "detection_algorithm": "detection-simple",
             "rec_length_s": "6",
             "rec_type": "FS",
+            "feedback_on_off": "feedback-on",
+            "feedback_volume": "50",
+            "feedback_pitch": "30",
+            "feedback_filter_low_khz": "15",
+            "feedback_filter_high_khz": "150",
+            "startup_option": "as-last-session",
             "scheduler_start_event": "on-sunset",
             "scheduler_start_adjust": "-15",
             "scheduler_stop_event": "off-sunrise",
@@ -58,24 +73,34 @@ class WurbSettings(object):
     def define_default_location(self):
         """ """
         self.default_location = {
-            "geo_source_option": "geo-not-used",
+            "geo_source": "geo-not-used",
             "latitude_dd": "0.0",
             "longitude_dd": "0.0",
             "manual_latitude_dd": "0.0",
             "manual_longitude_dd": "0.0",
+            "last_gps_latitude_dd": "0.0",
+            "last_gps_longitude_dd": "0.0",
         }
 
     async def startup(self):
         """ """
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        geo_source = self.current_location["geo_source"]
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             await self.save_latlong(0.0, 0.0)
             await self.wurb_manager.wurb_gps.startup()
         else:
             await self.wurb_manager.wurb_gps.shutdown()
         # Rec. mode. Scheduler, rec-on or rec-off.
         rec_mode = self.current_settings["rec_mode"]
-        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
+        if rec_mode in [
+            "mode-off",
+            "mode-on",
+            "mode-auto",
+            "mode-manual",
+            "mode-scheduler-on",
+            "mode-scheduler-auto",
+        ]:
             await self.wurb_manager.wurb_scheduler.startup()
         else:
             await self.wurb_manager.wurb_scheduler.shutdown()
@@ -85,31 +110,7 @@ class WurbSettings(object):
         # GPS.
         await self.wurb_manager.wurb_gps.shutdown()
 
-    async def save_rec_mode(self, rec_mode):
-        """ """
-        self.current_settings["rec_mode"] = rec_mode
-        self.save_settings_to_file()
-        # Activate directly if on or off.
-        if rec_mode == "rec-mode-on":
-            await self.wurb_manager.start_rec()
-        if rec_mode == "rec-mode-off":
-            await self.wurb_manager.stop_rec()
-        # Rec. mode: Scheduler, rec-on or rec-off.
-        if rec_mode in ["rec-mode-scheduler", "rec-mode-on", "rec-mode-off"]:
-            await self.wurb_manager.wurb_scheduler.startup()
-        else:
-            await self.wurb_manager.wurb_scheduler.shutdown()
-        # Create a new event and release all from the old event.
-        old_settings_event = self.settings_event
-        self.settings_event = asyncio.Event()
-        if old_settings_event:
-            old_settings_event.set()
-        # Logging.
-        rec_mode_str = rec_mode.replace("rec-mode-", "").capitalize()
-        message = "Rec. mode: " + rec_mode_str
-        self.wurb_logging.info(message, short_message=message)
-
-    async def save_settings(self, settings_dict={}):
+    async def save_settings(self, settings_dict={}, settings_type=None):
         """ """
         for key, value in settings_dict.items():
             if value is not None:
@@ -119,6 +120,36 @@ class WurbSettings(object):
                     value = value.replace("_", "-")
                 self.current_settings[key] = value
         self.save_settings_to_file()
+        if settings_type is not None:
+            if settings_type == "user-default":
+                self.save_settings_to_file(
+                    settings_file_name=self.settings_user_file_name,
+                    skip_keys=["startup_option"],
+                )
+            if settings_type == "startup":
+                self.save_settings_to_file(
+                    settings_file_name=self.settings_startup_file_name,
+                    skip_keys=["startup_option"],
+                )
+
+        # Active modes.
+        rec_mode = self.current_settings["rec_mode"]
+        if rec_mode in ["mode-on", "mode-auto", "mode-manual"]:
+            await self.wurb_manager.start_rec()
+        if rec_mode in ["mode-off"]:
+            await self.wurb_manager.stop_rec()
+        # Passive modes, and monitoring active.
+        if rec_mode in [
+            "mode-off",
+            "mode-on",
+            "mode-auto",
+            "mode-manual",
+            "mode-scheduler-on",
+            "mode-scheduler-auto",
+        ]:
+            await self.wurb_manager.wurb_scheduler.startup()
+        else:
+            await self.wurb_manager.wurb_scheduler.shutdown()
 
         # Create a new event and release all from the old event.
         old_settings_event = self.settings_event
@@ -139,6 +170,11 @@ class WurbSettings(object):
             return self.current_settings.get(key, "")
         return ""
 
+    def set_setting_without_saving(self, key=None, value=""):
+        """ """
+        if key:
+            self.current_settings[key] = value
+
     async def get_settings(self, default=False):
         """ """
         if default:
@@ -151,8 +187,9 @@ class WurbSettings(object):
             if value is not None:
                 self.current_location[key] = value
 
+        geo_source = self.current_location["geo_source"]
         # Manual.
-        if self.current_location["geo_source_option"] == "geo-manual":
+        if geo_source == "geo-manual":
             self.current_location["latitude_dd"] = self.current_location[
                 "manual_latitude_dd"
             ]
@@ -160,7 +197,7 @@ class WurbSettings(object):
                 "manual_longitude_dd"
             ]
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             self.current_location["latitude_dd"] = 0.0
             self.current_location["longitude_dd"] = 0.0
 
@@ -172,21 +209,69 @@ class WurbSettings(object):
             old_location_event.set()
 
         # GPS.
-        if self.current_location["geo_source_option"] == "geo-usb-gps":
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
             await self.wurb_manager.wurb_gps.startup()
         else:
             await self.wurb_manager.wurb_gps.shutdown()
 
     async def save_latlong(self, latitude_dd, longitude_dd):
         """ """
-        self.current_location["latitude_dd"] = latitude_dd
-        self.current_location["longitude_dd"] = longitude_dd
+        geo_source = self.current_location["geo_source"]
+        # Manual.
+        if geo_source in ["geo-gps", "geo-gps-or-manual", "geo-last-gps-or-manual"]:
+            self.current_location["latitude_dd"] = latitude_dd
+            self.current_location["longitude_dd"] = longitude_dd
+            if (latitude_dd > 0.0) and (longitude_dd > 0.0):
+                self.current_location["last_gps_latitude_dd"] = latitude_dd
+                self.current_location["last_gps_longitude_dd"] = longitude_dd
         self.save_settings_to_file()
         # Create a new event and release all from the old event.
         old_latlong_event = self.latlong_event
         self.latlong_event = asyncio.Event()
         if old_latlong_event:
             old_latlong_event.set()
+
+    def get_valid_location(self):
+        """ """
+        latitude = 0.0
+        longitude = 0.0
+        location_dict = self.get_location_dict()
+        latitude = float(location_dict.get("latitude_dd", "0.0"))
+        longitude = float(location_dict.get("longitude_dd", "0.0"))
+        manual_latitude = float(location_dict.get("manual_latitude_dd", "0.0"))
+        manual_longitude = float(location_dict.get("manual_longitude_dd", "0.0"))
+        last_gps_latitude = float(location_dict.get("last_gps_latitude_dd", "0.0"))
+        last_gps_longitude = float(location_dict.get("last_gps_longitude_dd", "0.0"))
+        geo_source = location_dict.get("geo_source", "")
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-gps-or-manual"]:
+                latitude = manual_latitude
+                longitude = manual_longitude
+        if (latitude == 0.0) or (longitude == 0.0):
+            if geo_source in ["geo-last-gps-or-manual"]:
+                latitude = last_gps_latitude
+                longitude = last_gps_longitude
+                if (latitude == 0.0) or (longitude == 0.0):
+                    latitude = manual_latitude
+                    longitude = manual_longitude
+        # Result.
+        return latitude, longitude
+
+    def get_location_status(self):
+        """ """
+        lat, long = self.get_valid_location()
+        if (lat == 0.0) and (long == 0.0):
+            return "Not valid. Scheduler not started."
+        else:
+            geo_source = self.get_location_dict().get("geo_source", "")
+            if geo_source == "geo-gps":
+                if self.wurb_manager.wurb_gps:
+                    no_of_satellites = (
+                        self.wurb_manager.wurb_gps.get_number_of_satellites()
+                    )
+                    return "Number of satellites: " + str(no_of_satellites)
+            else:
+                return "Lat: " + str(lat) + " Long: " + str(long)
 
     def get_location_dict(self):
         """ """
@@ -229,11 +314,39 @@ class WurbSettings(object):
             message = "Logging: get_latlong_event: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    def load_settings_from_file(self):
+    async def load_settings(self, settings_type):
+        """ """
+        # Keep startup_option.
+        startup_option = self.current_settings.get("startup_option", "")
+        if settings_type == "user-default":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_user_file_name
+            )
+        elif settings_type == "start-up":
+            self.load_settings_from_file(
+                settings_file_name=self.settings_startup_file_name
+            )
+        elif settings_type == "factory-default":
+            self.current_settings = self.default_settings.copy()
+            self.current_location = self.default_location.copy()
+        # Keep startup_option.
+        self.current_settings["startup_option"] = startup_option
+        # Create a new event and release all from the old event.
+        old_settings_event = self.settings_event
+        self.settings_event = asyncio.Event()
+        if old_settings_event:
+            old_settings_event.set()
+        # Create a new event and release all from the old event.
+        old_location_event = self.location_event
+        self.location_event = asyncio.Event()
+        if old_location_event:
+            old_location_event.set()
+
+    def load_settings_from_file(self, settings_file_name=None):
         """ Load from file. """
-        settings_file_path = pathlib.Path(
-            self.settings_dir_path, self.settings_file_name
-        )
+        if settings_file_name is None:
+            settings_file_name = self.settings_file_name
+        settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
         if settings_file_path.exists():
             with settings_file_path.open("r") as settings_file:
                 for row in settings_file:
@@ -249,11 +362,11 @@ class WurbSettings(object):
                         if key in self.default_location.keys():
                             self.current_location[key] = value
 
-    def save_settings_to_file(self):
+    def save_settings_to_file(self, settings_file_name=None, skip_keys=[]):
         """ Save to file. """
-        settings_file_path = pathlib.Path(
-            self.settings_dir_path, self.settings_file_name
-        )
+        if settings_file_name is None:
+            settings_file_name = self.settings_file_name
+        settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
         with settings_file_path.open("w") as settings_file:
             settings_file.write("# CloudedBats, http://cloudedbats.org" + "\n")
             settings_file.write("# Settings for the WURB bat detector." + "\n")
@@ -265,7 +378,8 @@ class WurbSettings(object):
             settings_file.write("# " + "\n")
             #
             for key, value in self.current_location.items():
-                settings_file.write(key + ": " + str(value) + "\n")
+                if key not in skip_keys:
+                    settings_file.write(key + ": " + str(value) + "\n")
             for key, value in self.current_settings.items():
-                settings_file.write(key + ": " + str(value) + "\n")
-
+                if key not in skip_keys:
+                    settings_file.write(key + ": " + str(value) + "\n")

@@ -31,9 +31,10 @@ class WurbRecManager(object):
             self.wurb_rpi = None
             self.wurb_logging = None
             self.wurb_settings = None
-            self.wurb_recorder = None
             self.wurb_gps = None
             self.wurb_scheduler = None
+            self.wurb_audiofeedback = None
+            self.manual_trigger_activated = False
 
         except Exception as e:
             print("Exception: ", e)
@@ -44,6 +45,7 @@ class WurbRecManager(object):
             self.wurb_logging = wurb_rec.WurbLogging(self)
             self.wurb_rpi = wurb_rec.WurbRaspberryPi(self)
             self.wurb_settings = wurb_rec.WurbSettings(self)
+            self.wurb_audiofeedback = wurb_rec.WurbPitchShifting(self)
             self.ultrasound_devices = wurb_rec.UltrasoundDevices(self)
             self.wurb_recorder = wurb_rec.WurbRecorder(self)
             self.wurb_gps = wurb_rec.WurbGps(self)
@@ -52,6 +54,8 @@ class WurbRecManager(object):
             await self.wurb_logging.startup()
             await self.wurb_settings.startup()
             # await self.wurb_scheduler.startup()
+            # await self.wurb_audiofeedback.startup()
+            self.manual_trigger_activated = False
             # Logging.
             message = "Detector started."
             self.wurb_logging.info(message, short_message=message)
@@ -65,6 +69,9 @@ class WurbRecManager(object):
         try:
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
 
+            if self.wurb_audiofeedback:
+                await self.wurb_audiofeedback.shutdown()
+                self.wurb_audiofeedback = None
             if self.wurb_gps:
                 await self.wurb_gps.shutdown()
                 self.wurb_gps = None
@@ -89,7 +96,7 @@ class WurbRecManager(object):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 return  # Already running.
 
             # await self.ultrasound_devices.stop_checking_devices()
@@ -98,6 +105,10 @@ class WurbRecManager(object):
             device_name = self.ultrasound_devices.device_name
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
+                # Audio feedback.
+                await self.wurb_audiofeedback.set_sampling_freq(sampling_freq=sampling_freq_hz)
+                # Rec.
+                self.manual_trigger_activated = False
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
                 await self.wurb_recorder.start_streaming()
                 # Logging.
@@ -117,24 +128,27 @@ class WurbRecManager(object):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 # Logging.
                 message = "Rec. stopped."
                 self.wurb_logging.info(message, short_message=message)
 
+            # Audio feedback.
+            await self.wurb_audiofeedback.shutdown()
+            # Rec.
             await self.wurb_recorder.set_rec_status("")
             await self.wurb_recorder.stop_streaming(stop_immediate=True)
             await self.ultrasound_devices.reset_devices()
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: stop_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def restart_rec(self):
         """ """
         try:
             rec_status = await self.wurb_recorder.get_rec_status()
-            if rec_status == "Recording.":
+            if rec_status == "Microphone is on.":
                 # Logging.
                 message = "Rec. restart initiated."
                 self.wurb_logging.info(message, short_message=message)
@@ -143,7 +157,7 @@ class WurbRecManager(object):
                 await self.start_rec()
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: restart_rec: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def get_notification_event(self):
@@ -154,21 +168,26 @@ class WurbRecManager(object):
             return self.notification_event
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: get_notification_event: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def get_status_dict(self):
         """ """
         try:
+            # Avoid too long device names in the user interface.
+            device_name = self.ultrasound_devices.device_name
+            device_name = device_name.replace("USB Ultrasound Microphone", "")
+            if len(device_name) > 25:
+                device_name = device_name[:24] + "..."
             status_dict = {
                 "rec_status": self.wurb_recorder.rec_status,
-                "device_name": self.ultrasound_devices.device_name,
+                "device_name": device_name,
                 "sample_rate": str(self.ultrasound_devices.sampling_freq_hz),
             }
             return status_dict
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: get_status_dict: " + str(e)
             self.wurb_logging.error(message, short_message=message)
 
     async def update_status(self):
@@ -195,9 +214,18 @@ class WurbRecManager(object):
                     exit
         except Exception as e:
             # Logging error.
-            message = "Manager: start_rec: " + str(e)
+            message = "Manager: update_status: " + str(e)
             self.wurb_logging.error(message, short_message=message)
         finally:
             # Logging error.
-            message = "Manager update status terminated."
+            message = "Manager update_status terminated."
             self.wurb_logging.debug(message=message)
+
+    async def manual_trigger(self):
+        """ """
+        # Will be checked and resetted in wurb_sound_detection.py
+        self.manual_trigger_activated = True
+        # Logging.
+        message = "Manually triggered."
+        self.wurb_logging.info(message, short_message=message)
+

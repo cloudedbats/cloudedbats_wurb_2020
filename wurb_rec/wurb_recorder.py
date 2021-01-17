@@ -4,6 +4,7 @@
 # Copyright (c) 2020-present Arnold Andreasson
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
+import os
 import asyncio
 import time
 import wave
@@ -11,7 +12,6 @@ import pathlib
 import psutil
 from collections import deque
 import sounddevice
-
 
 # CloudedBats.
 import wurb_rec
@@ -67,9 +67,8 @@ class UltrasoundDevices(object):
                     sampling_freq_hz = self.recorder_m500.get_sampling_freq_hz()
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
-                settings_device_name_part = "GoMic"  # TODO: From settings.
-                settings_sampling_freq_hz = 0  # TODO: From settings.
-                # settings_sampling_freq_hz = 44100  # TODO: From settings.
+                settings_device_name_part = os.getenv("WURB_REC_INPUT_DEVICE", "")
+                settings_sampling_freq_hz = int(os.getenv("WURB_REC_INPUT_DEVICE_FREQ_HZ", "0"))
                 if settings_device_name_part:
                     device_dict = None
                     device_name = ""
@@ -154,6 +153,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.wurb_manager = wurb_manager
         self.wurb_settings = wurb_manager.wurb_settings
         self.wurb_logging = wurb_manager.wurb_logging
+        self.wurb_audiofeedback = wurb_manager.wurb_audiofeedback
         self.rec_status = ""
         self.device_name = ""
         self.sampling_freq_hz = 0
@@ -245,8 +245,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
     #         print("EXCEPTION: put_on_queue_from_source: ", e)
 
     async def sound_source_worker(self):
-        """ Abstract worker method for sound sources. Mainly files or streams.
-            Test implementation to be used as template.
+        """Abstract worker method for sound sources. Mainly files or streams.
+        Test implementation to be used as template.
         """
         self.rec_start_time = None
         loop = asyncio.get_event_loop()
@@ -263,11 +263,12 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             # Logging.
             message = "Recorder: M500 started."
             self.wurb_manager.wurb_logging.info(message, short_message=message)
-            await self.set_rec_status("Recording.")
+            await self.set_rec_status("Microphone is on.")
             try:
                 await loop.run_in_executor(
-                    None, recorder_m500.start_streaming, 
-                )            
+                    None,
+                    recorder_m500.start_streaming,
+                )
             except asyncio.CancelledError:
                 recorder_m500.stop_streaming()
             except Exception as e:
@@ -280,8 +281,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
         # Standard ASLA microphones.
         def audio_callback(indata, frames, cffi_time, status):
-            """ Locally defined callback.
-                This is called (from a separate thread) for each audio block. """
+            """Locally defined callback.
+            This is called (from a separate thread) for each audio block."""
             try:
                 if status:
                     print("DEBUG: audio_callback Status:", status)
@@ -314,7 +315,6 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                     "data": indata_copy,
                 }
                 # Add to queue.
-                # Note: Maybe "call_soon_threadsafe" is faster than "run_coroutine_threadsafe".
                 try:
                     if not self.from_source_queue.full():
                         loop.call_soon_threadsafe(
@@ -322,6 +322,21 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                         )
                 except Exception as e:
                     print("DEBUG: Failed to put buffer on queue: ", e)
+                    pass
+                # Add to audio feedback, if available.
+                try:
+                    if self.wurb_audiofeedback:
+                        is_active = self.wurb_audiofeedback.is_audio_feedback_active()
+                        if is_active:
+                            indata_to_audiofeedback = indata_raw.copy()
+                            asyncio.run_coroutine_threadsafe(
+                                self.wurb_audiofeedback.add_buffer(
+                                    indata_to_audiofeedback
+                                ),
+                                loop,
+                            )
+                except Exception as e:
+                    print("DEBUG: Failed to call wurb_audiofeedback.add_buffer: ", e)
                     pass
 
                 # # Add to queue. Should be attached to the main async loop.
@@ -362,7 +377,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 callback=audio_callback,
             )
 
-            await self.set_rec_status("Recording.")
+            await self.set_rec_status("Microphone is on.")
 
             with stream:
                 await sound_source_event.wait()
@@ -377,8 +392,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             await self.set_rec_status("Recording finished.")
 
     async def sound_process_worker(self):
-        """ Abstract worker for sound processing algorithms.
-            Test implementation to be used as template.
+        """Abstract worker for sound processing algorithms.
+        Test implementation to be used as template.
         """
 
         try:
@@ -419,7 +434,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                             self.restart_activated = True
                             loop = asyncio.get_event_loop()
                             asyncio.run_coroutine_threadsafe(
-                                self.wurb_manager.restart_rec(), loop,
+                                self.wurb_manager.restart_rec(),
+                                loop,
                             )
                             await self.remove_items_from_queue(self.from_source_queue)
                             await self.from_source_queue.put(False)  # Flush.
@@ -460,7 +476,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                                     self.restart_activated = True
                                     loop = asyncio.get_event_loop()
                                     asyncio.run_coroutine_threadsafe(
-                                        self.wurb_manager.restart_rec(), loop,
+                                        self.wurb_manager.restart_rec(),
+                                        loop,
                                     )
                                     await self.remove_items_from_queue(
                                         self.from_source_queue
@@ -581,8 +598,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             pass
 
     async def sound_target_worker(self):
-        """ Worker for sound targets. Mainly files or streams.
-         """
+        """Worker for sound targets. Mainly files or streams."""
         wave_file_writer = None
         try:
             while True:
@@ -636,8 +652,8 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
 
 
 class WaveFileWriter:
-    """ Each file is connected to a separate file writer object 
-        to avoid concurrency problems. """
+    """Each file is connected to a separate file writer object
+    to avoid concurrency problems."""
 
     def __init__(self, wurb_manager):
         """ """
@@ -745,16 +761,15 @@ class WaveFileWriter:
         """ """
         latlongstring = ""
         try:
-            location_dict = self.wurb_settings.get_location_dict()
-            latitude_dd = float(location_dict.get("latitude_dd", "0.0"))
-            longitude_dd = float(location_dict.get("longitude_dd", "0.0"))
-            if latitude_dd >= 0:
+            latitude_dd, longitude_dd = self.wurb_settings.get_valid_location()
+
+            if latitude_dd >= 0.0:
                 latlongstring += "N"
             else:
                 latlongstring += "S"
             latlongstring += str(abs(latitude_dd))
             #
-            if longitude_dd >= 0:
+            if longitude_dd >= 0.0:
                 latlongstring += "E"
             else:
                 latlongstring += "W"
