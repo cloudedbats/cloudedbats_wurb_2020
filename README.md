@@ -52,9 +52,9 @@ Next release, v0.9 (available for test in the "master" branch):
 - New alternatives for GPS sources with fallback alternatives suitable for passive monitoring.
 - Two configurable settings: "user default settings" and "start-up settings".
 - Basic control via switches or a computer mouse (reintroduced, was missing in v0.8).
-- Configurable host and port for internet traffic.
-- Possible to use other compatible sound cards (compatible with ALSA on Raspberry Pi).
-  Environment variables is used for sound card name and sampling frequency.
+- Configurable host and port for internet traffic via environment variables.
+- Possible to experiment and use other compatible sound cards that are compatible with ALSA on Raspberry Pi.
+  Environment variables are used to specify sound card name and sampling frequency.
 
 ## Other characteristics
 
@@ -283,7 +283,8 @@ recommended since there is a small risk of corrupted SD card or USB memory stick
 - Select "Mode": "Detector - Power off..." and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
 - Attach an USB Computer mouse and hold down both the left end right button for 5 sec.
-- Connect a physical button to GPIO pin #37 and pin #39. Then press that button for a few seconds.
+- Connect a physical button to GPIO pin #37 and pin #39 (but be careful, connecting the wrong GPIO 
+  pins can destroy your Raspberry Pi). Then press that button for a few seconds.
 
 More than one USB memory stick can be used. They will be filled up with wave files 
 in alphabetic order. When the last USB memory stick is full, then it will continue 
