@@ -271,8 +271,6 @@ function updateSettings(settings) {
   // Trigging Audio feedback sliders
   feedback_volume_slider_id.oninput()
   feedback_pitch_slider_id.oninput()
-  setAudioFeedback()
-
 }
 
 function saveUserDefaultSettings() {

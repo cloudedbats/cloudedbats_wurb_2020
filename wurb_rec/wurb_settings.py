@@ -281,6 +281,20 @@ class WurbSettings(object):
         """ """
         return self.current_location
 
+    async def set_audio_feedback(self, volume, pitch):
+        """ """
+        self.current_settings["feedback_volume"] = volume
+        self.current_settings["feedback_pitch"] = pitch
+        audiofeedback = self.wurb_manager.wurb_audiofeedback
+        if audiofeedback:
+            await audiofeedback.set_volume(volume)
+            await audiofeedback.set_pitch(pitch)
+        # Create a new event and release all from the old event.
+        old_settings_event = self.settings_event
+        self.settings_event = asyncio.Event()
+        if old_settings_event:
+            old_settings_event.set()
+
     async def get_settings_event(self):
         """ """
         try:

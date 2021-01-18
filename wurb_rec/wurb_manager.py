@@ -106,7 +106,10 @@ class WurbRecManager(object):
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
                 # Audio feedback.
-                await self.wurb_audiofeedback.set_sampling_freq(sampling_freq=sampling_freq_hz)
+                await self.wurb_audiofeedback.set_sampling_freq(
+                    sampling_freq=sampling_freq_hz
+                )
+                await self.wurb_audiofeedback.startup()
                 # Rec.
                 self.manual_trigger_activated = False
                 await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
@@ -228,4 +231,3 @@ class WurbRecManager(object):
         # Logging.
         message = "Manually triggered."
         self.wurb_logging.info(message, short_message=message)
-

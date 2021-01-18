@@ -56,32 +56,21 @@ class WurbPitchShifting(object):
         self.max_buffer_size_s = 2.5
         # self.min_adjust_buffer_s = 0.5
 
+    async def set_sampling_freq(self, sampling_freq):
+        """ """
+        self.sampling_freq_in = int(sampling_freq)
+        await self.setup()
+
     async def set_volume(self, volume):
         """ """
         print("AUDIO FEEDBACK VOLUME: ", volume)
         self.volume = (int(volume) / 100.0) * 2.0
-        self.wurb_settings.set_setting_without_saving("feedback_volume", volume)
 
-    async def set_pitch_factor(self, pitch_factor):
+    async def set_pitch(self, pitch_factor):
         """ """
         print("AUDIO FEEDBACK PITCH: ", pitch_factor)
         self.pitch_div_factor = int(pitch_factor)
-        self.wurb_settings.set_setting_without_saving("feedback_pitch", pitch_factor)
-        # await self.shutdown()
-        # await asyncio.sleep(0.2)
-        # if self.sampling_freq_in:
-        #     if self.sampling_freq_in > 0:
-        #         await self.setup()
-        #         await self.startup()
         await self.setup()
-
-    async def set_sampling_freq(self, sampling_freq):
-        """ """
-        self.sampling_freq_in = int(sampling_freq)
-        await self.shutdown()
-        await asyncio.sleep(0.2)
-        await self.setup()
-        await self.startup()
 
     def is_audio_feedback_active(self):
         """ """
@@ -96,13 +85,6 @@ class WurbPitchShifting(object):
             filter_high_khz = settings_dict.get("feedback_filter_high_khz", "150.0")
             self.filter_low_limit_hz = int(float(filter_low_khz) * 1000.0)
             self.filter_high_limit_hz = int(float(filter_high_khz) * 1000.0)
-            # From environment variables.
-            # - Device "Headphones" is for RPi 3.5mm jack.
-            self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
-            self.device_freq_hz = int(
-                os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000")
-            )
-            # - WURB_REC_OUTPUT_DEVICE_FREQ_HZ
             # Calculated parameters.
             self.sampling_freq_out = int(self.sampling_freq_in / self.pitch_div_factor)
             self.hop_out_length = int(
@@ -137,13 +119,15 @@ class WurbPitchShifting(object):
             # Start audio
             self.asyncio_loop = asyncio.get_event_loop()
             self.audio_task = asyncio.create_task(self.stream_audio())
+            # self.audio_task = self.asyncio_loop.run_in_executor(None, self.stream_audio)
 
     async def shutdown(self):
         """ """
         try:
             if self.audio_task:
                 self.audio_task.cancel()
-            self.audio_task = None
+                self.audio_task = None
+                await asyncio.sleep(0.2)
         except Exception as e:
             print("Exception: WurbPitchShifting: shutdown: ", e)
 
@@ -241,19 +225,19 @@ class WurbPitchShifting(object):
         """ """
         loop = asyncio.get_event_loop()
         audio_event = asyncio.Event()
+        # From environment variables.
+        # - Device "Headphones" is for RPi 3.5mm jack.
+        self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
+        self.device_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
 
         # Locally defined callback.
         def audio_out_callback(outdata, frames, cffi_time, status):
             """ Locally defined callback. Called from another thread. """
             try:
                 self.audio_callback_active = True
-                # if status:
-                #     print(
-                #         "DEBUG: stream_audio/callback: Status: ",
-                #         status,
-                #         file=sys.stderr,
-                #     )
-                #
+                if status:
+                    pass
+                    # print("DEBUG: STATUS: ", status)
                 if (self.out_buffer is not None) and (self.out_buffer.size > frames):
                     data = self.out_buffer[:frames]
                     self.out_buffer = self.out_buffer[frames:]
@@ -264,6 +248,7 @@ class WurbPitchShifting(object):
                 else:
                     # Send zeroes if out buffer is empty.
                     outdata[:] = numpy.zeros((frames, 1), dtype=numpy.float32)
+                    # print("DEBUG: FRAMES-ZEROS: ", frames)
             except Exception as e:
                 print("Exception: WurbPitchShifting: stream_audio-callback: ", e)
                 loop.call_soon_threadsafe(audio_event.set)
@@ -277,7 +262,7 @@ class WurbPitchShifting(object):
                 device=self.device_name,
                 samplerate=int(self.device_freq_hz),
                 channels=1,
-                blocksize=8192, # 0 = Automatically by ALSA.
+                blocksize=2048,  # 0 = Automatically by ALSA.
                 callback=audio_out_callback,  # Locally defined above.
             )
             with stream:
