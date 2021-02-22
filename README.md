@@ -107,7 +107,7 @@ or attach the M500 or M500-384 microphone after startup.
 
 Use Raspberry Pi Imager to download "Raspbian Pi OS Lite" 
 and install it on a SD card. Raspberry Pi Imager can be found here: 
-https://www.raspberrypi.org/downloads
+https://www.raspberrypi.org/software/operating-systems/
 
 Alternative: BalenaEtcher is an alternative to Raspberry Pi Imager.
 
