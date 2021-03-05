@@ -56,7 +56,7 @@ class WurbSettings(object):
             "detection_algorithm": "detection-simple",
             "rec_length_s": "6",
             "rec_type": "FS",
-            "feedback_on_off": "feedback-on",
+            "feedback_on_off": "feedback-off",
             "feedback_volume": "50",
             "feedback_pitch": "30",
             "feedback_filter_low_khz": "15",
