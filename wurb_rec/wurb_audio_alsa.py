@@ -118,12 +118,13 @@ class AlsaMixer:
 
     def set_volume(self, card_index, volume_percent):
         """ """
-        mixer = alsaaudio.Mixer(
-            control="Master", id=0, device="sysdefault", cardindex=card_index
-        )
-        mixer.setvolume(volume_percent)
-        # FOR DEBUG:
-        print("DBUG: VOLUME: ", mixer.getvolume())
+        try:
+            mixer = alsaaudio.Mixer(
+                control="Master", id=0, device="sysdefault", cardindex=card_index
+            )
+            mixer.setvolume(int(volume_percent))
+        except Exception as e:
+            print("EXCEPTION: Mixer volume: ", e)
 
 
 class AlsaSoundCapture:
@@ -167,10 +168,12 @@ class AlsaSoundCapture:
     def start_capture(self):
         """ """
         print("CAPTURE STARTED.")
-        calculated_time_s = time.time()
-        time_increment_s = self.buffer_size / self.sampling_freq
+        pmc_capture = None
+        self.capture_active = True
         try:
-            self.capture_active = True
+            calculated_time_s = time.time()
+            time_increment_s = self.buffer_size / self.sampling_freq
+
             pmc_capture = alsaaudio.PCM(
                 alsaaudio.PCM_CAPTURE,
                 alsaaudio.PCM_NORMAL,
@@ -188,7 +191,7 @@ class AlsaSoundCapture:
                 if length < 0:
                     print("SOUND CAPTURE OVERRUN: ", length)
                 if len(data) > 0:
-                    print("LENGTH: ", length)
+                    # print("LENGTH: ", length)
                     data_int16 = numpy.frombuffer(data, dtype="int16")
 
                     if self.data_queue:
@@ -234,6 +237,8 @@ class AlsaSoundCapture:
             print("EXCEPTION CAPTURE: ", e)
         finally:
             self.capture_active = False
+            if pmc_capture:
+                pmc_capture.close()
             print("CAPTURE ENDED.")
 
 
@@ -312,15 +317,16 @@ class AlsaSoundPlayback:
 
     def add_data(self, data):
         """ """
-        print("DEBUG DATA ADDED. Length: ", len(data))
+        # print("DEBUG DATA ADDED. Length: ", len(data))
         if self.out_buffer_int16 is None:
             self.out_buffer_int16 = numpy.array([], dtype=numpy.int16)
         self.out_buffer_int16 = numpy.concatenate((self.out_buffer_int16, data))
 
     def alsa_playback(self):
         """ """
+        pmc_play = None
+        self.playback_active = True
         try:
-            self.playback_active = True
             pmc_play = alsaaudio.PCM(
                 alsaaudio.PCM_PLAYBACK,
                 alsaaudio.PCM_NORMAL,
@@ -361,6 +367,8 @@ class AlsaSoundPlayback:
             print("EXCEPTION PLAYBACK-2: ", e)
         finally:
             self.playback_active = False
+            if pmc_play:
+                pmc_play.close()
             print("PLAYBACK ENDED.")
 
 

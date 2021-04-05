@@ -7,7 +7,6 @@
 import asyncio
 import time
 from collections import deque
-import sounddevice
 
 import os
 import wave

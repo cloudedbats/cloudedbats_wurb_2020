@@ -11,7 +11,6 @@ import wave
 import pathlib
 import psutil
 from collections import deque
-import sounddevice
 
 # CloudedBats.
 import wurb_rec
