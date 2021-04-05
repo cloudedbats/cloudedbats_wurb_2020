@@ -6,7 +6,6 @@
 
 import alsaaudio
 import asyncio
-import concurrent
 import numpy
 import time
 
@@ -20,8 +19,8 @@ class AlsaSoundCards:
 
     def clear(self):
         self.card_list = []
-        self.input_card_index_list = []
-        self.output_card_index_list = []
+        self.capture_card_index_list = []
+        self.playback_card_index_list = []
 
     def update_card_lists(self):
         """ """
@@ -37,7 +36,7 @@ class AlsaSoundCards:
             card_dict["card_name"] = card_name.strip()
             card_dict["card_long_name"] = long_name.strip()
             self.card_list.append(card_dict)
-        # Check card devices for input and output.
+        # Check card devices for capture.
         for device in alsaaudio.pcms(alsaaudio.PCM_CAPTURE):
             if device.startswith("sysdefault:CARD="):
                 card_id = device.replace("sysdefault:CARD=", "").strip()
@@ -46,7 +45,8 @@ class AlsaSoundCards:
                         card_dict["device"] = device
                         card_index = card_dict.get("card_index", "")
                         if card_index:
-                            self.input_card_index_list.append(card_index)
+                            self.capture_card_index_list.append(card_index)
+        # Check card devices for playback.
         for device in alsaaudio.pcms(alsaaudio.PCM_PLAYBACK):
             if device.startswith("sysdefault:CARD="):
                 card_id = device.replace("sysdefault:CARD=", "").strip()
@@ -55,26 +55,35 @@ class AlsaSoundCards:
                         card_dict["device"] = device
                         card_index = card_dict.get("card_index", "")
                         if card_index:
-                            self.output_card_index_list.append(card_index)
+                            self.playback_card_index_list.append(card_index)
 
-    def get_input_card_index_by_name(self, part_of_name):
-        """ Returns fist found. """
-        for card_index in self.input_card_index_list:
+    def get_capture_card_index_by_name(self, part_of_name):
+        """ Returns first found. """
+        for card_index in self.capture_card_index_list:
             card_dict = self.card_list[card_index]
             if part_of_name in card_dict.get("card_name", ""):
                 card_index = card_dict.get("card_index", "")
                 return card_index
+        return None
 
-    def get_output_card_index_by_name(self, part_of_name):
-        """ Returns fist found. """
-        for card_index in self.output_card_index_list:
+    def get_playback_card_index_by_name(self, part_of_name):
+        """ Returns first found. """
+        for card_index in self.playback_card_index_list:
             card_dict = self.card_list[card_index]
             if part_of_name in card_dict.get("card_name", ""):
                 card_index = card_dict.get("card_index", "")
                 return card_index
+        return None
+
+    def get_card_dict_by_index(self, card_index):
+        """ Returns first found. """
+        for card_dict in self.card_list:
+            if card_index == card_dict.get("card_index", ""):
+                return card_dict
+        return {}
 
     def get_max_sampling_freq(self, card_index):
-        """ Only for input devices. """
+        """ Only for capture devices. """
         max_freq = -99
         inp = None
         try:
@@ -120,48 +129,42 @@ class AlsaMixer:
 class AlsaSoundCapture:
     """ """
 
-    def __init__(self, out_queue):
+    def __init__(self, data_queue=None, direct_target=None):
         """ """
-        self.out_queue = out_queue
+        self.data_queue = data_queue
+        self.direct_target = direct_target
         self.card_index = None
         self.sampling_freq = None
         self.buffer_size = None
-        #
-        self.capture_task = None
-        self.executor = None
+        # Internal.
         self.capture_active = False
 
-    def is_active(self):
+    def is_capture_active(self):
         """ """
         return self.capture_active
 
-    async def start_capture(self, card_index, sampling_freq, buffer_size):
+    async def initiate_capture(self, card_index, sampling_freq, buffer_size):
         """ """
-        print("CAPTURE-TASK.")
         self.main_loop = asyncio.get_running_loop()
         self.card_index = card_index
         self.sampling_freq = sampling_freq
         self.buffer_size = buffer_size
-        # If already started.
-        if self.capture_task:
-            await self.stop_capture()
-        # Run executor as task.
-        self.capture_task = asyncio.create_task(self.capture_executor())
 
-    async def capture_executor(self):
+    async def start_capture_in_executor(self):
         """ Use executor for IO-blocking function. """
-        print("CAPTURE-EXECUTOR STARTED.")
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            await self.main_loop.run_in_executor(executor, self.alsa_capture)
+        print("CAPTURE-EXECUTOR STARTING.")
+        if self.is_capture_active():
+            print("ERROR: CAPTURE already running: ")
+            return
+        #
+        await self.main_loop.run_in_executor(None, self.start_capture)
 
     async def stop_capture(self):
         """ """
+        # Use traditional thread termination.
         self.capture_active = False
-        if self.capture_task:
-            self.capture_task.cancel()
-            self.capture_task = None
 
-    def alsa_capture(self):
+    def start_capture(self):
         """ """
         print("CAPTURE STARTED.")
         calculated_time_s = time.time()
@@ -187,34 +190,48 @@ class AlsaSoundCapture:
                 if len(data) > 0:
                     print("LENGTH: ", length)
                     data_int16 = numpy.frombuffer(data, dtype="int16")
-                    # Time rounded to half sec.
-                    calculated_time_s += time_increment_s
-                    adc_time = int((calculated_time_s) * 2) / 2
-                    detector_time = time.time()
-                    # Put together.
-                    send_dict = {
-                        "status": "data",
-                        "adc_time": adc_time,
-                        "detector_time": detector_time,
-                        "data": data_int16,
-                    }
-                    try:
-                        if not self.out_queue.full():
-                            self.main_loop.call_soon_threadsafe(
-                                self.out_queue.put_nowait, send_dict
-                            )
-                    #
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as e:
-                        # Logging error.
-                        message = "Failed to put buffer on queue: " + str(e)
-                        print(message)
+
+                    if self.data_queue:
+                        # Time rounded to half sec.
+                        calculated_time_s += time_increment_s
+                        device_time = int((calculated_time_s) * 2) / 2
+                        # Used to detect time drift.
+                        detector_time = time.time()
+                        # Copy data.
+                        data_int16_copy = data_int16.copy()
+                        # Put together.
+                        data_dict = {
+                            "status": "data",
+                            "adc_time": device_time,
+                            "detector_time": detector_time,
+                            "data": data_int16_copy,
+                        }
+                        try:
+                            if not self.data_queue.full():
+                                self.main_loop.call_soon_threadsafe(
+                                    self.data_queue.put_nowait, data_dict
+                                )
+                        #
+                        except Exception as e:
+                            # Logging error.
+                            message = "Failed to put data on queue: " + str(e)
+                            print(message)
+                    
+                    if self.direct_target:
+                        # The target object must contain the methods is_active() and add_data().
+                        try:
+                            if self.direct_target.is_active():
+                                data_int16_copy = data_int16.copy()
+                                self.main_loop.call_soon_threadsafe(
+                                    self.direct_target.add_data, data_int16_copy
+                                )
+                        except Exception as e:
+                            # Logging error.
+                            message = "Failed to add data to direct_target: " + str(e)
+                            print(message)
         #
-        except asyncio.CancelledError:
-            pass
         except Exception as e:
-            print("EXCEPTION CAPTURE-2: ", e)
+            print("EXCEPTION CAPTURE: ", e)
         finally:
             self.capture_active = False
             print("CAPTURE ENDED.")
@@ -258,8 +275,7 @@ class AlsaSoundPlayback:
 
     async def playback_executor(self):
         """ Use executor for IO-blocking function. """
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            await self.main_loop.run_in_executor(executor, self.alsa_playback)
+        await self.main_loop.run_in_executor(None, self.alsa_playback)
 
     async def stop_playback(self):
         """ """
@@ -282,9 +298,9 @@ class AlsaSoundPlayback:
                 self.data_queue.task_done()
             while True:
                 try:
-                    send_dict = await self.data_queue.get()
-                    if "data" in send_dict:
-                        self.add_data(send_dict["data"])
+                    data_dict = await self.data_queue.get()
+                    if "data" in data_dict:
+                        self.add_data(data_dict["data"])
                 except asyncio.CancelledError:
                     break
                 except Exception as e:
@@ -296,7 +312,7 @@ class AlsaSoundPlayback:
 
     def add_data(self, data):
         """ """
-        print("DEBUG DATA ADDED: ")
+        print("DEBUG DATA ADDED. Length: ", len(data))
         if self.out_buffer_int16 is None:
             self.out_buffer_int16 = numpy.array([], dtype=numpy.int16)
         self.out_buffer_int16 = numpy.concatenate((self.out_buffer_int16, data))
@@ -355,26 +371,33 @@ async def main():
     part_of_playback_card_name = "iMic"
 
     amixer = AlsaMixer()
-    amixer.set_volume(0, 90)
+    amixer.set_volume(0, 100)
 
-    sound_queue = asyncio.Queue(maxsize=4)
     cards = AlsaSoundCards()
     cards.update_card_lists()
-    #
-    alsa_capture = AlsaSoundCapture(out_queue=sound_queue)
+
+    # TEST 1: Use queue.
+    sound_queue = asyncio.Queue(maxsize=4)
+    alsa_capture = AlsaSoundCapture(data_queue=sound_queue)
     alsa_playback = AlsaSoundPlayback(data_queue=sound_queue)
+
+    # # TEST 2: Used direct target.
+    # alsa_playback = AlsaSoundPlayback(data_queue=None)
+    # alsa_capture = AlsaSoundCapture(data_queue=None, direct_target=alsa_playback)
+
     #
-    card_index = cards.get_input_card_index_by_name(part_of_capture_card_name)
+    card_index = cards.get_capture_card_index_by_name(part_of_capture_card_name)
     if card_index != None:
         rate = cards.get_max_sampling_freq(card_index)
         buffer_size = int(rate / 2)  # 0.5 sec.
-        await alsa_capture.start_capture(
+        await alsa_capture.initiate_capture(
             card_index=card_index, sampling_freq=rate, buffer_size=buffer_size
         )
+        asyncio.create_task(alsa_capture.start_capture_in_executor())
     else:
         print("FAILED TO FIND CARD: ", part_of_capture_card_name)
     #
-    card_index = cards.get_output_card_index_by_name(part_of_playback_card_name)
+    card_index = cards.get_playback_card_index_by_name(part_of_playback_card_name)
     if card_index != None:
         rate = 48000
         buffer_size = 1000
@@ -384,7 +407,7 @@ async def main():
     else:
         print("FAILED TO FIND CARD: ", part_of_playback_card_name)
 
-    await asyncio.sleep(2.0)
+    await asyncio.sleep(4.0)
     await alsa_capture.stop_capture()
     await asyncio.sleep(10.0)
     await alsa_playback.stop_playback()

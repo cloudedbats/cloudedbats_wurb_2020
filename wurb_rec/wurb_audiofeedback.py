@@ -13,6 +13,8 @@ import os
 import sys
 import pathlib
 
+import wurb_rec
+
 
 class WurbPitchShifting(object):
     """For audio feedback by using Pitch Shifting, PS.
@@ -72,7 +74,7 @@ class WurbPitchShifting(object):
         self.pitch_div_factor = int(pitch_factor)
         await self.setup()
 
-    def is_audio_feedback_active(self):
+    def is_active(self):
         """ """
         return self.audio_callback_active
 
@@ -131,8 +133,12 @@ class WurbPitchShifting(object):
         except Exception as e:
             print("Exception: WurbPitchShifting: shutdown: ", e)
 
-    async def add_buffer(self, buffer_int16):
+    def add_data(self, buffer_int16):
         """ """
+        if self.is_active():
+            self.asyncio_loop.run_in_executor(None, self.add_buffer, buffer_int16)
+
+    def add_buffer(self, buffer_int16):
         try:
             if (self.audio_task is None) or (not self.audio_callback_active):
                 if self.in_buffer.size > 0:
@@ -227,7 +233,8 @@ class WurbPitchShifting(object):
         audio_event = asyncio.Event()
         # From environment variables.
         # - Device "Headphones" is for RPi 3.5mm jack.
-        self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
+        # self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
+        self.device_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
         self.device_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
 
         # Locally defined callback.

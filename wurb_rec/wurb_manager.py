@@ -103,6 +103,7 @@ class WurbRecManager(object):
             await self.ultrasound_devices.check_devices()
 
             device_name = self.ultrasound_devices.device_name
+            card_index = self.ultrasound_devices.card_index
             sampling_freq_hz = self.ultrasound_devices.sampling_freq_hz
             if (len(device_name) > 1) and sampling_freq_hz > 0:
                 # Audio feedback.
@@ -112,7 +113,9 @@ class WurbRecManager(object):
                 await self.wurb_audiofeedback.startup()
                 # Rec.
                 self.manual_trigger_activated = False
-                await self.wurb_recorder.set_device(device_name, sampling_freq_hz)
+                await self.wurb_recorder.set_device(
+                    device_name, card_index, sampling_freq_hz
+                )
                 await self.wurb_recorder.start_streaming()
                 # Logging.
                 message = "Rec. started."
