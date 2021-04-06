@@ -44,7 +44,7 @@ class AlsaSoundCards:
                     if card_dict.get("card_id", "") == card_id:
                         card_dict["device"] = device
                         card_index = card_dict.get("card_index", "")
-                        if card_index:
+                        if card_index != "":
                             self.capture_card_index_list.append(card_index)
         # Check card devices for playback.
         for device in alsaaudio.pcms(alsaaudio.PCM_PLAYBACK):
@@ -54,7 +54,7 @@ class AlsaSoundCards:
                     if card_dict.get("card_id", "") == card_id:
                         card_dict["device"] = device
                         card_index = card_dict.get("card_index", "")
-                        if card_index:
+                        if card_index != "":
                             self.playback_card_index_list.append(card_index)
 
     def get_capture_card_index_by_name(self, part_of_name):
@@ -116,7 +116,7 @@ class AlsaMixer:
     def __init__(self):
         """ """
 
-    def set_volume(self, card_index, volume_percent):
+    def set_volume(self, volume_percent=100, card_index=-1):
         """ """
         try:
             mixer = alsaaudio.Mixer(
@@ -153,7 +153,7 @@ class AlsaSoundCapture:
 
     async def start_capture_in_executor(self):
         """ Use executor for IO-blocking function. """
-        print("CAPTURE-EXECUTOR STARTING.")
+        # print("CAPTURE-EXECUTOR STARTING.")
         if self.is_capture_active():
             print("ERROR: CAPTURE already running: ")
             return
@@ -167,7 +167,7 @@ class AlsaSoundCapture:
 
     def start_capture(self):
         """ """
-        print("CAPTURE STARTED.")
+        # print("CAPTURE STARTED.")
         pmc_capture = None
         self.capture_active = True
         try:
@@ -219,7 +219,7 @@ class AlsaSoundCapture:
                             # Logging error.
                             message = "Failed to put data on queue: " + str(e)
                             print(message)
-                    
+
                     if self.direct_target:
                         # The target object must contain the methods is_active() and add_data().
                         try:
@@ -239,7 +239,7 @@ class AlsaSoundCapture:
             self.capture_active = False
             if pmc_capture:
                 pmc_capture.close()
-            print("CAPTURE ENDED.")
+            # print("CAPTURE ENDED.")
 
 
 class AlsaSoundPlayback:
@@ -369,17 +369,18 @@ class AlsaSoundPlayback:
             self.playback_active = False
             if pmc_play:
                 pmc_play.close()
-            print("PLAYBACK ENDED.")
+            # print("PLAYBACK ENDED.")
 
 
 # === MAIN - for test ===
 async def main():
     """ """
     part_of_capture_card_name = "Pettersson"
-    part_of_playback_card_name = "iMic"
+    part_of_playback_card_name = "Headphones"
+    # part_of_playback_card_name = "iMic"
 
     amixer = AlsaMixer()
-    amixer.set_volume(0, 100)
+    amixer.set_volume(volume_percent=100, card_index=-1)    
 
     cards = AlsaSoundCards()
     cards.update_card_lists()

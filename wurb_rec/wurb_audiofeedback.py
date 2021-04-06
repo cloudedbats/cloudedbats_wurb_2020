@@ -40,7 +40,7 @@ class WurbPitchShifting(object):
         self.resample_factor = None
         self.sampling_freq_in = None
         self.pitch_div_factor = 30
-        self.volume = 5.0
+        self.volume = 2.0
         self.filter_low_limit_hz = None
         self.filter_high_limit_hz = None
         self.filter_order = None
@@ -67,7 +67,7 @@ class WurbPitchShifting(object):
         """ """
         try:
             # print("AUDIO FEEDBACK VOLUME: ", volume)
-            self.volume = float((float(volume) / 100.0) * 5.0)
+            self.volume = float((float(volume) / 100.0) * 2.0)
         except Exception as e:
             print("EXCEPTION: set_volume: ", e)
 
@@ -92,6 +92,12 @@ class WurbPitchShifting(object):
         try:
             # From settings.
             settings_dict = await self.wurb_settings.get_settings()
+            # Volume and pitch.
+            feedback_volume = settings_dict.get("feedback_volume", "100")
+            self.volume = float((float(feedback_volume) / 100.0) * 2.0)
+            feedback_pitch = settings_dict.get("feedback_pitch", "30")
+            self.pitch_div_factor = int(feedback_pitch)
+            # Filter.
             filter_low_khz = settings_dict.get("feedback_filter_low_khz", "15.0")
             filter_high_khz = settings_dict.get("feedback_filter_high_khz", "150.0")
             self.filter_low_limit_hz = int(float(filter_low_khz) * 1000.0)
@@ -127,13 +133,13 @@ class WurbPitchShifting(object):
         part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
         # part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
         sampling_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
-
+        # ALSA volume.
+        wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
+        # ALSA cards.
         cards = wurb_rec.AlsaSoundCards()
         cards.update_card_lists()
         card_index = cards.get_playback_card_index_by_name(part_of_name)
         if card_index != None:
-            # wurb_rec.AlsaMixer().set_volume(card_index, 100)
-            wurb_rec.AlsaMixer().set_volume(0, 100)
             self.alsa_playback = wurb_rec.AlsaSoundPlayback()
             buffer_size = 1000
             await self.alsa_playback.start_playback(
