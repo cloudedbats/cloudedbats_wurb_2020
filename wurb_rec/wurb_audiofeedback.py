@@ -60,7 +60,7 @@ class WurbPitchShifting(object):
 
     async def set_sampling_freq(self, sampling_freq):
         """ """
-        self.sampling_freq_in = int(sampling_freq)
+        self.sampling_freq_in = int(float(sampling_freq))
         await self.setup()
 
     async def set_volume(self, volume):
@@ -75,7 +75,7 @@ class WurbPitchShifting(object):
         """ """
         try:
             # print("AUDIO FEEDBACK PITCH: ", pitch_factor)
-            self.pitch_div_factor = int(pitch_factor)
+            self.pitch_div_factor = int(float(pitch_factor))
             await self.setup()
         except Exception as e:
             print("EXCEPTION: set_pitch: ", e)
@@ -96,7 +96,7 @@ class WurbPitchShifting(object):
             feedback_volume = settings_dict.get("feedback_volume", "100")
             self.volume = float((float(feedback_volume) / 100.0) * 2.0)
             feedback_pitch = settings_dict.get("feedback_pitch", "30")
-            self.pitch_div_factor = int(feedback_pitch)
+            self.pitch_div_factor = int(float(feedback_pitch))
             # Filter.
             filter_low_khz = settings_dict.get("feedback_filter_low_khz", "15.0")
             filter_high_khz = settings_dict.get("feedback_filter_high_khz", "150.0")
@@ -133,8 +133,8 @@ class WurbPitchShifting(object):
         part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
         # part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
         sampling_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
-        # ALSA volume.
-        wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
+        # # ALSA volume.
+        # wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
         # ALSA cards.
         cards = wurb_rec.AlsaSoundCards()
         cards.update_card_lists()
@@ -160,6 +160,7 @@ class WurbPitchShifting(object):
             self.asyncio_loop.run_in_executor(None, self.add_buffer, buffer_int16)
 
     def add_buffer(self, buffer_int16):
+        """ """
         try:
             if (self.alsa_playback is None) or (not self.is_active()):
                 if self.in_buffer.size > 0:
@@ -187,8 +188,9 @@ class WurbPitchShifting(object):
                     output="sos",
                 )
                 filtered = scipy.signal.sosfilt(sos, buffer)
-            except:
+            except Exception as e:
                 pass
+                print("EXCEPTION: Butterworth: ", e)
             # Concatenate with old buffer.
             self.in_buffer = numpy.concatenate((self.in_buffer, filtered))
             # Add overlaps on pitchshifting_buffer. Window function is applied on "part".
