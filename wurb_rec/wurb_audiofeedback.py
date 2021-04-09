@@ -11,6 +11,7 @@ import scipy.interpolate
 import os
 import sys
 import pathlib
+import logging
 
 import wurb_rec
 
@@ -31,6 +32,7 @@ class WurbPitchShifting(object):
         # self.audio_callback_active = False
         self.alsa_playback = None
         #
+        self.logger = logging.getLogger("CloudedBats-WURB")
         self.clear()
 
     def clear(self):
@@ -51,7 +53,6 @@ class WurbPitchShifting(object):
         self.window_function = None
         self.in_buffer = None
         self.pitchshifting_buffer = None
-        self.to_outbuffer_limit = None
         # self.out_buffer = None
         # Params.
         self.filter_order = 10
@@ -66,19 +67,17 @@ class WurbPitchShifting(object):
     async def set_volume(self, volume):
         """ """
         try:
-            # print("AUDIO FEEDBACK VOLUME: ", volume)
-            self.volume = float((float(volume) / 100.0) * 2.0)
+            self.volume = float((float(volume) / 100.0) * 10.0)
         except Exception as e:
-            print("EXCEPTION: set_volume: ", e)
+            self.logger.debug("EXCEPTION: set_volume: " + str(e))
 
     async def set_pitch(self, pitch_factor):
         """ """
         try:
-            # print("AUDIO FEEDBACK PITCH: ", pitch_factor)
             self.pitch_div_factor = int(float(pitch_factor))
             await self.setup()
         except Exception as e:
-            print("EXCEPTION: set_pitch: ", e)
+            self.logger.debug("EXCEPTION: set_pitch: " + str(e))
 
     def is_active(self):
         """ """
@@ -94,7 +93,7 @@ class WurbPitchShifting(object):
             settings_dict = await self.wurb_settings.get_settings()
             # Volume and pitch.
             feedback_volume = settings_dict.get("feedback_volume", "100")
-            self.volume = float((float(feedback_volume) / 100.0) * 2.0)
+            self.volume = float((float(feedback_volume) / 100.0) * 10.0)
             feedback_pitch = settings_dict.get("feedback_pitch", "30")
             self.pitch_div_factor = int(float(feedback_pitch))
             # Filter.
@@ -114,24 +113,42 @@ class WurbPitchShifting(object):
             kaiser_beta = int(self.pitch_div_factor * 0.8)
             self.window_size = int(self.hop_in_length * buffer_in_overlap_factor)
             self.window_function = numpy.kaiser(self.window_size, beta=kaiser_beta)
-            self.in_buffer = numpy.array([], dtype=numpy.float32)
-            pitchshifting_buffer_length = int(self.sampling_freq_out * 3)
-            self.pitchshifting_buffer = numpy.zeros(
-                pitchshifting_buffer_length, dtype=numpy.float32
-            )  # 3 sec buffer length.
-            self.to_outbuffer_limit = int(
-                pitchshifting_buffer_length / 2
-            )  # Half buffer used.
-            # self.out_buffer = numpy.array([], dtype=numpy.float32)
+            #
+            self.in_buffer == None
+            self.pitchshifting_buffer == None
+
+            # For debug.
+            self.logger.debug(
+                "Audiofeedback setup: feedback_volume: " + str(self.volume)
+            )
+            self.logger.debug(
+                "Audiofeedback setup: feedback_pitch: " + str(self.pitch_div_factor)
+            )
+            self.logger.debug(
+                "Audiofeedback setup: sampling_freq_out: " + str(self.sampling_freq_out)
+            )
+            self.logger.debug(
+                "Audiofeedback setup: hop_out_length: " + str(self.hop_out_length)
+            )
+            self.logger.debug(
+                "Audiofeedback setup: hop_in_length: " + str(self.hop_in_length)
+            )
+            self.logger.debug(
+                "Audiofeedback setup: resample_factor: " + str(self.resample_factor)
+            )
+            self.logger.debug("Audiofeedback setup: kaiser_beta: " + str(kaiser_beta))
+            self.logger.debug(
+                "Audiofeedback setup: window_size: " + str(self.window_size)
+            )
 
         except Exception as e:
-            print("Exception: WurbPitchShifting: setup: ", e)
+            self.logger.debug("Exception: WurbPitchShifting: setup: " + str(e))
 
     async def startup(self):
         """ """
         self.asyncio_loop = asyncio.get_event_loop()
         part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
-        # part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
+        ### part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
         sampling_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
         # # ALSA volume.
         # wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
@@ -143,10 +160,12 @@ class WurbPitchShifting(object):
             self.alsa_playback = wurb_rec.AlsaSoundPlayback()
             buffer_size = 1000
             await self.alsa_playback.start_playback(
-                card_index=card_index, sampling_freq=sampling_freq_hz, buffer_size=buffer_size
+                card_index=card_index,
+                sampling_freq=sampling_freq_hz,
+                buffer_size=buffer_size,
             )
         else:
-            print("FAILED TO FIND CARD: ", part_of_name)
+            self.logger.debug("FAILED TO FIND CARD: " + part_of_name)
 
     async def shutdown(self):
         """ """
@@ -162,13 +181,23 @@ class WurbPitchShifting(object):
     def add_buffer(self, buffer_int16):
         """ """
         try:
+            # Clear buffer if not active.
             if (self.alsa_playback is None) or (not self.is_active()):
-                if self.in_buffer.size > 0:
-                    self.in_buffer = numpy.array([], dtype=numpy.float32)
-                # if self.out_buffer.size > 0:
-                #     self.out_buffer = numpy.array([], dtype=numpy.float32)
+                self.in_buffer = None
+                self.pitchshifting_buffer = None
                 return
-
+            # Avoid too long out buffers.
+            out_buffer_size_s = self.alsa_playback.get_out_buffer_size_s()
+            if out_buffer_size_s > 1.0:
+                return
+            # Create missing buffers.
+            if self.in_buffer is None:
+                self.in_buffer = numpy.array([], dtype=numpy.float32)
+                pitchshifting_buffer_length = int(self.sampling_freq_out * 3)
+            if self.pitchshifting_buffer is None:
+                self.pitchshifting_buffer = numpy.zeros(
+                    pitchshifting_buffer_length, dtype=numpy.float32
+                )  # 3 sec buffer length.
             # Buffer delivered as int16. Transform to intervall -1 to 1.
             buffer = buffer_int16 / 32768.0
             # Filter buffer. Butterworth bandpass.
@@ -179,7 +208,7 @@ class WurbPitchShifting(object):
                 if (high_limit_hz + 100) >= (self.sampling_freq_in / 2):
                     high_limit_hz = self.sampling_freq_in / 2 - 100
                 if low_limit_hz < 0 or (low_limit_hz + 100 >= high_limit_hz):
-                    low_limit_hz = 0
+                    low_limit_hz = 100
                 sos = scipy.signal.butter(
                     self.filter_order,
                     [low_limit_hz, high_limit_hz],
@@ -190,7 +219,7 @@ class WurbPitchShifting(object):
                 filtered = scipy.signal.sosfilt(sos, buffer)
             except Exception as e:
                 pass
-                print("EXCEPTION: Butterworth: ", e)
+                self.logger.debug("EXCEPTION: Butterworth: " + str(e))
             # Concatenate with old buffer.
             self.in_buffer = numpy.concatenate((self.in_buffer, filtered))
             # Add overlaps on pitchshifting_buffer. Window function is applied on "part".
@@ -202,25 +231,13 @@ class WurbPitchShifting(object):
                     insert_pos : insert_pos + self.window_size
                 ] += part
                 insert_pos += self.hop_out_length
-                if insert_pos > self.to_outbuffer_limit:
-                    new_part = self.pitchshifting_buffer[:insert_pos]
-                    new_part_2 = self.resample(new_part)
-
-                    new_buffer_int16 = numpy.array(new_part_2 * 32768.0 * self.volume, dtype=numpy.int16)
-                    self.alsa_playback.add_data(new_buffer_int16)
-
-                    self.pitchshifting_buffer[
-                        : self.window_size
-                    ] = self.pitchshifting_buffer[
-                        insert_pos : insert_pos + self.window_size
-                    ]
-                    self.pitchshifting_buffer[self.window_size :] = 0.0
-                    insert_pos = 0
             # Flush.
             new_part = self.pitchshifting_buffer[:insert_pos]
             new_part_2 = self.resample(new_part)
 
-            new_buffer_int16 = numpy.array(new_part_2 * 32768.0 * self.volume, dtype=numpy.int16)
+            new_buffer_int16 = numpy.array(
+                new_part_2 * 32768.0 * self.volume, dtype=numpy.int16
+            )
             self.alsa_playback.add_data(new_buffer_int16)
 
             self.pitchshifting_buffer[: self.window_size] = self.pitchshifting_buffer[
@@ -228,9 +245,9 @@ class WurbPitchShifting(object):
             ]
             self.pitchshifting_buffer[self.window_size :] = 0.0
             insert_pos = 0
-            # print("DEBUG: Max/min amp: ", max(self.out_buffer), "   ", min(self.out_buffer))
+            # self.logging.debug("DEBUG: Max/min amp: ", max(self.out_buffer), "   ", min(self.out_buffer))
         except Exception as e:
-            print("Exception: WurbPitchShifting: add_buffer: ", e)
+            self.logger.debug("Exception: WurbPitchShifting: add_buffer: " + str(e))
 
     def resample(self, x, kind="linear"):
         """ Resample to 48000 Hz, in most cases, to match output devices. """

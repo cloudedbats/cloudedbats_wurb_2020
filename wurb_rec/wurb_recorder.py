@@ -75,10 +75,8 @@ class UltrasoundDevices(object):
                     card_index = None
                     sampling_freq_hz = 0
                     try:
-                        card_index = (
-                            self.alsa_cards.get_capture_card_index_by_name(
-                                device_name_part
-                            )
+                        card_index = self.alsa_cards.get_capture_card_index_by_name(
+                            settings_device_name_part
                         )
                         if card_index != None:
                             card_dict = self.alsa_cards.get_card_dict_by_index(
@@ -91,8 +89,12 @@ class UltrasoundDevices(object):
                                 sampling_freq_hz = (
                                     self.alsa_cards.get_max_sampling_freq(card_index)
                                 )
-                    except:
-                        pass
+                    except Exception as e:
+                        # Logging error.
+                        message = "Recorder: check_devices: " + str(e)
+                        self.wurb_manager.wurb_logging.error(
+                            message, short_message=message
+                        )
             # Done.
             await self.set_connected_device(device_name, card_index, sampling_freq_hz)
 
@@ -251,18 +253,16 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         # Standard ASLA microphones.
         recorder_alsa = wurb_rec.AlsaSoundCapture(
             data_queue=self.from_source_queue,
-            direct_target=self.wurb_audiofeedback, 
+            direct_target=self.wurb_audiofeedback,
         )
         # Logging.
-        message = "Recorder: ALSA started."
-        self.wurb_manager.wurb_logging.info(message, short_message=message)
         await self.set_rec_status("Microphone is on.")
         try:
             buffer_size = int(self.sampling_freq_hz / 2)  # 0.5 sec.
             await recorder_alsa.initiate_capture(
-                card_index=self.card_index, 
-                sampling_freq=self.sampling_freq_hz, 
-                buffer_size=buffer_size
+                card_index=self.card_index,
+                sampling_freq=self.sampling_freq_hz,
+                buffer_size=buffer_size,
             )
             await recorder_alsa.start_capture_in_executor()
         except asyncio.CancelledError:
@@ -277,9 +277,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         return
 
     async def sound_process_worker(self):
-        """Abstract worker for sound processing algorithms.
-        Test implementation to be used as template.
-        """
+        """ """
 
         try:
             # Get rec length from settings.

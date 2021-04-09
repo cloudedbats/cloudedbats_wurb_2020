@@ -8,6 +8,7 @@ import alsaaudio
 import asyncio
 import numpy
 import time
+import logging
 
 
 class AlsaSoundCards:
@@ -15,6 +16,7 @@ class AlsaSoundCards:
 
     def __init__(self):
         """ """
+        self.logger = logging.getLogger("CloudedBats-WURB")
         self.clear()
 
     def clear(self):
@@ -59,20 +61,22 @@ class AlsaSoundCards:
 
     def get_capture_card_index_by_name(self, part_of_name):
         """ Returns first found. """
-        for card_index in self.capture_card_index_list:
-            card_dict = self.card_list[card_index]
-            if part_of_name in card_dict.get("card_name", ""):
-                card_index = card_dict.get("card_index", "")
-                return card_index
+        for card_dict in self.card_list:
+            card_name = card_dict.get("card_name", "")
+            card_index = card_dict.get("card_index", "")
+            if card_index in self.capture_card_index_list:
+                if part_of_name in card_name:
+                    return card_index
         return None
 
     def get_playback_card_index_by_name(self, part_of_name):
         """ Returns first found. """
-        for card_index in self.playback_card_index_list:
-            card_dict = self.card_list[card_index]
-            if part_of_name in card_dict.get("card_name", ""):
-                card_index = card_dict.get("card_index", "")
-                return card_index
+        for card_dict in self.card_list:
+            card_name = card_dict.get("card_name", "")
+            card_index = card_dict.get("card_index", "")
+            if card_index in self.playback_card_index_list:
+                if part_of_name in card_name:
+                    return card_index
         return None
 
     def get_card_dict_by_index(self, card_index):
@@ -103,7 +107,7 @@ class AlsaSoundCards:
                 else:
                     max_freq = inp.getrates()
             except Exception as e:
-                print("Exception: ", e)
+                self.logger.debug("Exception: " + str(e))
         finally:
             if inp:
                 inp.close()
@@ -115,6 +119,7 @@ class AlsaMixer:
 
     def __init__(self):
         """ """
+        self.logger = logging.getLogger("CloudedBats-WURB")
 
     def set_volume(self, volume_percent=100, card_index=-1):
         """ """
@@ -124,7 +129,7 @@ class AlsaMixer:
             )
             mixer.setvolume(int(volume_percent))
         except Exception as e:
-            print("EXCEPTION: Mixer volume: ", e)
+            self.logger.debug("EXCEPTION: Mixer volume: " + str(e))
 
 
 class AlsaSoundCapture:
@@ -138,6 +143,7 @@ class AlsaSoundCapture:
         self.sampling_freq = None
         self.buffer_size = None
         # Internal.
+        self.logger = logging.getLogger("CloudedBats-WURB")
         self.capture_active = False
 
     def is_capture_active(self):
@@ -153,9 +159,9 @@ class AlsaSoundCapture:
 
     async def start_capture_in_executor(self):
         """ Use executor for IO-blocking function. """
-        # print("CAPTURE-EXECUTOR STARTING.")
+        # self.logger.debug("CAPTURE-EXECUTOR STARTING.")
         if self.is_capture_active():
-            print("ERROR: CAPTURE already running: ")
+            self.logger.debug("ERROR: CAPTURE already running: ")
             return
         #
         await self.main_loop.run_in_executor(None, self.start_capture)
@@ -167,7 +173,7 @@ class AlsaSoundCapture:
 
     def start_capture(self):
         """ """
-        # print("CAPTURE STARTED.")
+        # self.logger.debug("CAPTURE STARTED.")
         pmc_capture = None
         self.capture_active = True
         try:
@@ -189,9 +195,9 @@ class AlsaSoundCapture:
             while self.capture_active:
                 length, data = pmc_capture.read()
                 if length < 0:
-                    print("SOUND CAPTURE OVERRUN: ", length)
+                    self.logger.debug("SOUND CAPTURE OVERRUN: " + str(length))
                 if len(data) > 0:
-                    # print("LENGTH: ", length)
+                    # self.logger.debug("LENGTH: ", length)
                     data_int16 = numpy.frombuffer(data, dtype="int16")
 
                     if self.data_queue:
@@ -218,7 +224,7 @@ class AlsaSoundCapture:
                         except Exception as e:
                             # Logging error.
                             message = "Failed to put data on queue: " + str(e)
-                            print(message)
+                            self.logger.debug(message)
 
                     if self.direct_target:
                         # The target object must contain the methods is_active() and add_data().
@@ -231,15 +237,15 @@ class AlsaSoundCapture:
                         except Exception as e:
                             # Logging error.
                             message = "Failed to add data to direct_target: " + str(e)
-                            print(message)
+                            self.logger.debug(message)
         #
         except Exception as e:
-            print("EXCEPTION CAPTURE: ", e)
+            self.logger.debug("EXCEPTION CAPTURE: " + str(e))
         finally:
             self.capture_active = False
             if pmc_capture:
                 pmc_capture.close()
-            # print("CAPTURE ENDED.")
+            # self.logger.debug("CAPTURE ENDED.")
 
 
 class AlsaSoundPlayback:
@@ -257,11 +263,21 @@ class AlsaSoundPlayback:
         self.playback_active = False
         self.data_queue_task = None
         #
+        self.logger = logging.getLogger("CloudedBats-WURB")
         self.out_buffer_int16 = None
 
     def is_active(self):
         """ """
         return self.playback_active
+
+    def get_out_buffer_size_s(self):
+        """ """
+        size_in_sec = 0
+        try:
+            size_in_sec = len(self.out_buffer_int16) / self.sampling_freq
+        except:
+            pass
+        return size_in_sec
 
     async def start_playback(self, card_index, sampling_freq, buffer_size):
         """ """
@@ -311,13 +327,13 @@ class AlsaSoundPlayback:
                 except Exception as e:
                     # Logging error.
                     message = "Failed to read data queue: " + str(e)
-                    print(message)
+                    self.logger.debug(message)
         except Exception as e:
-            print("EXCEPTION from queue: ", e)
+            self.logger.debug("EXCEPTION from queue: " + str(e))
 
     def add_data(self, data):
         """ """
-        # print("DEBUG DATA ADDED. Length: ", len(data))
+        # self.logger.debug("DEBUG DATA ADDED. Length: ", len(data))
         if self.out_buffer_int16 is None:
             self.out_buffer_int16 = numpy.array([], dtype=numpy.int16)
         self.out_buffer_int16 = numpy.concatenate((self.out_buffer_int16, data))
@@ -351,7 +367,7 @@ class AlsaSoundPlayback:
                             self.buffer_size :
                         ]
                     # else:
-                    #     print("SILENCE")
+                    #     self.logger.debug("SILENCE")
                     # Convert to byte buffer and write.
                     out_buffer = data_int16.tobytes()
                     pmc_play.write(out_buffer)
@@ -359,17 +375,17 @@ class AlsaSoundPlayback:
                 except asyncio.CancelledError:
                     break
                 except Exception as e:
-                    print("EXCEPTION PLAYBACK-1: ", e)
+                    self.logger.debug("EXCEPTION PLAYBACK-1: " + str(e))
         #
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print("EXCEPTION PLAYBACK-2: ", e)
+            self.logger.debug("EXCEPTION PLAYBACK-2: " + str(e))
         finally:
             self.playback_active = False
             if pmc_play:
                 pmc_play.close()
-            # print("PLAYBACK ENDED.")
+            # self.logger.debug("PLAYBACK ENDED.")
 
 
 # === MAIN - for test ===
@@ -380,7 +396,7 @@ async def main():
     # part_of_playback_card_name = "iMic"
 
     amixer = AlsaMixer()
-    amixer.set_volume(volume_percent=100, card_index=-1)    
+    amixer.set_volume(volume_percent=100, card_index=-1)
 
     cards = AlsaSoundCards()
     cards.update_card_lists()
