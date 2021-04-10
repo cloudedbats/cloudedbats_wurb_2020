@@ -182,7 +182,7 @@ class AlsaSoundCapture:
 
     def start_capture(self):
         """ """
-        # self.logger.debug("CAPTURE STARTED.")
+        self.logger.debug("CAPTURE STARTED.")
         pmc_capture = None
         self.capture_active = True
         try:
@@ -200,28 +200,30 @@ class AlsaSoundCapture:
                 device="sysdefault",
                 cardindex=self.card_index,
             )
-            # A byte array is used for devices that can't deliver
-            # the requested amount of data (buffer_size).
-            # Two bytes are used for each sample.
-            byte_array = None
-            byte_array_size = self.buffer_size * 2
+
+            in_buffer_int16 = numpy.array([], dtype=numpy.int16)
             while self.capture_active:
+                # Read from capture device.
                 length, data = pmc_capture.read()
                 if length < 0:
                     self.logger.debug("SOUND CAPTURE OVERRUN: " + str(length))
-                if len(data) > 0:
-                    # Append.
-                    if byte_array is None:
-                        byte_array = data
-                    else:
-                        byte_array += data
+                elif len(data) > 0:
+                    # Convert from string-byte array to int16 array.
+                    in_data_int16 = numpy.frombuffer(data, dtype=numpy.int16)
 
-                    if len(byte_array) >= byte_array_size:
+                    # Temporary solution for stereo sound cards that can't 
+                    # run in mono mode (or maybe related to a bug in alsaaudio).
+                    # Extract one channel if the data array is doubled in size.
+                    if (length * 2) == in_data_int16.size:
+                        in_data_int16 = in_data_int16[1::2].copy()
+
+                    # Concatenate
+                    in_buffer_int16 = numpy.concatenate((in_buffer_int16, in_data_int16))
+
+                    while len(in_buffer_int16) >= self.buffer_size:
                         # Copy "buffer_size" part and save remaining part.
-                        data_buffer = byte_array[0:byte_array_size]
-                        byte_array = byte_array[byte_array_size:]
-                        # Convert from byte array to int16 array.
-                        data_int16 = numpy.frombuffer(data_buffer, dtype="int16")
+                        data_int16 = in_buffer_int16[0:self.buffer_size]
+                        in_buffer_int16 = in_buffer_int16[self.buffer_size:]
 
                         # Use data queue.
                         if self.data_queue:
@@ -270,7 +272,7 @@ class AlsaSoundCapture:
             self.capture_active = False
             if pmc_capture:
                 pmc_capture.close()
-            # self.logger.debug("CAPTURE ENDED.")
+            self.logger.debug("CAPTURE ENDED.")
 
 
 class AlsaSoundPlayback:
