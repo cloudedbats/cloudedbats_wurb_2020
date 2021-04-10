@@ -11,7 +11,6 @@ import wave
 import pathlib
 import psutil
 from collections import deque
-import sounddevice
 
 # CloudedBats.
 import wurb_rec
@@ -28,36 +27,36 @@ class UltrasoundDevices(object):
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.
         self.default_name_part_list = ["Pettersson", "UltraMic"]
         self.device_name = ""
+        self.card_index = None
         self.sampling_freq_hz = 0
         self.check_interval_s = 5.0
         self.notification_event = None
         self.recorder_m500 = wurb_rec.WurbRecorderM500()
+        self.alsa_cards = wurb_rec.AlsaSoundCards()
+        self.alsa_capture = None
 
     async def check_devices(self):
         """ For asyncio events. """
         try:
-            # Check default ALSA connected microphones.
-            lock = asyncio.Lock()
-            async with lock:
-                # Refresh device list.
-                sounddevice._terminate()
-                sounddevice._initialize()
-                await asyncio.sleep(0.2)
+            # Check ALSA connected microphones.
+            self.alsa_cards.update_card_lists()
             #
-            await self.set_connected_device("", 0)
-            device_dict = None
+            await self.set_connected_device("", None, 0)
             device_name = ""
+            card_index = None
             sampling_freq_hz = 0
             for device_name_part in self.default_name_part_list:
                 try:
-                    device_dict = sounddevice.query_devices(device=device_name_part)
-                    if device_dict:
-                        device_name = device_dict["name"]
-                        if ":" in device_name:
-                            # Extract name only.
-                            device_name = device_name.split(":")[0]
-                        sampling_freq_hz = int(device_dict["default_samplerate"])
-                    break
+                    card_index = self.alsa_cards.get_capture_card_index_by_name(
+                        device_name_part
+                    )
+                    if card_index != None:
+                        card_dict = self.alsa_cards.get_card_dict_by_index(card_index)
+                        device_name = card_dict.get("card_name", "")
+                        sampling_freq_hz = self.alsa_cards.get_max_sampling_freq(
+                            card_index
+                        )
+                        break
                 except:
                     pass
             # Check if Pettersson M500.
@@ -68,30 +67,36 @@ class UltrasoundDevices(object):
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
                 settings_device_name_part = os.getenv("WURB_REC_INPUT_DEVICE", "")
-                settings_sampling_freq_hz = int(os.getenv("WURB_REC_INPUT_DEVICE_FREQ_HZ", "0"))
+                settings_sampling_freq_hz = int(
+                    os.getenv("WURB_REC_INPUT_DEVICE_FREQ_HZ", "0")
+                )
                 if settings_device_name_part:
-                    device_dict = None
                     device_name = ""
+                    card_index = None
                     sampling_freq_hz = 0
                     try:
-                        device_dict = sounddevice.query_devices(
-                            device=settings_device_name_part
+                        card_index = self.alsa_cards.get_capture_card_index_by_name(
+                            settings_device_name_part
                         )
-                        if device_dict:
-                            device_name = device_dict["name"]
-                            if ":" in device_name:
-                                # Extract name only.
-                                device_name = device_name.split(":")[0]
+                        if card_index != None:
+                            card_dict = self.alsa_cards.get_card_dict_by_index(
+                                card_index
+                            )
+                            device_name = card_dict.get("card_name", "")
                             if settings_sampling_freq_hz > 0:
                                 sampling_freq_hz = settings_sampling_freq_hz
                             else:
-                                sampling_freq_hz = int(
-                                    device_dict["default_samplerate"]
+                                sampling_freq_hz = (
+                                    self.alsa_cards.get_max_sampling_freq(card_index)
                                 )
-                    except:
-                        pass
+                    except Exception as e:
+                        # Logging error.
+                        message = "Recorder: check_devices: " + str(e)
+                        self.wurb_manager.wurb_logging.error(
+                            message, short_message=message
+                        )
             # Done.
-            await self.set_connected_device(device_name, sampling_freq_hz)
+            await self.set_connected_device(device_name, card_index, sampling_freq_hz)
 
         except Exception as e:
             # Logging error.
@@ -101,7 +106,7 @@ class UltrasoundDevices(object):
     async def reset_devices(self):
         """ For asyncio events. """
         try:
-            await self.set_connected_device("", 0)
+            await self.set_connected_device("", None, 0)
 
         except Exception as e:
             # Logging error.
@@ -128,10 +133,11 @@ class UltrasoundDevices(object):
             message = "Recorder: get_connected_device: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    async def set_connected_device(self, device_name, sampling_freq_hz):
+    async def set_connected_device(self, device_name, card_index, sampling_freq_hz):
         """ """
         try:
             self.device_name = device_name
+            self.card_index = card_index
             self.sampling_freq_hz = sampling_freq_hz
             # Create a new event and release all from the old event.
             old_notification_event = self.notification_event
@@ -156,6 +162,7 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.wurb_audiofeedback = wurb_manager.wurb_audiofeedback
         self.rec_status = ""
         self.device_name = ""
+        self.card_index = ""
         self.sampling_freq_hz = 0
         self.notification_event = None
         self.rec_start_time = None
@@ -199,61 +206,24 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
             message = "Recorder: set_rec_status: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    async def set_device(self, device_name, sampling_freq_hz):
+    async def set_device(self, device_name, card_index, sampling_freq_hz):
         """ """
         try:
             self.device_name = device_name
+            self.card_index = card_index
             self.sampling_freq_hz = sampling_freq_hz
         except Exception as e:
             # Logging error.
             message = "Recorder: set_device: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
 
-    # async def put_on_fromsourcequeue(self, send_dict):
-    #     """ """
-    #     # Compare real time and stream time.
-    #     adc_time = send_dict["adc_time"]
-    #     time_now = time.time()
-    #     # Restart if it differ too much.
-    #     if abs(adc_time - time_now) > self.max_adc_time_diff_s:
-    #         # Check if restart already is requested.
-    #         if self.restart_activated:
-    #             return
-    #         # Logging.
-    #         message = "Warning: Time diff. detected. Rec. will be restarted."
-    #         self.wurb_logging.info(message, short_message=message)
-    #         # Restart recording.
-    #         self.restart_activated = True
-    #         loop = asyncio.get_event_loop()
-    #         asyncio.run_coroutine_threadsafe(
-    #             self.wurb_manager.restart_rec(), loop,
-    #         )
-    #         await self.remove_items_from_queue(self.from_source_queue)
-    #         await self.from_source_queue.put(False)  # Flush.
-    #         return
-    #     # Put buffer on queue.
-    #     try:
-    #         if not self.from_source_queue.full():
-    #             await self.from_source_queue.put_nowait(send_dict)
-    #         else:
-    #             await self.remove_items_from_queue(self.from_source_queue)
-    #             await self.from_source_queue.put(False)  # Flush.
-    #             print("DEBUG: from_source_queue id FULL. Queues are flushed.")
-    #     except QueueFull:
-    #         print("EXCEPTION: put_on_queue_from_source: QueueFull.")
-    #     except Exception as e:
-    #         print("EXCEPTION: put_on_queue_from_source: ", e)
-
     async def sound_source_worker(self):
-        """Abstract worker method for sound sources. Mainly files or streams.
-        Test implementation to be used as template.
-        """
+        """ """
         self.rec_start_time = None
         loop = asyncio.get_event_loop()
-        sound_source_event = asyncio.Event()
         self.restart_activated = False
 
-        # Use another implementation if Pettersson M500.
+        # Pettersson M500, not compatible with ALSA.
         recorder_m500 = wurb_rec.WurbRecorderM500(
             wurb_manager=self.wurb_manager,
             asyncio_loop=loop,
@@ -276,125 +246,38 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
                 message = "Recorder: sound_source_worker: " + str(e)
                 self.wurb_manager.wurb_logging.error(message, short_message=message)
             finally:
+                recorder_m500.stop_streaming()
                 await self.set_rec_status("Recording finished.")
             return
 
         # Standard ASLA microphones.
-        def audio_callback(indata, frames, cffi_time, status):
-            """Locally defined callback.
-            This is called (from a separate thread) for each audio block."""
-            try:
-                if status:
-                    print("DEBUG: audio_callback Status:", status)
-
-                input_buffer_adc_time = cffi_time.inputBufferAdcTime
-                if self.rec_start_time == None:
-                    # Adjust first buffer.
-                    input_buffer_adc_time = input_buffer_adc_time + 0.121
-                    self.rec_start_time = time.time() - input_buffer_adc_time
-                # Round to half seconds.
-                buffer_adc_time = (
-                    int((self.rec_start_time + input_buffer_adc_time) * 2) / 2
-                )
-                # print(
-                #     "DEBUG: adc_time: ",
-                #     buffer_adc_time,
-                #     "   ",
-                #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(buffer_adc_time)),
-                # )
-                # Convert and copy buffer.
-                indata_raw = indata[:, 0]  # Transform list of lists to list.
-                indata_copy = indata_raw.copy()
-                # Used to check time drift.
-                detector_time = time.time()
-                # Put together.
-                send_dict = {
-                    "status": "data",
-                    "adc_time": buffer_adc_time,
-                    "detector_time": detector_time,
-                    "data": indata_copy,
-                }
-                # Add to queue.
-                try:
-                    if not self.from_source_queue.full():
-                        loop.call_soon_threadsafe(
-                            self.from_source_queue.put_nowait, send_dict
-                        )
-                except Exception as e:
-                    print("DEBUG: Failed to put buffer on queue: ", e)
-                    pass
-                # Add to audio feedback, if available.
-                try:
-                    if self.wurb_audiofeedback:
-                        is_active = self.wurb_audiofeedback.is_audio_feedback_active()
-                        if is_active:
-                            indata_to_audiofeedback = indata_raw.copy()
-                            asyncio.run_coroutine_threadsafe(
-                                self.wurb_audiofeedback.add_buffer(
-                                    indata_to_audiofeedback
-                                ),
-                                loop,
-                            )
-                except Exception as e:
-                    print("DEBUG: Failed to call wurb_audiofeedback.add_buffer: ", e)
-                    pass
-
-                # # Add to queue. Should be attached to the main async loop.
-                # asyncio.run_coroutine_threadsafe(
-                #     self.put_on_fromsourcequeue(send_dict), loop,
-                # )
-
-            except Exception as e:
-                # Logging error.
-                message = "Recorder: audio_callback: " + str(e)
-                self.wurb_manager.wurb_logging.error(message, short_message=message)
-                # Exit recording loop.
-                loop.call_soon_threadsafe(sound_source_event.set())
-
-            """ End of locally defined callback. """
-
+        recorder_alsa = wurb_rec.AlsaSoundCapture(
+            data_queue=self.from_source_queue,
+            direct_target=self.wurb_audiofeedback,
+        )
+        # Logging.
+        await self.set_rec_status("Microphone is on.")
         try:
-            # print(
-            #     "DEBUG: Rec started: ", self.device_name, "   ", self.sampling_freq_hz
-            # )
-            # time_start = time.time()
-            # print(
-            #     "DEBUG: Rec start: ",
-            #     time_start,
-            #     "   ",
-            #     time.strftime("%Y%m%dT%H%M%S%z", time.localtime(time_start)),
-            # )
-
-            blocksize = int(self.sampling_freq_hz / 2)
-
-            # Start streaming from the microphone.
-            stream = sounddevice.InputStream(
-                device=self.device_name,
-                samplerate=self.sampling_freq_hz,
-                channels=1,
-                dtype="int16",
-                blocksize=blocksize,
-                callback=audio_callback,
+            buffer_size = int(self.sampling_freq_hz / 2)  # 0.5 sec.
+            await recorder_alsa.initiate_capture(
+                card_index=self.card_index,
+                sampling_freq=self.sampling_freq_hz,
+                buffer_size=buffer_size,
             )
-
-            await self.set_rec_status("Microphone is on.")
-
-            with stream:
-                await sound_source_event.wait()
-
+            await recorder_alsa.start_capture_in_executor()
         except asyncio.CancelledError:
-            pass
+            await recorder_alsa.stop_capture()
         except Exception as e:
             # Logging error.
             message = "Recorder: sound_source_worker: " + str(e)
             self.wurb_manager.wurb_logging.error(message, short_message=message)
         finally:
+            await recorder_alsa.stop_capture()
             await self.set_rec_status("Recording finished.")
+        return
 
     async def sound_process_worker(self):
-        """Abstract worker for sound processing algorithms.
-        Test implementation to be used as template.
-        """
+        """ """
 
         try:
             # Get rec length from settings.

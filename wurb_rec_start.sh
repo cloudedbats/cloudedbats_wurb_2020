@@ -14,7 +14,7 @@ source venv/bin/activate
 # export WURB_REC_HOST=0.0.0.0
 # export WURB_REC_PORT=8000
 # export WURB_REC_LOG_LEVEL=info
-# export WURB_REC_INPUT_DEVICE=HiFiBerry
+# export WURB_REC_INPUT_DEVICE=hifiberry
 # export WURB_REC_INPUT_DEVICE_FREQ_HZ=192000
 # export WURB_REC_OUTPUT_DEVICE=Headphones
 # export WURB_REC_OUTPUT_DEVICE_FREQ_HZ=48000

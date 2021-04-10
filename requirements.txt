@@ -6,7 +6,7 @@ aiofiles
 websockets
 requests
 # Sound, etc.
-sounddevice
+pyalsaaudio
 numpy
 scipy
 psutil
