@@ -2,9 +2,6 @@
 
 Welcome to CloudedBats-WURB, the DIY bat detector.
 
-**Warning: Stability problems with RaspiOS Lite 2021-01-11: 
-https://github.com/cloudedbats/cloudedbats_wurb_2020/issues/34**
-
 **Note: This is a new version of the WURB bat detector.
 The old version can still be found here: 
 https://github.com/cloudedbats/cloudedbats_wurb**
