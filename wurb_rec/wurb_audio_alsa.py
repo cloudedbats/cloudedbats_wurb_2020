@@ -7,6 +7,7 @@
 import alsaaudio
 import asyncio
 import numpy
+import array
 import time
 import logging
 
@@ -58,6 +59,14 @@ class AlsaSoundCards:
                         card_index = card_dict.get("card_index", "")
                         if card_index != "":
                             self.playback_card_index_list.append(card_index)
+        # For debug.
+        for card_dict in self.card_list:
+            card_name = card_dict.get("card_name", "")
+            card_index = card_dict.get("card_index", "")
+            self.logger.debug("Sound card: " + card_name + "   Index: " + str(card_index))
+        self.logger.debug("Sound cards capture: " + str(self.capture_card_index_list))
+        self.logger.debug("Sound cards playback: " + str(self.playback_card_index_list))
+
 
     def get_capture_card_index_by_name(self, part_of_name):
         """ Returns first found. """
@@ -191,53 +200,69 @@ class AlsaSoundCapture:
                 device="sysdefault",
                 cardindex=self.card_index,
             )
-            #
+            # A byte array is used for devices that can't deliver
+            # the requested amount of data (buffer_size).
+            # Two bytes are used for each sample.
+            byte_array = None
+            byte_array_size = self.buffer_size * 2
             while self.capture_active:
                 length, data = pmc_capture.read()
                 if length < 0:
                     self.logger.debug("SOUND CAPTURE OVERRUN: " + str(length))
                 if len(data) > 0:
-                    # self.logger.debug("LENGTH: ", length)
-                    data_int16 = numpy.frombuffer(data, dtype="int16")
+                    # Append.
+                    if byte_array is None:
+                        byte_array = data
+                    else:
+                        byte_array += data
 
-                    if self.data_queue:
-                        # Time rounded to half sec.
-                        calculated_time_s += time_increment_s
-                        device_time = int((calculated_time_s) * 2) / 2
-                        # Used to detect time drift.
-                        detector_time = time.time()
-                        # Copy data.
-                        data_int16_copy = data_int16.copy()
-                        # Put together.
-                        data_dict = {
-                            "status": "data",
-                            "adc_time": device_time,
-                            "detector_time": detector_time,
-                            "data": data_int16_copy,
-                        }
-                        try:
-                            if not self.data_queue.full():
-                                self.main_loop.call_soon_threadsafe(
-                                    self.data_queue.put_nowait, data_dict
-                                )
-                        #
-                        except Exception as e:
-                            # Logging error.
-                            message = "Failed to put data on queue: " + str(e)
-                            self.logger.debug(message)
+                    if len(byte_array) >= byte_array_size:
+                        # Copy "buffer_size" part and save remaining part.
+                        data_buffer = byte_array[0:byte_array_size]
+                        byte_array = byte_array[byte_array_size:]
+                        # Convert from byte array to int16 array.
+                        data_int16 = numpy.frombuffer(data_buffer, dtype="int16")
 
-                    if self.direct_target:
-                        # The target object must contain the methods is_active() and add_data().
-                        try:
-                            if self.direct_target.is_active():
-                                data_int16_copy = data_int16.copy()
-                                self.main_loop.call_soon_threadsafe(
-                                    self.direct_target.add_data, data_int16_copy
-                                )
-                        except Exception as e:
-                            # Logging error.
-                            message = "Failed to add data to direct_target: " + str(e)
-                            self.logger.debug(message)
+                        # Use data queue.
+                        if self.data_queue:
+                            # Time rounded to half sec.
+                            calculated_time_s += time_increment_s
+                            device_time = int((calculated_time_s) * 2) / 2
+                            # Used to detect time drift.
+                            detector_time = time.time()
+                            # Copy data.
+                            data_int16_copy = data_int16.copy()
+                            # Put together.
+                            data_dict = {
+                                "status": "data",
+                                "adc_time": device_time,
+                                "detector_time": detector_time,
+                                "data": data_int16_copy,
+                            }
+                            try:
+                                if not self.data_queue.full():
+                                    self.main_loop.call_soon_threadsafe(
+                                        self.data_queue.put_nowait, data_dict
+                                    )
+                            #
+                            except Exception as e:
+                                # Logging error.
+                                message = "Failed to put data on queue: " + str(e)
+                                self.logger.debug(message)
+
+                        # Use data buffer.
+                        if self.direct_target:
+                            # The target object must contain the methods is_active() and add_data().
+                            try:
+                                if self.direct_target.is_active():
+                                    data_int16_copy = data_int16.copy()
+                                    self.main_loop.call_soon_threadsafe(
+                                        self.direct_target.add_data, data_int16_copy
+                                    )
+                            except Exception as e:
+                                # Logging error.
+                                message = "Failed to add data to direct_target: " + str(e)
+                                self.logger.debug(message)
         #
         except Exception as e:
             self.logger.debug("EXCEPTION CAPTURE: " + str(e))
