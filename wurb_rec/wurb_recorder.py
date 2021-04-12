@@ -23,7 +23,7 @@ class UltrasoundDevices(object):
         """ """
         self.wurb_manager = wurb_manager
         # Ultrasound microphones supported by default:
-        # - Pettersson: M500-384, u384, u256.
+        # - Pettersson: u256, u384, M500-384 and M500.
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.
         self.default_name_part_list = ["Pettersson", "UltraMic"]
         self.device_name = ""
@@ -31,7 +31,7 @@ class UltrasoundDevices(object):
         self.sampling_freq_hz = 0
         self.check_interval_s = 5.0
         self.notification_event = None
-        self.recorder_m500 = wurb_rec.WurbRecorderM500()
+        self.pettersson_m500 = wurb_rec.PetterssonM500()
         self.alsa_cards = wurb_rec.AlsaSoundCards()
         self.alsa_capture = None
 
@@ -61,9 +61,9 @@ class UltrasoundDevices(object):
                     pass
             # Check if Pettersson M500.
             if not device_name:
-                if self.recorder_m500.is_m500_available():
-                    device_name = self.recorder_m500.get_device_name()
-                    sampling_freq_hz = self.recorder_m500.get_sampling_freq_hz()
+                if self.pettersson_m500.is_m500_available():
+                    device_name = self.pettersson_m500.get_device_name()
+                    sampling_freq_hz = self.pettersson_m500.get_sampling_freq_hz()
             # Check if another ALSA mic. is specified in advanced settings.
             if not device_name:
                 settings_device_name_part = os.getenv("WURB_REC_INPUT_DEVICE", "")
@@ -224,29 +224,29 @@ class WurbRecorder(wurb_rec.SoundStreamManager):
         self.restart_activated = False
 
         # Pettersson M500, not compatible with ALSA.
-        recorder_m500 = wurb_rec.WurbRecorderM500(
-            wurb_manager=self.wurb_manager,
-            asyncio_loop=loop,
-            asyncio_queue=self.from_source_queue,
+        pettersson_m500 = wurb_rec.PetterssonM500(
+            data_queue=self.from_source_queue,
+            direct_target=self.wurb_audiofeedback,
         )
-        if self.device_name == recorder_m500.get_device_name():
+        if self.device_name == pettersson_m500.get_device_name():
             # Logging.
-            message = "Recorder: M500 started."
-            self.wurb_manager.wurb_logging.info(message, short_message=message)
             await self.set_rec_status("Microphone is on.")
             try:
-                await loop.run_in_executor(
-                    None,
-                    recorder_m500.start_streaming,
+                buffer_size = int(self.sampling_freq_hz / 2)  # 0.5 sec.
+                await pettersson_m500.initiate_capture(
+                    card_index=self.card_index,
+                    sampling_freq=self.sampling_freq_hz,
+                    buffer_size=buffer_size,
                 )
+                await pettersson_m500.start_capture_in_executor()
             except asyncio.CancelledError:
-                recorder_m500.stop_streaming()
+                await pettersson_m500.stop_capture()
             except Exception as e:
                 # Logging error.
                 message = "Recorder: sound_source_worker: " + str(e)
                 self.wurb_manager.wurb_logging.error(message, short_message=message)
             finally:
-                recorder_m500.stop_streaming()
+                await pettersson_m500.stop_capture()
                 await self.set_rec_status("Recording finished.")
             return
 

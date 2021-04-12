@@ -146,26 +146,32 @@ class WurbPitchShifting(object):
 
     async def startup(self):
         """ """
-        self.asyncio_loop = asyncio.get_event_loop()
-        part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
-        ### part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
-        sampling_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
-        # # ALSA volume.
-        # wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
-        # ALSA cards.
-        cards = wurb_rec.AlsaSoundCards()
-        cards.update_card_lists()
-        card_index = cards.get_playback_card_index_by_name(part_of_name)
-        if card_index != None:
-            self.alsa_playback = wurb_rec.AlsaSoundPlayback()
-            buffer_size = 1000
-            await self.alsa_playback.start_playback(
-                card_index=card_index,
-                sampling_freq=sampling_freq_hz,
-                buffer_size=buffer_size,
-            )
-        else:
-            self.logger.debug("FAILED TO FIND CARD: " + part_of_name)
+        # Shutdown if already running.
+        await self.shutdown()
+        # Check settings.
+        feedback_on_off = self.wurb_settings.get_setting(key="feedback_on_off")
+        if feedback_on_off == "feedback-on":
+            # Start audiofeedback.
+            self.asyncio_loop = asyncio.get_event_loop()
+            part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "Headphones")
+            ### part_of_name = os.getenv("WURB_REC_OUTPUT_DEVICE", "iMic")
+            sampling_freq_hz = int(os.getenv("WURB_REC_OUTPUT_DEVICE_FREQ_HZ", "48000"))
+            # # ALSA volume.
+            # wurb_rec.AlsaMixer().set_volume(volume_percent=100, card_index=-1)
+            # ALSA cards.
+            cards = wurb_rec.AlsaSoundCards()
+            cards.update_card_lists()
+            card_index = cards.get_playback_card_index_by_name(part_of_name)
+            if card_index != None:
+                self.alsa_playback = wurb_rec.AlsaSoundPlayback()
+                buffer_size = 1000
+                await self.alsa_playback.start_playback(
+                    card_index=card_index,
+                    sampling_freq=sampling_freq_hz,
+                    buffer_size=buffer_size,
+                )
+            else:
+                self.logger.debug("FAILED TO FIND PLAYBACK CARD: " + part_of_name)
 
     async def shutdown(self):
         """ """

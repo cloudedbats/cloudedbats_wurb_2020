@@ -8,23 +8,29 @@ import asyncio
 import time
 import numpy
 import array
+import logging
 
 # CloudedBats.
 import wurb_rec
 
 
-class WurbRecorderM500:
+class PetterssonM500(wurb_rec.AlsaSoundCapture):
     """ """
 
-    def __init__(self, wurb_manager=None, asyncio_loop=None, asyncio_queue=None):
+    def __init__(self, data_queue=None, direct_target=None):
         """ """
-        self.wurb_manager = wurb_manager
-        self.asyncio_loop = asyncio_loop
-        self.asyncio_queue = asyncio_queue
+        self.data_queue = data_queue
+        self.direct_target = direct_target
+        self.card_index = None
+        self.buffer_size = None
+        # M500.
         self.device_name = "Pettersson M500 (500kHz)"
         self.sampling_freq_hz = 500000
-        self.active = False
         self.pettersson_m500 = wurb_rec.PetterssonM500BatMic()
+
+        # Internal.
+        self.logger = logging.getLogger("CloudedBats-WURB")
+        self.capture_active = False
 
     def is_m500_available(self):
         """ """
@@ -38,14 +44,34 @@ class WurbRecorderM500:
         """ """
         return self.sampling_freq_hz
 
-    def stop_streaming(self):
+    def is_capture_active(self):
         """ """
-        # Start source in thread.
-        self.active = False
+        return self.capture_active
+
+    async def initiate_capture(self, card_index, sampling_freq, buffer_size):
+        """ """
+        self.main_loop = asyncio.get_running_loop()
+        self.card_index = card_index
+        self.sampling_freq = sampling_freq
+        self.buffer_size = buffer_size
+
+    async def start_capture_in_executor(self):
+        """ Use executor for IO-blocking function. """
+        # self.logger.debug("CAPTURE-EXECUTOR STARTING.")
+        if self.is_capture_active():
+            self.logger.debug("ERROR: CAPTURE already running: ")
+            return
+        #
+        await self.main_loop.run_in_executor(None, self.start_capture)
+
+    async def stop_capture(self):
+        """ """
+        # Use traditional thread termination.
+        self.capture_active = False
         self.pettersson_m500.stop_stream()
         self.pettersson_m500.reset()
 
-    def start_streaming(self):
+    def start_capture(self):
         """ For the Pettersson M500 microphone. """
         self.active = True
         #
@@ -56,7 +82,7 @@ class WurbRecorderM500:
         except Exception as e:
             # Logging error.
             message = "Failed to create stream (M500): " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
+            self.logger.debug(message, short_message=message)
             return
         # Main loop.
         try:
@@ -94,9 +120,7 @@ class WurbRecorderM500:
                     except Exception as e:
                         # Logging error.
                         message = "Failed to put buffer on queue (M500): " + str(e)
-                        self.wurb_manager.wurb_logging.error(
-                            message, short_message=message
-                        )
+                        self.logger.debug(message, short_message=message)
                         pass
                     # print("DEBUG M500 buffer: ", data_int16, "    Len: ", len(data_int16))
                     # Save remaining part.
@@ -110,5 +134,4 @@ class WurbRecorderM500:
         except Exception as e:
             # Logging error.
             message = "Recorder: sound_source_worker (M500): " + str(e)
-            self.wurb_manager.wurb_logging.error(message, short_message=message)
-
+            self.logger.debug(message, short_message=message)
