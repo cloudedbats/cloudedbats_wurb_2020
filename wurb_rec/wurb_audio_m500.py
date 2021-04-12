@@ -14,7 +14,7 @@ import logging
 import wurb_rec
 
 
-class PetterssonM500(wurb_rec.AlsaSoundCapture):
+class PetterssonM500():
     """ """
 
     def __init__(self, data_queue=None, direct_target=None):
@@ -82,7 +82,7 @@ class PetterssonM500(wurb_rec.AlsaSoundCapture):
         except Exception as e:
             # Logging error.
             message = "Failed to create stream (M500): " + str(e)
-            self.logger.debug(message, short_message=message)
+            self.logger.debug(message)
             return
         # Main loop.
         try:
@@ -101,27 +101,47 @@ class PetterssonM500(wurb_rec.AlsaSoundCapture):
                     data_int16 = numpy.fromstring(
                         data_buffer.tostring(), dtype=numpy.int16
                     )  # To ndarray.
-                    # Round to half seconds.
-                    buffer_adc_time = int((self.stream_time_s) * 2) / 2
-                    detector_time = time.time()
-                    # Put together.
-                    send_dict = {
-                        "status": "data",
-                        "adc_time": buffer_adc_time,
-                        "detector_time": detector_time,
-                        "data": data_int16,
-                    }
-                    # Add to queue in main event loop.
-                    try:
-                        if not self.asyncio_queue.full():
-                            self.asyncio_loop.call_soon_threadsafe(
-                                self.asyncio_queue.put_nowait, send_dict
-                            )
-                    except Exception as e:
-                        # Logging error.
-                        message = "Failed to put buffer on queue (M500): " + str(e)
-                        self.logger.debug(message, short_message=message)
-                        pass
+
+                    # Use data queue.
+                    if self.data_queue:
+                        # Round to half seconds.
+                        buffer_adc_time = int((self.stream_time_s) * 2) / 2
+                        detector_time = time.time()
+                        # Copy data.
+                        data_int16_copy = data_int16.copy()
+                        # Put together.
+                        send_dict = {
+                            "status": "data",
+                            "adc_time": buffer_adc_time,
+                            "detector_time": detector_time,
+                            "data": data_int16_copy,
+                        }
+                        # Add to queue in main event loop.
+                        try:
+                            if not self.data_queue.full():
+                                self.main_loop.call_soon_threadsafe(
+                                    self.data_queue.put_nowait, send_dict
+                                )
+                        except Exception as e:
+                            # Logging error.
+                            message = "Failed to put buffer on queue (M500): " + str(e)
+                            self.logger.debug(message)
+                            pass
+
+                    # Use data buffer.
+                    if self.direct_target:
+                        # The target object must contain the methods is_active() and add_data().
+                        try:
+                            if self.direct_target.is_active():
+                                data_int16_copy = data_int16.copy()
+                                self.main_loop.call_soon_threadsafe(
+                                    self.direct_target.add_data, data_int16_copy
+                                )
+                        except Exception as e:
+                            # Logging error.
+                            message = "Failed to add data to direct_target: " + str(e)
+                            self.logger.debug(message)
+
                     # print("DEBUG M500 buffer: ", data_int16, "    Len: ", len(data_int16))
                     # Save remaining part.
                     data_array = data_array[buffer_size:]
@@ -134,4 +154,4 @@ class PetterssonM500(wurb_rec.AlsaSoundCapture):
         except Exception as e:
             # Logging error.
             message = "Recorder: sound_source_worker (M500): " + str(e)
-            self.logger.debug(message, short_message=message)
+            self.logger.debug(message)
