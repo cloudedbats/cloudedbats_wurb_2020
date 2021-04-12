@@ -155,8 +155,8 @@ class WurbRecManager(object):
             rec_status = await self.wurb_recorder.get_rec_status()
             if rec_status == "Microphone is on.":
                 # Logging.
-                message = "Rec. restart initiated."
-                self.wurb_logging.info(message, short_message=message)
+                # message = "Rec. restart initiated."
+                # self.wurb_logging.info(message, short_message=message)
                 await self.stop_rec()
                 await asyncio.sleep(1.0)
                 await self.start_rec()
