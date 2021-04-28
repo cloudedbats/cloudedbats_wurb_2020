@@ -45,7 +45,7 @@ Release v0.8:
   internally if no USB are found. Automatic failover to internal storage when USB memory is full.
 - Possible to run the detectors user interface over internet, and to download files via SFTP.
 
-Next release, v0.9 (available for test in the "master" branch):
+Release v0.9:
 
 - Reorganized user interface with a more intuitive detector mode selector.
 - Audio feedback via the 3.5 mm audio jack for active monitoring with adjustable pitch level.
@@ -53,8 +53,9 @@ Next release, v0.9 (available for test in the "master" branch):
 - Two configurable settings: "user default settings" and "start-up settings".
 - Basic control via switches or a computer mouse (reintroduced, was missing in v0.8).
 - Configurable host and port for internet traffic via environment variables.
-- Possible to experiment and use other compatible sound cards that are compatible with ALSA on Raspberry Pi.
+- Possible to experiment and use other sound cards that are compatible with ALSA on Raspberry Pi.
   Environment variables are used to specify sound card name and sampling frequency.
+- User manual for basic usage.
 
 ## Other characteristics
 
@@ -71,7 +72,10 @@ Next release, v0.9 (available for test in the "master" branch):
 - The code is delivered "as-is" with no warranties at all. However, most software developers using Linux / Python 
   should understand the code and system setup to correct errors if I can't help.
 
-**User manuals:** They are not written yet. Please contact me if there are any questions.
+## User manuals:
+- User manual for basic usage:
+  https://github.com/cloudedbats/cloudedbats_wurb_2020/blob/master/docs/user_manual_basic.md
+- The user manual for advanced usage is not written yet. Please contact me if there are questions.
 
 ## Software notes, for developers:
 
@@ -262,7 +266,7 @@ the latest release of the library that causes the error. Together we can help ot
 
 If you want to run the latest stable version, then replace the git clone line in the instruction above.
 
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.8.1
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.9.0
 
 ## Run the detector
 
