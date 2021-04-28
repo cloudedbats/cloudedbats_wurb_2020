@@ -1,5 +1,5 @@
 
-__version__ = "development"
+__version__ = "0.9.0"
 
 from .wurb_logging import WurbLogging
 from .lib.pettersson_m500_batmic import PetterssonM500BatMic
