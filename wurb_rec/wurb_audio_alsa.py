@@ -196,7 +196,7 @@ class AlsaSoundCapture:
                 channels=1,
                 rate=self.sampling_freq,
                 format=alsaaudio.PCM_FORMAT_S16_LE,
-                periodsize=self.buffer_size,
+                periodsize=4096, # self.buffer_size,
                 device="sysdefault",
                 cardindex=self.card_index,
             )
