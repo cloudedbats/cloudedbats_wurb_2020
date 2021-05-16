@@ -25,7 +25,7 @@ class UltrasoundDevices(object):
         # Ultrasound microphones supported by default:
         # - Pettersson: u256, u384, M500-384 and M500.
         # - Dodotronic: UltraMic 192K, 200K, 250K, 384K.
-        self.default_name_part_list = ["Pettersson", "UltraMic"]
+        self.default_name_part_list = ["Pettersson", "UltraMic", "EasyMic"]
         self.device_name = ""
         self.card_index = None
         self.sampling_freq_hz = 0
