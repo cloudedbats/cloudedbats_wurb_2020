@@ -112,13 +112,27 @@ class WurbSettings(object):
 
     async def save_settings(self, settings_dict={}, settings_type=None):
         """ """
+        is_changed = False
         for key, value in settings_dict.items():
             if value is not None:
                 # Clean up filename_prefix.
                 if key == "filename_prefix":
                     value = value.replace(" ", "-")
                     value = value.replace("_", "-")
-                self.current_settings[key] = value
+
+                old_value = self.current_settings[key]
+                if old_value != value:
+                    is_changed = True
+                    self.current_settings[key] = value
+                    # Logging.
+                    message = (
+                        "Settings changed, old value: "
+                        + str(old_value)
+                        + "  new value: "
+                        + str(value)
+                    )
+                    self.wurb_logging.debug(message, short_message=message)
+
         self.save_settings_to_file()
         if settings_type is not None:
             if settings_type == "user-default":
@@ -134,10 +148,10 @@ class WurbSettings(object):
 
         # Active modes.
         rec_mode = self.current_settings["rec_mode"]
-        if rec_mode in ["mode-on", "mode-auto", "mode-manual"]:
-            await self.wurb_manager.start_rec()
-        if rec_mode in ["mode-off"]:
-            await self.wurb_manager.stop_rec()
+        # if rec_mode in ["mode-on", "mode-auto", "mode-manual"]:
+        #     await self.wurb_manager.start_rec()
+        # if rec_mode in ["mode-off"]:
+        #     await self.wurb_manager.stop_rec()
         # Passive modes, and monitoring active.
         if rec_mode in [
             "mode-off",
@@ -158,8 +172,9 @@ class WurbSettings(object):
             old_settings_event.set()
 
         # Logging.
-        message = "Settings saved."
-        self.wurb_logging.info(message, short_message=message)
+        if is_changed:
+            message = "Settings saved."
+            self.wurb_logging.info(message, short_message=message)
 
         # Restart recording. Needed for some settings.
         await self.wurb_manager.restart_rec()
