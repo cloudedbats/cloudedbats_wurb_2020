@@ -112,10 +112,10 @@ Edit /etc/ssh/sshd_config:
     
     # Connect the users call to "chroot" by adding this.
     Match Group sftp-read
-    	ChrootDirectory /home/chroot
- 	X11Forwarding no
- 	AllowTCPForwarding no
- 	ForceCommand internal-sftp
+        ChrootDirectory /home/chroot
+ 	    X11Forwarding no
+ 	    AllowTCPForwarding no
+ 	    ForceCommand internal-sftp
 
 Restart the service and test it by connecting from an SFTP client.
 
