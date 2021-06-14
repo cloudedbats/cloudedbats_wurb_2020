@@ -119,18 +119,26 @@ class WurbSettings(object):
                 if key == "filename_prefix":
                     value = value.replace(" ", "-")
                     value = value.replace("_", "-")
-
+                #
                 old_value = self.current_settings[key]
-                if old_value != value:
-                    is_changed = True
-                    self.current_settings[key] = value
+                self.current_settings[key] = value
+                #
+                try:
+                    if str(old_value) != str(value):
+                        is_changed = True
+                        # Logging.
+                        message = (
+                            "Settings changed: "
+                            + str(key)
+                            + " from: "
+                            + str(old_value)
+                            + " to: "
+                            + str(value)
+                        )
+                        self.wurb_logging.debug(message, short_message=message)
+                except Exception as e:
                     # Logging.
-                    message = (
-                        "Settings changed, old value: "
-                        + str(old_value)
-                        + "  new value: "
-                        + str(value)
-                    )
+                    message = "Error when comparing saved settings. " + str(e)
                     self.wurb_logging.debug(message, short_message=message)
 
         self.save_settings_to_file()
