@@ -267,6 +267,12 @@ the latest release of the library that causes the error. Together we can help ot
 If you want to run the latest stable version, then replace the git clone line in the instruction above.
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.9.0
+    
+    # Note: Due to a bug (wrong content-type in the post requests) the latests version of
+    # FastAPI can't be used to run older versions of the WURB software. If you want to run older 
+    # versions, then you have to downgrade FastAPI:
+    pip uninstall fastapi
+    pip install "fastapi<0.65.2"
 
 ## Run the detector
 
