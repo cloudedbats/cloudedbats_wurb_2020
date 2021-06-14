@@ -42,6 +42,9 @@ async function saveLocationSource() {
     await fetch("/save-location/",
       {
         method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(location)
       })
   } catch (err) {
@@ -79,6 +82,9 @@ async function saveLocation() {
     await fetch("/save-location/",
       {
         method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(location)
       })
   } catch (err) {
@@ -157,6 +163,9 @@ async function saveSettings(settings_type) {
     await fetch(url_string,
       {
         method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(settings)
       })
   } catch (err) {

@@ -11,6 +11,7 @@ import fastapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from typing import Optional
 import websockets.exceptions
 
 # CloudedBats.
@@ -30,35 +31,35 @@ wurb_rec_manager = None
 
 # Schemas.
 class LocationSettings(BaseModel):
-    geo_source: str = None
-    latitude_dd: float = None
-    longitude_dd: float = None
-    manual_latitude_dd: float = None
-    manual_longitude_dd: float = None
+    geo_source: Optional[str] = None
+    latitude_dd: Optional[float] = None
+    longitude_dd: Optional[float] = None
+    manual_latitude_dd: Optional[float] = None
+    manual_longitude_dd: Optional[float] = None
 
 
 class DetectorSettings(BaseModel):
-    rec_mode: str = None
-    file_directory: str = None
-    file_directory_date_option: str = None
-    filename_prefix: str = None
-    detection_limit_khz: float = None
-    detection_sensitivity_dbfs: float = None
-    detection_algorithm: str = None
-    rec_length_s: str = None
-    rec_type: str = None
-    feedback_on_off: str = None
-    feedback_volume: float = None
-    feedback_pitch: float = None
-    feedback_filter_low_khz: float = None
-    feedback_filter_high_khz: float = None
-    startup_option: str = None
-    scheduler_start_event: str = None
-    scheduler_start_adjust: float = None
-    scheduler_stop_event: str = None
-    scheduler_stop_adjust: float = None
-    scheduler_post_action: str = None
-    scheduler_post_action_delay: float = None
+    rec_mode: Optional[str] = None
+    file_directory: Optional[str] = None
+    file_directory_date_option: Optional[str] = None
+    filename_prefix: Optional[str] = None
+    detection_limit_khz: Optional[float] = None
+    detection_sensitivity_dbfs: Optional[float] = None
+    detection_algorithm: Optional[str] = None
+    rec_length_s: Optional[str] = None
+    rec_type: Optional[str] = None
+    feedback_on_off: Optional[str] = None
+    feedback_volume: Optional[float] = None
+    feedback_pitch: Optional[float] = None
+    feedback_filter_low_khz: Optional[float] = None
+    feedback_filter_high_khz: Optional[float] = None
+    startup_option: Optional[str] = None
+    scheduler_start_event: Optional[str] = None
+    scheduler_start_adjust: Optional[float] = None
+    scheduler_stop_event: Optional[str] = None
+    scheduler_stop_adjust: Optional[float] = None
+    scheduler_post_action: Optional[str] = None
+    scheduler_post_action_delay: Optional[float] = None
 
 
 @app.on_event("startup")
