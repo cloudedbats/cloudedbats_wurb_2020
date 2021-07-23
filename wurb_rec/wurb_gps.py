@@ -324,6 +324,7 @@ class ReadGpsSerialNmea(asyncio.Protocol):
         # print("GPS: Connection made.")
 
     def data_received(self, data):
+        debug_row = ""
         try:
             # print("Data: ", data)
             # Avoid problems with data streams without new lines.
@@ -336,6 +337,7 @@ class ReadGpsSerialNmea(asyncio.Protocol):
                 self.buf = rows[-1]  # Save remaining part.
                 for row in rows[:-1]:
                     row = row.decode().strip()
+                    debug_row = row
                     if (row.find("RMC,") > 0) or (row.find("GGA,") > 0):
                         # print("NMEA: ", row)
                         if self.gps_manager:
@@ -345,6 +347,9 @@ class ReadGpsSerialNmea(asyncio.Protocol):
             if self.gps_manager:
                 message = "EXCEPTION in GPS:ReadGpsSerialNmea:data_received: " + str(e)
                 self.gps_manager.wurb_logging.debug(message=message)
+                if debug_row:
+                    message = "- GPS NMEA row: " + debug_row
+                    self.gps_manager.wurb_logging.debug(message=message)
 
     def connection_lost(self, exc):
         pass
