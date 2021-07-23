@@ -43,6 +43,9 @@ class WurbSettings(object):
             self.load_settings_from_file(
                 settings_file_name=self.settings_startup_file_name
             )
+            # Reset last found gps positions.
+            self.current_location["last_gps_latitude_dd"] = 0.0
+            self.current_location["last_gps_longitude_dd"] = 0.0
 
     def define_default_settings(self):
         """ """
@@ -151,7 +154,11 @@ class WurbSettings(object):
             if settings_type == "startup":
                 self.save_settings_to_file(
                     settings_file_name=self.settings_startup_file_name,
-                    skip_keys=["startup_option"],
+                    skip_keys=[
+                        "startup_option",
+                        "last_gps_latitude_dd",
+                        "last_gps_longitude_dd",
+                    ],
                 )
 
         # Active modes.
@@ -363,6 +370,10 @@ class WurbSettings(object):
             self.load_settings_from_file(
                 settings_file_name=self.settings_startup_file_name
             )
+            # Reset last found gps positions.
+            self.current_location["last_gps_latitude_dd"] = 0.0
+            self.current_location["last_gps_longitude_dd"] = 0.0
+
         elif settings_type == "factory-default":
             self.current_settings = self.default_settings.copy()
             self.current_location = self.default_location.copy()
@@ -380,7 +391,7 @@ class WurbSettings(object):
             old_location_event.set()
 
     def load_settings_from_file(self, settings_file_name=None):
-        """ Load from file. """
+        """Load from file."""
         if settings_file_name is None:
             settings_file_name = self.settings_file_name
         settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
@@ -400,7 +411,7 @@ class WurbSettings(object):
                             self.current_location[key] = value
 
     def save_settings_to_file(self, settings_file_name=None, skip_keys=[]):
-        """ Save to file. """
+        """Save to file."""
         if settings_file_name is None:
             settings_file_name = self.settings_file_name
         settings_file_path = pathlib.Path(self.settings_dir_path, settings_file_name)
