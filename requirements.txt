@@ -17,7 +17,9 @@ pyserial-asyncio
 pytz
 python-dateutil
 # Raspberry Pi.
-RPi.GPIO
+# Note: Removed due to problems with Debian 11, Bullseye.
+#       See also wurb_rec_start.sh
+### RPi.GPIO
 # Visual Studio Code.
 pylint
 black

@@ -21,7 +21,9 @@ source venv/bin/activate
 
 # Launch control by GPIO and/or computer mouse.
 # It is running in it's own process.
-python3 wurb_rpi/control_via_rpi.py &
+# Note: Removed due to problems with Debian 11, Bullseye.
+#       See also requirements.txt
+### python3 wurb_rpi/control_via_rpi.py &
 
 # Launch the WURB detector.
 python3 wurb_rec_start.py
