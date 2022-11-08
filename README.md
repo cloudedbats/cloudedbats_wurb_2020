@@ -110,58 +110,138 @@ or attach the M500 or M500-384 microphone after startup.
 
 ## Installation
 
-Use Raspberry Pi Imager to download "Raspbian Pi OS Lite" 
-and install it on a SD card. Raspberry Pi Imager can be found here: 
-https://www.raspberrypi.org/software/operating-systems/
+Note: This installation instruction is updated to match the new
+Ansible installation guide for more automated installations.
+If you are familiar with Ansible please have a look here: 
+https://github.com/cloudedbats/ansible-playbooks
 
-Alternative: BalenaEtcher is an alternative to Raspberry Pi Imager.
+### Main workflow, overview
 
-Connect the SD card to a computer and add an empty file with 
-the name "ssh" to the SD card (the SD card will have the name 
-"boot" when connected). This step is done to activate the possibility
-to connect to the Raspberry Pi via ssh. 
+This is the main workflow described here:
 
-Insert the SD card into you Raspberry Pi, connect an Ethernet 
-cable and start it.
+- Install the Raspberry Pi Operating system on an SD card.
+- Move the SD card to a Raspberry Pi computer and power it up.
+- The Raspberry Pi should now be connected to your local WiFi network, or via an optional Ethernet cable.
+- Login to the Raspberry Pi with SSH by using a terminal window.
+- Make some basic configurations.
+- Install needed Linux modules.
+- Install the CloudedBats WURB-2020 software.
+- Restart the Raspberry Pi.
+- Add extra features like RaspAP, etc.
 
-Alternative: It is possible to connect a HDMI screen and USB keyboard as 
-an alternative to do the installation from a terminal window on another computer.
+### Install the Raspberry Pi Operating system
 
-### Raspberry Pi setup:
+Use the **Raspberry Pi Imager** to install the Raspberry Pi operating system.
 
-Connect to the Raspberry Pi from a computer over ssh. 
-The address "raspberrypi.local" can be used if your computer supports mDNS. 
-Otherwise you have to check up the IP number:
+- Download and install the Raspberry Pi Imager from here:
+https://www.raspberrypi.com/software/
+- Start the Raspberry Pi Imager.
+- Select the operating system **"Raspberry Pi OS Lite"**, use the 32-bit version.
+- Attach an SD card and select it in Raspberry Pi Imager.
+- Click the “settings” button (the cogwheel).
 
-    ssh pi@raspberrypi.local
-    
-Default password is: raspberry
+Then make these setting, to be used as an example. It will also work with an
+Ethernet cable connected to the Raspberry Pi, and then the WiFi part can be omitted.
 
-Update the Raspberry Pi: 
+Note that the username must be **pi** in this version of the WURB bat detector.
+
+- Hostname: wurb99
+- Enable SSH
+- Use password authentication
+- Username: pi
+- Password: my-wurb99-password
+- Configure wireless LAN
+  - SSID: my-home-wifi
+  - Password: my-home-wifi-password
+  - Wireless LAN country: SE
+- Locale settings
+  - Time zone: Europe/Stockholm
+  - Keyboard layout: se
+
+Finally write to the SD card. When finished move the SD card to the Raspberry Pi.
+
+### Start the Raspberry Pi
+
+Move the SD card to a Raspberry Pi computer and power it up.
+
+The Raspberry Pi should now be connected to your local network, either via 
+WiFi or Ethernet depending on your configuration above.
+
+Start a terminal window and connect with SSH
+
+    ssh pi@wurb99.local
+
+### Basic configurations
+
+Update the Raspberry Pi software.
 
     sudo apt update
     sudo apt upgrade
 
-Make some configurations:
+Make some configurations. 
+Most of them are already made when running
+Raspberry Pi Imager above, but the last two must
+be done here. Later modification can be done
+whenever you want by running raspi-config.
 
     sudo raspi-config
 
 Change this (example for Swedish users):
 
-- System Options - Password: chiroptera
-- System Options - Hostname: wurb 
-- System Options - Network at boot: No 
+- System Options - Hostname: wurb99 
+- System Options - Password: my-wurb99-password
 - Localisation Options - Timezone: Europe - Stockholm
 - Localisation Options - WLAN Country: SE
+
+Mandatory
+
+- System Options - Network at boot: No 
 - Advanced Options - Expand Filesystem.
 
-Reboot and reconnect. Remember to use the new password.:
+### Install Linux packages
 
+Install needed software packages
+
+    sudo apt install git python3-venv python3-dev libatlas-base-dev udevil
+
+### Pettersson M500 (500kHz)
+
+The Pettersson M500 microphone (the 500kHz version) differ in communication
+format compared to M500-384, u256, and u384. Some udev rules must be setup
+to allow the detector to communicate with it.
+
+    # Create a file with udev rules:
+    sudo nano /etc/udev/rules.d/pettersson_m500_batmic.rules
+    
+    # Add this row in the new file. 
+    SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pi"
+
+### Install the CloudedBats WURB-2020 software
+
+Clone the software from the GitHub repository
+
+    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
+    cd cloudedbats_wurb_2020/
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt 
+
+Run the detector software as a service
+
+    cp wurb_2020.service /etc/systemd/system/wurb_2020.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable wurb_2020.service
+    sudo systemctl start wurb_2020.service
+
+And finally, set the headphone volume and restart the detector:
+
+    amixer set 'Headphone' 100%
     sudo reboot
-    # Wait...
-    ssh pi@wurb.local
 
 ### RaspAP
+
+If you want to use the detector away from cmputer networks, then
+the RaspAP software can help. MORE DESCRIPTION LATER...
 
 Download and install RaspAp (https://raspap.com):
 
@@ -185,94 +265,6 @@ Change to (example for Swedish users):
 - Authentication-Username (admin username): batman
 - Authentication-Password (admin password): chiroptera
 - Hotspot-Advanced-Country Code: Sweden
-
-About Internet connection:
-
-When running the detector as a standalone unit and the Ethernet cable is not connected to 
-the Raspberry Pi, then Internet is not available. 
-That's ok if you only want to control the detector. If you have to, for example, 
-upgrade the Raspberry Pi, then you must connect an Ethernet cable to it to reach Internet.
-For advanced users there are many possible ways to set up networks with 
-multiple collaborating Raspberry Pi units.
-
-### Install packages
-
-Check that the Python version is 3.7 or later. If not you 
-have to download and install a new version:
-
-    python3 --version
-
-Install software:
-
-    sudo apt install git python3-venv python3-dev
-    sudo apt install libatlas-base-dev udevil
-
-### Pettersson M500 (500kHz)
-
-The Pettersson M500 microphone (the 500kHz version) differ in communication
-format compared to M500-384, u256, and u384. Some udev rules must be setup
-to allow the detector to communicate with it.
-
-    # Create a file with udev rules:
-    sudo nano /etc/udev/rules.d/pettersson_m500_batmic.rules
-    
-    # Add this row in the new file. 
-    SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="pi"
-
-### USB GPS Receiver (optional)
-
-The detector is listening to GPS units that are connected to  
-"/dev/ttyACM0" or "/dev/ttyUSB0". Only NMEA format is supported. 
-
-There is a python script to be used if the detector can't detect your GPS receiver. 
-Read the instructions in the test script: 
-https://github.com/cloudedbats/cloudedbats_wurb_2020/blob/master/test/gps_test.py 
-
-**Note:** This will not work if GPSD is installed. 
-Please uninstall it if that's the case.
-
-### CloudedBats software
-
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
-    cd cloudedbats_wurb_2020/
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt 
-
-    sudo nano /etc/rc.local 
-
-    # Add this before the "exit" row in rc.local:
-    sudo -u pi bash /home/pi/cloudedbats_wurb_2020/wurb_rec_start.sh &
-
-And finally, set the headphone volume and restart the detector:
-
-    amixer set 'Headphone' 100%
-    sudo reboot
-
-### Start problems
-
-If the detector does not start properly, the cause may be incompatible releases 
-of the software packages used. Try to start the detector in the development mode 
-to check for error messages.
-
-    cd /home/pi/cloudedbats_wurb_2020
-    source venv/bin/activate
-    python3 wurb_rec_start.py
-   
-Please contact me if this happens. Most of the time the solution is to avoid 
-the latest release of the library that causes the error. Together we can help other.
-
-### CloudedBats software - latest stable version
-
-If you want to run the latest stable version, then replace the git clone line in the instruction above.
-
-    git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git -b v0.9.0
-    
-    # Note: Due to a bug (wrong content-type in the post requests) the latests version of
-    # FastAPI can't be used to run older versions of the WURB software. If you want to run older 
-    # versions, then you have to downgrade FastAPI:
-    pip uninstall fastapi
-    pip install "fastapi<0.65.2"
 
 ## Run the detector
 
