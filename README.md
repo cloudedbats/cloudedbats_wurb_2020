@@ -293,8 +293,8 @@ Download and install RaspAp.
 
     curl -sL https://install.raspap.com | bash
 
-    It is ok to select "Y" on all steps during the installation.
-    OpenVPN and Wireguard are not used, you can press "N" for them.
+    # It is ok to select "Y" on all steps during the installation.
+    # OpenVPN and Wireguard are not used, you can press "N" for them.
 
 Restart the detector.
 
@@ -330,7 +330,7 @@ Change to (example for Swedish users):
 - Connect USB memory stick(s) (optional, or can be done after startup).
 - Start the Raspberry Pi. It will start automatically when power is added.
 - Connect a computer or mobile phone to the WiFi network called "wifi4bats". Password: chiroptera.
-- Open a web browser and go to http://10.3.141.1:8000
+- Open a web browser and go to http://10.3.141.1:8000 (http://wurb99:8000 will work if not using RaspAP.)
 - Check "Geographic location" and "Settings".
 - Press "Set time".
 - Select "Mode", for example "Recording - Auto detection".
