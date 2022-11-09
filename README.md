@@ -107,19 +107,18 @@ Personally I mostly use U3 (UHS Speed Class U3), for example Toshiba Exceria Pro
 Raspberry Pi 4 at startup (RPi3B+ works fine). Workarounds are to use an extra USB 2.0 Hub (passive is ok), 
 or attach the M500 or M500-384 microphone after startup.
 
-
 ## Installation
 
-Note: This installation instruction is updated to match the new
-Ansible installation guide for more automated installations.
-If you are familiar with Ansible please have a look here: 
+Note: This installation guide is updated to match the Ansible
+installation guide that is used for more automated installations.
+If you are familiar with Ansible, then please have a look here:
 https://github.com/cloudedbats/ansible-playbooks
 
 ### Main workflow, overview
 
-This is the main workflow described here:
+The main steps during the installation are:
 
-- Install the Raspberry Pi Operating system on an SD card.
+- Install the Raspberry Pi Operating system on an SD card, with some basic configurations.
 - Move the SD card to a Raspberry Pi computer and power it up.
 - The Raspberry Pi should now be connected to your local WiFi network, or via an optional Ethernet cable.
 - Login to the Raspberry Pi with SSH by using a terminal window.
@@ -127,21 +126,21 @@ This is the main workflow described here:
 - Install needed Linux modules.
 - Install the CloudedBats WURB-2020 software.
 - Restart the Raspberry Pi.
-- Add extra features like RaspAP, etc.
+- Add extra optional features like RaspAP, etc.
 
-### Install the Raspberry Pi Operating system
+### Install the Raspberry Pi OS
 
 Use the **Raspberry Pi Imager** to install the Raspberry Pi operating system.
 
 - Download and install the Raspberry Pi Imager from here:
 https://www.raspberrypi.com/software/
 - Start the Raspberry Pi Imager.
-- Select the operating system **"Raspberry Pi OS Lite"**, use the 32-bit version.
-- Attach an SD card and select it in Raspberry Pi Imager.
+- Select the operating system **"Raspberry Pi OS Lite"**, use the 32-bit version. (The "Desktop" version will not work, it must be the **"Lite"** version.)
+- Attach an SD card and select it in the Raspberry Pi Imager.
 - Click the “settings” button (the cogwheel).
 
 Then make these setting, to be used as an example. It will also work with an
-Ethernet cable connected to the Raspberry Pi, and then the WiFi part can be omitted.
+Ethernet cable connected to the Raspberry Pi, and then the WiFi (wireless LAN) part can be omitted.
 
 Note that the username must be **pi** in this version of the WURB bat detector.
 
@@ -158,18 +157,27 @@ Note that the username must be **pi** in this version of the WURB bat detector.
   - Time zone: Europe/Stockholm
   - Keyboard layout: se
 
-Finally write to the SD card. When finished move the SD card to the Raspberry Pi.
+Finally write to the SD card. When finished remove the SD card.
+
+If you have many detectors, then be sure that you use different hostnames.
+Otherwise there will be problems when they are connected to the same network
+if more than one is identified as, for example, "wurb99.local".
 
 ### Start the Raspberry Pi
 
-Move the SD card to a Raspberry Pi computer and power it up.
+Insert the SD card into the Raspberry Pi and power it up.
 
 The Raspberry Pi should now be connected to your local network, either via 
-WiFi or Ethernet depending on your configuration above.
+WiFi or an Ethernet cable depending on your configuration above.
 
-Start a terminal window and connect with SSH
+Start a terminal window and connect with SSH.
+For Windows users Putty is a well known alternative.
 
     ssh pi@wurb99.local
+
+It is also possible to attach a screen and keyboard/mouse directly to
+the Raspberry Pi instead of using ssh. 
+No graphical user interface will be available, only command line mode.
 
 ### Basic configurations
 
@@ -178,7 +186,7 @@ Update the Raspberry Pi software.
     sudo apt update
     sudo apt upgrade
 
-Make some configurations. 
+Make some configurations.
 Most of them are already made when running
 Raspberry Pi Imager above, but the last two must
 be done here. Later modification can be done
@@ -186,21 +194,32 @@ whenever you want by running raspi-config.
 
     sudo raspi-config
 
-Change this (example for Swedish users):
+Check or change this (example for Swedish users):
 
 - System Options - Hostname: wurb99 
 - System Options - Password: my-wurb99-password
-- Localisation Options - Timezone: Europe - Stockholm
-- Localisation Options - WLAN Country: SE
+- Localization Options - Timezone: Europe - Stockholm
 
-Mandatory
+Mandatory:
 
-- System Options - Network at boot: No 
+- System Options - Network at boot: No
 - Advanced Options - Expand Filesystem.
+
+A reboot is needed to expand the file system.
+
+    sudo reboot
+
+Hint: WiFi networks can be changed via raspi-config.
+Another alternative is to edit the wpa_supplicant.conf file
+and change SSID and password for the network.
+Even a list of networks can be added in this file if the
+detector is used at different places.
+
+    sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 
 ### Install Linux packages
 
-Install needed software packages
+Install needed software packages.
 
     sudo apt install git python3-venv python3-dev libatlas-base-dev udevil
 
@@ -218,7 +237,7 @@ to allow the detector to communicate with it.
 
 ### Install the CloudedBats WURB-2020 software
 
-Clone the software from the GitHub repository
+Clone the software from the GitHub repository and install Python related packages.
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
     cd cloudedbats_wurb_2020/
@@ -226,30 +245,69 @@ Clone the software from the GitHub repository
     source venv/bin/activate
     pip install -r requirements.txt 
 
-Run the detector software as a service
+Note: When installing packages most of them are pre-prepared in something
+called "wheels".
+The main source for wheels for Raspberry Pi can be found here,
+with an example for SciPy:
+https://piwheels.org/project/scipy/
+If that build has failed, then it is possible to use an older version.
+The installation process may find a working version automatically with a
+lot of warnings during the installation process.
+Then it is possible to edit the requirements.txt file to speed up the
+installation process. In the SciPy case the row can be changed
+from "scipy" to "scipy<1.9" if there are problems with version 1.9.
 
-    cp wurb_2020.service /etc/systemd/system/wurb_2020.service
+### Run the detector software as a service
+
+Install the service and enable it. Enable means that the service will
+start automatically when the Raspberry Pi is started.
+
+    nano cp wurb_2020.service /etc/systemd/system/wurb_2020.service
     sudo systemctl daemon-reload
     sudo systemctl enable wurb_2020.service
     sudo systemctl start wurb_2020.service
 
-And finally, set the headphone volume and restart the detector:
+### Adjust sound level
+
+Set the headphone volume used for audio feedback.
 
     amixer set 'Headphone' 100%
+
+### And finally, restart the detector
+
     sudo reboot
 
-### RaspAP
+### RaspAP, optional installation
 
-If you want to use the detector away from cmputer networks, then
-the RaspAP software can help. MORE DESCRIPTION LATER...
+If you want to use the detector away from computer networks, then
+the RaspAP software can help. Read more here: https://raspap.com
 
-Download and install RaspAp (https://raspap.com):
+Note that the built-in WiFi module will be used by RaspAP to provide a WiFi
+access point. That means that the previously used WiFi connection to
+the local wireless network will not work when RaspAP is installed.
+When internet access is needed you have to connect an Ethernet cable.
+Another option is to use a 4G/LTE modem, like the HUAWEI E3372, and then
+the detector also can be used as a WiFi access point for internet access.
+
+Download and install RaspAp.
 
     curl -sL https://install.raspap.com | bash
 
+    It is ok to select "Y" on all steps during the installation.
+    OpenVPN and Wireguard are not used, you can press "N" for them.
+
+Restart the detector.
+
+    sudo reboot
+
 Connect to the wifi network named raspi-webgui. Password: ChangeMe.
 
-Start a web browser and go to: http://10.3.141.1. Username: admin, password: secret.
+Start a web browser and go to: http://10.3.141.1.
+
+If the detector is using an Ethernet cable the web address "http://wurb99.local/"
+will work from any computer in the network (if the hostname is wurb99).
+
+Login for the administration page: Username: **admin**, password: **secret**.
 
 Change the defaults settings from:
 
@@ -261,7 +319,7 @@ Change the defaults settings from:
 Change to (example for Swedish users):
 
 - Hotspot-Basic-SSID (wifi name): wifi4bats
-- Hotspot-Security-PSK (wifi password): chiroptera 
+- Hotspot-Security-PSK (wifi password): chiroptera
 - Authentication-Username (admin username): batman
 - Authentication-Password (admin password): chiroptera
 - Hotspot-Advanced-Country Code: Sweden
@@ -273,7 +331,7 @@ Change to (example for Swedish users):
 - Start the Raspberry Pi. It will start automatically when power is added.
 - Connect a computer or mobile phone to the WiFi network called "wifi4bats". Password: chiroptera.
 - Open a web browser and go to http://10.3.141.1:8000
-- Check "Geographic location" and "Settings". 
+- Check "Geographic location" and "Settings".
 - Press "Set time".
 - Select "Mode", for example "Recording - Auto detection".
 - Connect headphones (3.5 mm jacket on the Raspberry Pi) and listen to the bats.
@@ -281,7 +339,7 @@ Change to (example for Swedish users):
 - Press "Stop recording".
 
 There are different ways to turn the Raspberry Pi detector off (power off only is not
-recommended since there is a small risk of corrupted SD card or USB memory sticks): 
+recommended since there is a small risk of corrupted SD card or USB memory sticks):
 
 - Select "Mode": "Detector - Power off..." and press the "Shutdown" button.
 - Go to the WiFi administration page at http://10.3.141.1. Select "System" and press "Shutdown".
@@ -289,30 +347,30 @@ recommended since there is a small risk of corrupted SD card or USB memory stick
 - Connect a physical button to GPIO pin #37 and pin #39 (but be careful, connecting the wrong GPIO 
   pins can destroy your Raspberry Pi). Then press that button for a few seconds.
 
-More than one USB memory stick can be used. They will be filled up with wave files 
-in alphabetic order. When the last USB memory stick is full, then it will continue 
+More than one USB memory stick can be used. They will be filled up with wave files
+in alphabetic order. When the last USB memory stick is full, then it will continue
 on the SD card. It will stop when there is less than 0.5 GB left on the SD card.
 
-If files are stored on the SD card then they can be downloaded and/or removed by 
+If files are stored on the SD card then they can be downloaded and/or removed by
 using for example FileZilla. Connect with SFTP to http://10.3.141.1 
 with user "pi" and password "chiroptera".
 Path to files on the SD card: "/home/pi/wurb_recordings".
 
-It is also possible to download files by using FileZilla, or similar, from the USB 
-memory stick during an ongoing recording session. The path to the USB memory is then 
+It is also possible to download files by using FileZilla, or similar, from the USB
+memory stick during an ongoing recording session. The path to the USB memory is then
 "/media/pi/<your-usb-memory-stick-name>".
 
-Note: Some mobile phones complains if the "wifi4bats" network not is 
-connected to internet. If that happens, then tell it to forget the network, 
+Note: Some mobile phones complains if the "wifi4bats" network not is
+connected to internet. If that happens, then tell it to forget the network,
 connect to i again and answer the question if you want to connect to it
 anyway.
 
 ## The MIT license
 
-This software is released under the MIT license that means that you are free to use it as you want; 
-use it, share it, cut it into pieces, extend it, or even sell it for money. 
-But you are not allowed to remove the MIT license clause 
-(just change my name to yours in the copyright row for modified code files), 
+This software is released under the MIT license that means that you are free to use it as you want;
+use it, share it, cut it into pieces, extend it, or even sell it for money.
+But you are not allowed to remove the MIT license clause
+(just change my name to yours in the copyright row for modified code files),
 and it comes "as-is" with no warranties at all.
 
 ## Contact
