@@ -262,7 +262,7 @@ from "scipy" to "scipy<1.9" if there are problems with version 1.9.
 Install the service and enable it. Enable means that the service will
 start automatically when the Raspberry Pi is started.
 
-    nano cp wurb_2020.service /etc/systemd/system/wurb_2020.service
+    sudo cp wurb_2020.service /etc/systemd/system/wurb_2020.service
     sudo systemctl daemon-reload
     sudo systemctl enable wurb_2020.service
     sudo systemctl start wurb_2020.service
