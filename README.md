@@ -255,14 +255,14 @@ The installation process may find a working version automatically with a
 lot of warnings during the installation process.
 Then it is possible to edit the requirements.txt file to speed up the
 installation process. In the SciPy case the row can be changed
-from "scipy" to "scipy<1.9" if there are problems with version 1.9.
+from "scipy" to "scipy<1.9.0" if there are problems with version 1.9.0.
 
 ### Run the detector software as a service
 
 Install the service and enable it. Enable means that the service will
 start automatically when the Raspberry Pi is started.
 
-    nano cp wurb_2020.service /etc/systemd/system/wurb_2020.service
+    sudo cp wurb_2020.service /etc/systemd/system/wurb_2020.service
     sudo systemctl daemon-reload
     sudo systemctl enable wurb_2020.service
     sudo systemctl start wurb_2020.service
