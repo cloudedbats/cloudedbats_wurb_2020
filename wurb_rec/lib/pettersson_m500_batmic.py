@@ -206,7 +206,7 @@ if __name__ == "__main__":
             # Write to wave file.
             while datetime.datetime.now() < end_time:
                 data = batmic.read_stream()
-                wave_file.writeframes(data.tostring())
+                wave_file.writeframes(data.tobytes())
             # Stop M500 and wave file.
             batmic.stop_stream()
             wave_file.close()
@@ -239,7 +239,7 @@ if __name__ == "__main__":
             # Write to wave file.
             while datetime.datetime.now() < end_time:
                 data = batmic.read_stream()
-                wave_file.writeframes(data.tostring())
+                wave_file.writeframes(data.tobytes())
             # Stop M500 and wave file.
             batmic.stop_stream()
             wave_file.close()

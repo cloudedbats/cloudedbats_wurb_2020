@@ -99,7 +99,7 @@ class PetterssonM500():
                     # Push time and data buffer.
                     data_buffer = data_array[0:buffer_size]
                     data_int16 = numpy.fromstring(
-                        data_buffer.tostring(), dtype=numpy.int16
+                        data_buffer.tobytes(), dtype=numpy.int16
                     )  # To ndarray.
 
                     # Use data queue.
