@@ -271,7 +271,11 @@ start automatically when the Raspberry Pi is started.
 
 Set the headphone volume used for audio feedback.
 
-    amixer set 'Headphone' 100%
+    amixer set 'PCM' 100%
+    # Other useful commands if there are problems:
+    aplay -L
+    amixer scontrols
+    alsamixer -c0
 
 ### And finally, restart the detector
 
