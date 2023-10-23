@@ -223,6 +223,16 @@ Install needed software packages.
 
     sudo apt install git python3-venv python3-dev libatlas-base-dev udevil
 
+To make it work with the "Bookworm" release of the Raspberry Pi OS these 
+installations must be done. Note that "numpy" and "scipy" now is removed from
+the "requirements.txt" file used by "pip install". The command for creating
+virtual environments for python is also modified to accept numpy and 
+scipy when they are not created inside the virtual environment. 
+The package "pyalsaaudio" is not available in the 64 bits version, 
+and we have to stay with the 32 bits version of the operating system.
+
+    sudo apt install pulseaudio python3-numpy python3-scipy
+
 ### Pettersson M500 (500kHz)
 
 The Pettersson M500 microphone (the 500kHz version) differ in communication
@@ -241,7 +251,7 @@ Clone the software from the GitHub repository and install Python related package
 
     git clone https://github.com/cloudedbats/cloudedbats_wurb_2020.git
     cd cloudedbats_wurb_2020/
-    python3 -m venv venv
+    python -m venv --system-site-packages venv
     source venv/bin/activate
     pip install -r requirements.txt 
 
