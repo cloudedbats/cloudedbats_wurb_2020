@@ -371,15 +371,48 @@ async def websocket_endpoint(websocket: fastapi.WebSocket):
         # Loop.
         while True:
             # Wait for next event to happen.
+            # events = [
+            #     asyncio.sleep(1.0),  # Update detector time field each second.
+            #     rec_manager_notification.wait(),
+            #     location_changed_notification.wait(),
+            #     latlong_changed_notification.wait(),
+            #     settings_changed_notification.wait(),
+            #     logging_changed_notification.wait(),
+            # ]
+            # await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
+
+            task_1 = asyncio.create_task(asyncio.sleep(1.0), name="ws-sleep-event")
+            task_2 = asyncio.create_task(
+                rec_manager_notification.wait(), name="ws-rec-event"
+            )
+            task_3 = asyncio.create_task(
+                location_changed_notification.wait(), name="ws-location-event"
+            )
+            task_4 = asyncio.create_task(
+                latlong_changed_notification.wait(), name="ws-latlong-event"
+            )
+            task_5 = asyncio.create_task(
+                settings_changed_notification.wait(), name="ws-settings-event"
+            )
+            task_6 = asyncio.create_task(
+                logging_changed_notification.wait(), name="ws-logging-event"
+            )
             events = [
-                asyncio.sleep(1.0),  # Update detector time field each second.
-                rec_manager_notification.wait(),
-                location_changed_notification.wait(),
-                latlong_changed_notification.wait(),
-                settings_changed_notification.wait(),
-                logging_changed_notification.wait(),
+                task_1,
+                task_2,
+                task_3,
+                task_4,
+                task_5,
+                task_6,
             ]
-            await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(
+                events, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in done:
+                # print("Done WS: ", task.get_name())
+                task.cancel()
+            for task in pending:
+                task.cancel()
 
             # Prepare message to client.
             ws_json = {}

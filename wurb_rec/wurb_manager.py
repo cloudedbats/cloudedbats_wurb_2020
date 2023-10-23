@@ -204,11 +204,30 @@ class WurbRecManager(object):
                         await self.ultrasound_devices.get_notification_event()
                     )
                     rec_notification = await self.wurb_recorder.get_notification_event()
+                    # events = [
+                    #     device_notification.wait(),
+                    #     rec_notification.wait(),
+                    # ]
+                    # await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
+
+                    task_1 = asyncio.create_task(
+                        device_notification.wait(), name="rec-settings-event"
+                    )
+                    task_2 = asyncio.create_task(
+                        rec_notification.wait(), name="rec-location-event"
+                    )
                     events = [
-                        device_notification.wait(),
-                        rec_notification.wait(),
+                        task_1,
+                        task_2,
                     ]
-                    await asyncio.wait(events, return_when=asyncio.FIRST_COMPLETED)
+                    done, pending = await asyncio.wait(
+                        events, return_when=asyncio.FIRST_COMPLETED
+                    )
+                    for task in done:
+                        task.cancel()
+                        # print("Done REC: ", task.get_name())
+                    for task in pending:
+                        task.cancel()
 
                     # Create a new event and release all from the old event.
                     old_notification_event = self.notification_event
