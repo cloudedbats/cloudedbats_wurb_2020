@@ -7,8 +7,8 @@ websockets
 requests
 # Sound, etc.
 pyalsaaudio
-numpy
-scipy
+### numpy # Installed via apt install.
+### scipy # Installed via apt install.
 psutil
 pyusb
 # GPS and date/time.
