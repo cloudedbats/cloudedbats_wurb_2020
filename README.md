@@ -1,13 +1,9 @@
 #  CloudedBats - WURB 2020
 
+**This code is no longer maintained. Please use WURB-2026 instead: 
+<https://github.com/cloudedbats/wurb_2026>**
+
 Welcome to CloudedBats-WURB, the DIY bat detector.
-
-**Note: This is a new version of the WURB bat detector.
-The old version can still be found here: 
-https://github.com/cloudedbats/cloudedbats_wurb**
-
-![WURB-2020](images/CloudedBats-WURB.jpg?raw=true  "CloudedBats WURB 2020.")
-CloudedBats - WURB 2020. CloudedBats.org / [CC-BY](https://creativecommons.org/licenses/by/3.0/)
 
 ## Introduction
 
